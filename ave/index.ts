@@ -1,6 +1,12 @@
 import Lexer from './lexer/lexer';
 import debug = require('./debug/debug');
 
-const lexer = new Lexer('\'Heelow\\n\' + and + 123.1e2 0b101 0xffea1');
+const code: string = `const a = 1;
+const b = 2.12e2;
+const binNum = 0b1010;
+func doThis(a)
+    return a*a;`;
+
+const lexer = new Lexer(code);
 const tokens = lexer.lex();
 debug.printTokens(tokens);

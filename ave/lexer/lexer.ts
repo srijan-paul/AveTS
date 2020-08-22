@@ -3,26 +3,28 @@ import Token from './token';
 import keywords from './keywords';
 import * as util from './helpers';
 
+type bracket = ')' | '(' | '[' | ']' | '{' | '}';
+
 export default class Lexer {
   private readonly sourceCode: string;
   // current Indentation level
   private currentLevel: number;
   // indentation level stack
   private levels: number[];
-  private parens: string[];
+  private brackets: bracket[];
   private tokens: Token[];
   private current: number;
   private start: number;
   private line: number;
   private hasError: boolean = false;
-  private static readonly numberRegex: RegExp = /^\d+(\.\d+)?([eE][+-]?\d+)?$/;
+  // private static readonly numberRegex: RegExp = /^\d+(\.\d+)?([eE][+-]?\d+)?$/;
 
   constructor(source: string) {
     this.sourceCode = source;
     this.currentLevel = 0;
     this.start = 0;
     this.levels = [];
-    this.parens = [];
+    this.brackets = [];
     this.line = 1;
     this.tokens = [];
     this.current = 0;
@@ -30,20 +32,20 @@ export default class Lexer {
 
   // helper functions
 
-  eof(): boolean {
+  private eof(): boolean {
     return this.current >= this.sourceCode.length;
   }
 
-  next(): string {
+  private next(): string {
     return this.sourceCode[this.current++];
   }
 
-  peek(): string {
+  private peek(): string {
     if (this.eof()) return '\0';
     return this.sourceCode[this.current];
   }
 
-  peekNext(): string {
+  private peekNext(): string {
     if (this.eof() || this.current + 1 >= this.sourceCode.length) return '\0';
     return this.sourceCode[this.current + 1];
   }
@@ -54,9 +56,9 @@ export default class Lexer {
     // TODO
   }
 
-  expect(char: string, errorMessage: string) {}
+  private expect(char: string, errorMessage: string) {}
 
-  match(char: string): boolean {
+  private match(char: string): boolean {
     if (this.check(char)) {
       this.next();
       return true;
@@ -64,11 +66,11 @@ export default class Lexer {
     return false;
   }
 
-  check(char: string): boolean {
+  private check(char: string): boolean {
     return this.peek() == char;
   }
 
-  addToken(type: TokenType, value?: string | number) {
+  private addToken(type: TokenType, value?: string | number) {
     const token: Token = {
       raw: this.sourceCode.substring(this.start, this.current),
       pos: {
@@ -93,7 +95,7 @@ export default class Lexer {
     return this.tokens;
   }
 
-  lexString(quote: string) {
+  private lexString(quote: string) {
     while (!this.eof() && !this.check(quote)) {
       if (this.check('\n')) this.line++;
       this.next();
@@ -106,10 +108,11 @@ export default class Lexer {
     );
   }
 
-  lexNumber(firstDigit: string) {
+  private lexNumber(firstDigit: string) {
     while (!this.eof() && util.isDigit(this.peek())) this.next();
 
-    if (this.match('.')) {
+    if (this.check('.') && util.isDigit(this.peekNext())) {
+      this.next();
       while (!this.eof() && util.isDigit(this.peek())) this.next();
     }
 
@@ -127,7 +130,7 @@ export default class Lexer {
     this.addToken(TokenType.LITERAL_NUM, parseFloat(number));
   }
 
-  lexHex() {
+  private lexHex() {
     // a 0x is consumed when this method is called
     let hexNum: string = '0x';
 
@@ -144,7 +147,7 @@ export default class Lexer {
     this.addToken(TokenType.LITERAL_HEX, hexNum);
   }
 
-  lexBinary() {
+  private lexBinary() {
     // a 0b is consumed when this method is called
 
     let binaryNum: string = '0b';
@@ -178,7 +181,7 @@ export default class Lexer {
     this.addToken(TokenType.NAME, id);
   }
 
-  scanToken() {
+  private scanToken() {
     const c: string = this.next();
     //prettier-ignore
     switch (c) {
@@ -189,7 +192,24 @@ export default class Lexer {
       case '|': this.addToken(TokenType.PIPE); break;
       case '&': this.addToken(TokenType.AMP); break;
       case '^': this.addToken(TokenType.XOR); break;
-      case '+': 
+      case '=': this.addToken(TokenType.EQ); break;
+      case '(':
+        this.addToken(TokenType.L_PAREN);
+        this.brackets.push(c);
+        break;
+      case ')':
+        this.addToken(TokenType.R_PAREN);
+        break;
+      case '[':
+        this.addToken(TokenType.L_SQ_BRACE);
+        this.brackets.push(c);
+        break;
+      case ']':
+        this.addToken(TokenType.R_SQ_BRACE);
+        break;
+      case '{': this.addToken(TokenType.L_BRACE); break;
+      case '}': this.addToken(TokenType.L_BRACE); break;
+      case '+':
         if (this.match('=')) this.addToken(TokenType.PLUS_EQ);
         else if (this.match('+')) this.addToken(TokenType.PLUS_PLUS);
         else this.addToken(TokenType.PLUS);
@@ -218,22 +238,19 @@ export default class Lexer {
         if (this.match('=')) this.addToken(TokenType.LESS_EQ);
         else this.addToken(TokenType.LESS);
         break;
-      case '\"':
-      case '\'':
-          this.lexString(c);
-
+      case '"':
+      case "'":
+        this.lexString(c);
+        break;
       default:
         if (util.isValidIdStart(c)) {
           this.lexIdentifier(c);
-        } else if(util.isDigit(c)) {
-          if (c == '0' && this.match('b'))
-            this.lexBinary();
-          else if (c == '0' && this.match('x')) 
-            this.lexHex();
-          else
-            this.lexNumber(c);
+        } else if (util.isDigit(c)) {
+          if (c == '0' && this.match('b')) this.lexBinary();
+          else if (c == '0' && this.match('x')) this.lexHex();
+          else this.lexNumber(c);
         }
-    //prettier-ignore-end
+      //prettier-ignore-end
     }
   }
 }
