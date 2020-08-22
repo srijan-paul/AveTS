@@ -119,8 +119,7 @@ export default class Lexer {
 
     if (this.match('e') || this.match('E')) {
       if (this.check('+') || this.check('-')) this.next();
-      if (!util.isDigit(this.peek()))
-        return this.error('Expected number after exponent.');
+      if (!util.isDigit(this.peek())) return this.error('Missing exponent.');
       while (util.isDigit(this.peek())) this.next();
     }
 
