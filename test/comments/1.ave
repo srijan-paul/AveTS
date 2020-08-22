@@ -1,0 +1,10 @@
+# single line comment
+
+1 + 2;
+
+#* multi
+line
+comment
+*#
+
+423 * 3

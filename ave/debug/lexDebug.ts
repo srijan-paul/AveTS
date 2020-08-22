@@ -127,7 +127,6 @@ export function tokenName(t: TokenType): string {
     case TokenType.TRUE:           return 'TRUE';
     case TokenType.FALSE:          return 'FALSE';
     case TokenType.NIL:            return 'NIL';
-    case TokenType.LITERAL_STR:    return 'LITERAL_STR';
     case TokenType.LITERAL_HEX:    return 'LITERAL_HEX';
     case TokenType.LITERAL_BINARY: return 'LITERAL_BINARY';
     case TokenType.LITERAL_REGEXP: return 'LITERAL_REGEXP';

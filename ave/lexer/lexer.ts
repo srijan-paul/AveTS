@@ -92,6 +92,7 @@ export default class Lexer {
       this.start = this.current;
       this.scanToken();
     }
+    this.addToken(TokenType.EOF);
     return this.tokens;
   }
 
@@ -108,7 +109,7 @@ export default class Lexer {
     );
   }
 
-  private lexNumber(firstDigit: string) {
+  private lexNumber() {
     while (!this.eof() && util.isDigit(this.peek())) this.next();
 
     if (this.check('.') && util.isDigit(this.peekNext())) {
@@ -130,7 +131,7 @@ export default class Lexer {
     this.addToken(TokenType.LITERAL_NUM, parseFloat(number));
   }
 
-  private lexHex() {
+  private lexHexNumber() {
     // a 0x is consumed when this method is called
     let hexNum: string = '0x';
 
@@ -147,7 +148,7 @@ export default class Lexer {
     this.addToken(TokenType.LITERAL_HEX, hexNum);
   }
 
-  private lexBinary() {
+  private lexBinaryNumber() {
     // a 0b is consumed when this method is called
 
     let binaryNum: string = '0b';
@@ -242,13 +243,21 @@ export default class Lexer {
       case "'":
         this.lexString(c);
         break;
+      // TODO: store comments somehow... I don't know how
+      case '#':
+        while (!this.check('\n')) this.next();
+        break;
+      case '\n':
+        this.line++;
+        this.addToken(TokenType.NEWLINE);
+        break;
       default:
         if (util.isValidIdStart(c)) {
           this.lexIdentifier(c);
         } else if (util.isDigit(c)) {
-          if (c == '0' && this.match('b')) this.lexBinary();
-          else if (c == '0' && this.match('x')) this.lexHex();
-          else this.lexNumber(c);
+          if (c == '0' && this.match('b')) this.lexBinaryNumber();
+          else if (c == '0' && this.match('x')) this.lexHexNumber();
+          else this.lexNumber();
         }
       //prettier-ignore-end
     }

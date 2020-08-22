@@ -1,0 +1,8 @@
+# precedence
+
+1 + 2 * (3 + 4)
+1 + 2 * 3
+
+# associativity. Expect: (1 - 2) - 3
+
+1 - 2 - 3

@@ -4,7 +4,7 @@
   "description": "A scripting language that compiles to Javascript",
   "main": "index.js",
   "scripts": {
-    "test": "test",
+    "lextest": "node build/tests/lexTests.js",
     "build": "tsc"
   },
   "repository": {
