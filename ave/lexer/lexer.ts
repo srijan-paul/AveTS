@@ -3,7 +3,7 @@ import Token from './token';
 import keywords from './keywords';
 import * as util from './helpers';
 
-type bracket = ')' | '(' | '[' | ']' | '{' | '}';
+type scope_specifier = ')' | '(' | '[' | ']' | '->';
 
 export default class Lexer {
   private readonly sourceCode: string;
@@ -11,7 +11,7 @@ export default class Lexer {
   private currentLevel: number;
   // indentation level stack
   private levels: number[];
-  private brackets: bracket[];
+  private brackets: scope_specifier[];
   private tokens: Token[];
   private current: number;
   private start: number;
@@ -70,9 +70,13 @@ export default class Lexer {
     return this.peek() == char;
   }
 
-  private addToken(type: TokenType, value?: string | number) {
+  private addToken(
+    type: TokenType,
+    value?: string | number | null,
+    raw?: string
+  ) {
     const token: Token = {
-      raw: this.sourceCode.substring(this.start, this.current),
+      raw: raw || this.sourceCode.substring(this.start, this.current),
       pos: {
         start: this.start,
         end: this.current,
@@ -92,7 +96,7 @@ export default class Lexer {
       this.start = this.current;
       this.scanToken();
     }
-    this.addToken(TokenType.EOF);
+    this.addToken(TokenType.EOF, null, '<EOF>');
     return this.tokens;
   }
 
@@ -131,7 +135,7 @@ export default class Lexer {
   }
 
   private lexHexNumber() {
-    // a 0x is consumed when this method is called
+    // a 0x is consumed before this method is called
     let hexNum: string = '0x';
 
     if (!util.isHexDigit(this.peek()))
@@ -181,18 +185,54 @@ export default class Lexer {
     this.addToken(TokenType.NAME, id);
   }
 
+  // TODO Allow nested mutliline comments
+  // TODO reserve comments (?)
+  skipComment() {
+    // this method is called once a '#' symbol is consumed
+
+    // multi line comments #* comment *#
+    if (this.match('*')) {
+      while (!(this.check('*') && this.peekNext() == '#')) {
+        let c: string = this.next();
+        if (c == '\n') this.line++;
+      }
+      this.next(); // consume ending *
+      this.next(); // consume ending #
+      return;
+    }
+
+    // single line comments #comment... <NEWLINE>
+    while (!this.check('\n')) this.next();
+  }
+
   private scanToken() {
     const c: string = this.next();
     //prettier-ignore
     switch (c) {
-      case ':': this.addToken(TokenType.COLON); break;
-      case ';': this.addToken(TokenType.SEMI_COLON); break;
-      case '.': this.addToken(TokenType.DOT); break;
-      case ',': this.addToken(TokenType.COMMA); break;
-      case '|': this.addToken(TokenType.PIPE); break;
-      case '&': this.addToken(TokenType.AMP); break;
-      case '^': this.addToken(TokenType.XOR); break;
-      case '=': this.addToken(TokenType.EQ); break;
+      case ':':
+        this.addToken(TokenType.COLON);
+        break;
+      case ';':
+        this.addToken(TokenType.SEMI_COLON);
+        break;
+      case '.':
+        this.addToken(TokenType.DOT);
+        break;
+      case ',':
+        this.addToken(TokenType.COMMA);
+        break;
+      case '|':
+        this.addToken(TokenType.PIPE);
+        break;
+      case '&':
+        this.addToken(TokenType.AMP);
+        break;
+      case '^':
+        this.addToken(TokenType.XOR);
+        break;
+      case '=':
+        this.addToken(TokenType.EQ);
+        break;
       case '(':
         this.addToken(TokenType.L_PAREN);
         this.brackets.push(c);
@@ -207,8 +247,12 @@ export default class Lexer {
       case ']':
         this.addToken(TokenType.R_SQ_BRACE);
         break;
-      case '{': this.addToken(TokenType.L_BRACE); break;
-      case '}': this.addToken(TokenType.L_BRACE); break;
+      case '{':
+        this.addToken(TokenType.L_BRACE);
+        break;
+      case '}':
+        this.addToken(TokenType.L_BRACE);
+        break;
       case '+':
         if (this.match('=')) this.addToken(TokenType.PLUS_EQ);
         else if (this.match('+')) this.addToken(TokenType.PLUS_PLUS);
@@ -230,6 +274,10 @@ export default class Lexer {
         else if (this.match('/')) this.addToken(TokenType.FLOOR_DIV);
         else this.addToken(TokenType.DIV);
         break;
+      case '%':
+        if (this.match('=')) this.addToken(TokenType.MOD_EQ);
+        else this.addToken(TokenType.MOD);
+        break;
       case '>':
         if (this.match('=')) this.addToken(TokenType.GREATER_EQ);
         else this.addToken(TokenType.GREATER);
@@ -244,11 +292,11 @@ export default class Lexer {
         break;
       // TODO: store comments somehow... I don't know how
       case '#':
-        while (!this.check('\n')) this.next();
+        this.skipComment();
         break;
       case '\n':
+        this.addToken(TokenType.NEWLINE, null, '<NEWLINE>');
         this.line++;
-        this.addToken(TokenType.NEWLINE);
         break;
       default:
         if (util.isValidIdStart(c)) {
