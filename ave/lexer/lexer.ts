@@ -3,15 +3,30 @@ import Token from './token';
 import keywords from './keywords';
 import * as util from './helpers';
 
-type scope_specifier = ')' | '(' | '[' | ']' | '->';
+// indent_specifiers are characters that
+// control whether indentation is
+// detected or not in that region.
+
+// eg: anything inside parenthesis is indentation
+// insensitive. Like :
+//
+// myFunc(a, b, c,
+//      d, e f)
+//
+// or expressions inside parentheses (a + <newline> b)
+// or array elements
+// [1, 2, 3, 4, 5, 6, 7, 8,
+//  9, 10, 11]
+
+type indent_specifier = '(' | '[' | '->';
 
 export default class Lexer {
   private readonly sourceCode: string;
   // current Indentation level
-  private currentLevel: number;
+  private currentIndentLevel: number;
   // indentation level stack
-  private levels: number[];
-  private brackets: scope_specifier[];
+  private indentLevels: number[];
+  private indentSpecifiers: indent_specifier[];
   private tokens: Token[];
   private current: number;
   private start: number;
@@ -21,10 +36,10 @@ export default class Lexer {
 
   constructor(source: string) {
     this.sourceCode = source;
-    this.currentLevel = 0;
+    this.currentIndentLevel = 0;
     this.start = 0;
-    this.levels = [];
-    this.brackets = [];
+    this.indentLevels = [];
+    this.indentSpecifiers = [];
     this.line = 1;
     this.tokens = [];
     this.current = 0;
@@ -56,8 +71,6 @@ export default class Lexer {
     // TODO
   }
 
-  private expect(char: string, errorMessage: string) {}
-
   private match(char: string): boolean {
     if (this.check(char)) {
       this.next();
@@ -75,14 +88,18 @@ export default class Lexer {
     value?: string | number | null,
     raw?: string
   ) {
+    raw = raw || this.sourceCode.substring(this.start, this.current);
+    value = value || null;
+    const pos = {
+      start: this.start,
+      end: this.current,
+      line: this.line,
+    };
+
     const token: Token = {
-      raw: raw || this.sourceCode.substring(this.start, this.current),
-      pos: {
-        start: this.start,
-        end: this.current,
-        line: this.line,
-      },
-      type: type,
+      raw,
+      pos,
+      type,
       value: value || null,
     };
 
@@ -92,7 +109,7 @@ export default class Lexer {
   // actual functions (?)
 
   lex(): Token[] {
-    while (!this.eof()) {
+    while (!(this.eof() || this.hasError)) {
       this.start = this.current;
       this.scanToken();
     }
@@ -152,7 +169,7 @@ export default class Lexer {
   }
 
   private lexBinaryNumber() {
-    // a 0b is consumed when this method is called
+    // a 0b has been consumed when this method is called
 
     let binaryNum: string = '0b';
 
@@ -187,7 +204,7 @@ export default class Lexer {
 
   // TODO Allow nested mutliline comments
   // TODO reserve comments (?)
-  skipComment() {
+  private skipComment() {
     // this method is called once a '#' symbol is consumed
 
     // multi line comments #* comment *#
@@ -205,9 +222,41 @@ export default class Lexer {
     while (!this.check('\n')) this.next();
   }
 
+  private handleIndentation() {
+    // if we are inside a () or a []
+    // then no indentation is detected. Unless it's
+    // an arrow function.
+    if (
+      this.indentSpecifiers.length &&
+      this.indentSpecifiers[this.indentSpecifiers.length - 1] != '->'
+    )
+      return;
+
+    let n = 0;
+    // count number of whitespaces
+    while (this.match(' ')) n++;
+    // if no other characters on this line, ignore
+    if (this.match('\r') || this.check('\n')) return;
+
+    if (n > this.currentIndentLevel) {
+      this.indentLevels.push(n);
+      this.currentIndentLevel = n;
+      this.addToken(TokenType.INDENT, null, '<INDENT>');
+      return;
+    }
+
+    if (n < this.currentIndentLevel) {
+      while (n < this.currentIndentLevel) {
+        this.addToken(TokenType.DEDENT, null, '<DEDENT>');
+        this.indentLevels.pop();
+        this.currentIndentLevel =
+          this.indentLevels[this.indentLevels.length - 1] || 0;
+      }
+    }
+  }
+
   private scanToken() {
     const c: string = this.next();
-    //prettier-ignore
     switch (c) {
       case ':':
         this.addToken(TokenType.COLON);
@@ -230,22 +279,44 @@ export default class Lexer {
       case '^':
         this.addToken(TokenType.XOR);
         break;
+      case '!':
+        if (this.match('=')) this.addToken(TokenType.BANG_EQ);
+        else this.addToken(TokenType.BANG);
+        break;
       case '=':
-        this.addToken(TokenType.EQ);
+        if (this.match('=')) this.addToken(TokenType.EQ_EQ);
+        else this.addToken(TokenType.EQ);
         break;
       case '(':
         this.addToken(TokenType.L_PAREN);
-        this.brackets.push(c);
+        // ignore identations from here
+        this.indentSpecifiers.push(c);
         break;
       case ')':
         this.addToken(TokenType.R_PAREN);
+        // if we were inside an arrow function
+        // then we were indentation sensitive so far
+        // pop the '->' and '('
+        if (this.indentSpecifiers[this.indentSpecifiers.length - 1] == '->') {
+          // pop ->
+          this.indentSpecifiers.pop();
+        }
+        // pop (
+        this.indentSpecifiers.pop();
         break;
       case '[':
         this.addToken(TokenType.L_SQ_BRACE);
-        this.brackets.push(c);
+        // ignore indentation inside arrays
+        this.indentSpecifiers.push(c);
         break;
       case ']':
         this.addToken(TokenType.R_SQ_BRACE);
+        if (this.indentSpecifiers[this.indentSpecifiers.length - 1] == '->') {
+          // pop ->
+          this.indentSpecifiers.pop();
+        }
+        // pop [
+        this.indentSpecifiers.pop();
         break;
       case '{':
         this.addToken(TokenType.L_BRACE);
@@ -261,8 +332,10 @@ export default class Lexer {
       case '-':
         if (this.match('=')) this.addToken(TokenType.MINUS_EQ);
         else if (this.match('-')) this.addToken(TokenType.MINUS_MINUS);
-        else if (this.match('>')) this.addToken(TokenType.ARROW);
-        else this.addToken(TokenType.MINUS);
+        else if (this.match('>')) {
+          this.addToken(TokenType.ARROW);
+          this.indentSpecifiers.push('->');
+        } else this.addToken(TokenType.MINUS);
         break;
       case '*':
         if (this.match('=')) this.addToken(TokenType.STAR_EQ);
@@ -295,8 +368,10 @@ export default class Lexer {
         this.skipComment();
         break;
       case '\n':
-        this.addToken(TokenType.NEWLINE, null, '<NEWLINE>');
+        // this.addToken(TokenType.NEWLINE, null, '<NEWLINE>');
         this.line++;
+        this.handleIndentation();
+
         break;
       default:
         if (util.isValidIdStart(c)) {
@@ -306,7 +381,6 @@ export default class Lexer {
           else if (c == '0' && this.match('x')) this.lexHexNumber();
           else this.lexNumber();
         }
-      //prettier-ignore-end
     }
   }
 }

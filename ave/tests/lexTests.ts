@@ -8,7 +8,7 @@ import chalk = require('chalk');
 const lexTestDir: string = './test';
 
 function runLexer(filePath: string) {
-  console.log('running lexer on ' + chalk.yellow(filePath));
+  console.log('running lexer on ' + chalk.yellow(filePath), '\n');
   const fileContents = fs.readFileSync(filePath, 'utf8');
   const lexer = new Lexer(fileContents);
   debug.printTokens(lexer.lex());

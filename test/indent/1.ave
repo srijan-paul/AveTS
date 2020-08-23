@@ -1,0 +1,7 @@
+func myFunction(a, b)
+    for i = a, b 
+        print(i)
+        print(a)
+        print(b)
+
+myFunction(a, b)

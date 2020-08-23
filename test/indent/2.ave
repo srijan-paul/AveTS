@@ -1,0 +1,5 @@
+window.addEventListener('click', e ->
+    const str = 'my string'
+    const num = 123
+    console.log(e)
+)

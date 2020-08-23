@@ -1,0 +1,26 @@
+# for loops
+
+for i = 1, 10, 1
+  console.log(i)
+
+# higher order functions
+
+func getAdder(c)
+  return (a) -> c + a
+
+class MyClass
+  static something = 4
+  new(a)
+    @a = a
+    @b = Math.random()
+    
+  method()
+    console.log(@a + @b)
+
+func squaresInRange(n)
+  return i * i for i = 1, n
+
+const abc = 1;
+abc = 2 // Error: Reassignment to constant 
+
+const isDigit = c -> (c <= '0' && c >= '9')

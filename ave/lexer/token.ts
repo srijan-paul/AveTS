@@ -1,13 +1,13 @@
 import TokenType = require('./tokentype');
 
-export default interface Token {
+export default interface TToken {
   raw: string;
   type: TokenType;
   value: null | string | number;
-  pos: Position;
+  pos: TokenPosition;
 }
 
-export interface Position {
+export interface TokenPosition {
   start: number;
   line: number;
   end: number;
