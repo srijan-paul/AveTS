@@ -1,10 +1,15 @@
-import { Interface } from 'readline';
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
+import * as AST from './astnode';
+import { PrefixParseFn, InfixParseFn } from './parselets/parsefn';
+import Precedence = require('./precedence');
+import { PrefixUnaryParser } from './parselets/preunary';
+import BinaryOpParselet from './parselets/binary';
 
-class Parser {
-  private readonly prefixParseMap: Map<TokenType, Function>;
-  private readonly infixParseMap: Map<TokenType, Function>;
+export default class Parser {
+  private readonly prefixParseMap: Map<TokenType, PrefixParseFn>;
+  private readonly infixParseMap: Map<TokenType, InfixParseFn>;
+  private readonly precedenceTable: Map<TokenType, number>;
   private tokenstream: Token[];
   private current: number = 0;
   private hasError: boolean = false;
@@ -12,16 +17,23 @@ class Parser {
   constructor(tokens: Token[]) {
     this.prefixParseMap = new Map();
     this.infixParseMap = new Map();
+    this.precedenceTable = new Map();
     this.tokenstream = tokens;
   }
 
-  registerInfix(toktype: TokenType, fn: Function) {
-    this.infixParseMap.set(toktype, fn);
+  registerInfix(toktype: TokenType, parseFn: InfixParseFn) {
+    this.infixParseMap.set(toktype, parseFn);
   }
 
-  registerPrefix(toktype: TokenType, fn: Function) {}
+  registerPrefix(toktype: TokenType, parseFn: PrefixParseFn) {
+    this.prefixParseMap.set(toktype, parseFn);
+  }
 
   // helper functions
+
+  prev(): Token {
+    return this.tokenstream[this.current - 1];
+  }
 
   next(): Token {
     return this.tokenstream[this.current++];
@@ -55,5 +67,44 @@ class Parser {
     if (!this.match(type)) console.error(errorMessage);
   }
 
-  parseExpression() {}
+  //--
+
+  private prefixParseFn(tokentype: TokenType): PrefixParseFn {
+    return this.prefixParseMap.get(tokentype) as PrefixParseFn;
+  }
+
+  private infixParseFn(tokentype: TokenType): InfixParseFn {
+    return this.infixParseMap.get(tokentype) as InfixParseFn;
+  }
+
+  prefix(type: TokenType, bp: Precedence, parseFn?: PrefixParseFn) {
+    this.registerPrefix(type, parseFn || PrefixUnaryParser(bp));
+  }
+
+  infix(type: TokenType, bp: Precedence, parseFn?: InfixParseFn) {
+    this.precedenceTable.set(type, bp);
+    this.registerInfix(type, parseFn || BinaryOpParselet(bp));
+  }
+
+  getPrecedence(tokType: TokenType): number {
+    return this.precedenceTable.get(tokType) || 0;
+  }
+
+  parseExpression(precedence: number): AST.Node {
+    const token: Token = this.next();
+    const prefix = this.prefixParseFn(token.type);
+    if (!prefix) {
+      // throw error
+    }
+
+    let left: AST.Node = prefix(this, token);
+
+    while (precedence <= this.getPrecedence(this.peek().type)) {
+      const token: Token = this.next();
+      const infix: InfixParseFn = this.infixParseFn(token.type);
+      left = infix(this, left, token);
+    }
+
+    return left;
+  }
 }
