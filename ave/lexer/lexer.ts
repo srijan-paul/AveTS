@@ -380,6 +380,8 @@ export default class Lexer {
           if (c == '0' && this.match('b')) this.lexBinaryNumber();
           else if (c == '0' && this.match('x')) this.lexHexNumber();
           else this.lexNumber();
+        } else {
+          this.error("Unexpected character " + c);
         }
     }
   }
