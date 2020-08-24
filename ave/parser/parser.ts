@@ -7,6 +7,16 @@ import { PrefixUnaryParser } from './parselets/preunary';
 import BinaryOpParselet from './parselets/binary';
 import PostfixUnaryParselet from './parselets/postunary';
 
+/* Parser
+  This class defines the base parser.
+  The Expression parser at it's core is a simple pratt parser.
+  the parser can be extended by adding more operators to it.
+  
+  eg : parser.infix(TokenType.PLUS, Precedence.ADD)
+
+  the ave parser class extends this in exactly the same way
+  by adding operators
+*/
 
 export default class Parser {
   private readonly prefixParseMap: Map<TokenType, PrefixParseFn>;
@@ -66,7 +76,12 @@ export default class Parser {
   }
 
   expect(type: TokenType, errorMessage: string) {
-    if (!this.match(type)) console.error(errorMessage);
+    // TODO
+
+    if (!this.match(type)) {
+      console.error(errorMessage);
+      this.hasError = true;
+    }
   }
 
   //--
@@ -87,7 +102,6 @@ export default class Parser {
     this.precedenceTable.set(type, prec);
     this.registerInfix(type, parseFn || PostfixUnaryParselet());
   }
-  
 
   infix(
     type: TokenType,
@@ -109,6 +123,7 @@ export default class Parser {
 
     if (!prefix) {
       // throw error
+      console.error(`No prefix rule for token ${token.raw}`);
     }
 
     let left: AST.Node = prefix(this, token);

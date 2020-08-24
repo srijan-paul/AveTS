@@ -64,6 +64,19 @@ export class PostfixUnaryExpr extends Node {
   }
 }
 
+export class GroupExpr extends Node {
+  readonly expr: Node;
+
+  constructor(lparen: Token, expr: Node) {
+    super(lparen);
+    this.expr = expr;
+  }
+
+  toString() {
+    return `(${this.expr})`;
+  }
+}
+
 export class Literal extends Node {
   readonly value: string | number | boolean;
   constructor(tok: Token, value: string | number | boolean) {
@@ -85,5 +98,18 @@ export class Identifier extends Node {
 
   toString(): string {
     return this.name;
+  }
+}
+
+export class VarDeclaration extends Node {
+  readonly name: string;
+
+  constructor(name: Token) {
+    super(name);
+    this.name = name.raw;
+  }
+
+  toString() {
+    return `decl ${this.name}`;
   }
 }
