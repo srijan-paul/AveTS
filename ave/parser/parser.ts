@@ -1,6 +1,6 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
-import * as AST from './astnode';
+import * as AST from './ast';
 import { PrefixParseFn, InfixParseFn } from './parselets/parsefn';
 import Precedence = require('./precedence');
 import { PrefixUnaryParser } from './parselets/preunary';
@@ -114,7 +114,10 @@ export default class Parser {
   }
 
   getPrecedence(tokType: TokenType): number {
-    return this.precedenceTable.get(tokType) || 0;
+    if (!this.precedenceTable.has(tokType)) {
+      return -1;
+    }
+    return this.precedenceTable.get(tokType) as number;
   }
 
   parseExpression(precedence: number): AST.Node {

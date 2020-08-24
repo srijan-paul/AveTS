@@ -1,7 +1,7 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
 import Parser from './parser';
-import * as AST from './astnode';
+import * as AST from './ast';
 import Precedence = require('./precedence');
 
 export default class AveParser extends Parser {
@@ -85,15 +85,44 @@ export default class AveParser extends Parser {
   }
 
   parse(): AST.Node {
-    return this.parseExpression(Precedence.NONE);
+    return this.declaration();
   }
 
   declaration(): AST.Node {
-    
+    if (this.match(TokenType.VAR, TokenType.CONST, TokenType.LET)) {
+      return this.varDeclaration(this.prev());
+    } else {
+      return this.parseExpression(Precedence.NONE);
+    }
   }
 
-  statement(): AST.Node {
+  varDeclaration(tok: Token): AST.VarDeclaration {
+    const varDecl = new AST.VarDeclaration(tok);
 
+    if (this.match(TokenType.L_PAREN)) {
+      // TODO: fix, not working
+      while (this.check(TokenType.NAME)) {
+        varDecl.declarators.push(this.varDeclarator());
+      }
+      this.expect(TokenType.R_PAREN, "Expected closing ')' after declaration.");
+      return varDecl;
+    }
+
+    varDecl.declarators.push(this.varDeclarator());
+    return varDecl;
   }
 
+  varDeclarator(): AST.VarDeclarator {
+    const varName = this.next();
+    let value = null;
+
+    if (this.match(TokenType.EQ)) {
+      value = this.parseExpression(Precedence.ASSIGN);
+    }
+    return new AST.VarDeclarator(varName, value);
+  }
+
+  // statement(): AST.Node {
+
+  // }
 }

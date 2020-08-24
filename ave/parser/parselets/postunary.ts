@@ -1,4 +1,4 @@
-import * as AST from '../astnode';
+import * as AST from '../ast';
 import Token from '../../lexer/token';
 import Parser from '../parser';
 import { InfixParseFn } from './parsefn';

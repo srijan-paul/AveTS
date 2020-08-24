@@ -102,14 +102,32 @@ export class Identifier extends Node {
 }
 
 export class VarDeclaration extends Node {
-  readonly name: string;
+  readonly kind: string;
+  readonly declarators: VarDeclarator[];
 
-  constructor(name: Token) {
-    super(name);
-    this.name = name.raw;
+  // kw: var / let / const
+  constructor(kw: Token) {
+    super(kw);
+    this.declarators = [];
+    this.kind = kw.raw;
   }
 
   toString() {
-    return `decl ${this.name}`;
+    return `vardecl (${this.declarators.map(e => e.toString()).join(', ')})`;
+  }
+}
+
+export class VarDeclarator extends Node {
+  readonly name: string;
+  readonly value: Node | null;
+
+  constructor(name: Token, value: Node | null) {
+    super(name);
+    this.name = name.raw;
+    this.value = value;
+  }
+
+  toString() {
+    return `${this.name} = ${this.value ? this.value.toString() : ''}`;
   }
 }

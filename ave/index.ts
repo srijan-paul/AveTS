@@ -3,7 +3,7 @@ import debug = require('./debug/debug');
 import AveParser from './parser/aveparser';
 import util = require('util')
 
-const code: string = `1 + 2 + 3 * a++`;
+const code: string = `var a = 1`;
 
 const lexer = new Lexer(code);
 const tokens = lexer.lex();

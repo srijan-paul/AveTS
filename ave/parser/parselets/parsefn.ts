@@ -1,6 +1,6 @@
 import Token from '../../lexer/token';
 import Parser from '../parser';
-import * as AST from '../astnode';
+import * as AST from '../ast';
 
 export type InfixParseFn = (
   parser: Parser,
