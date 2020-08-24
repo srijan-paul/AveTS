@@ -30,9 +30,7 @@ export class BinaryExpr extends Node {
   }
 
   toString(): string {
-    return `<BinaryExpr ${this.left.toString()} ${
-      this.op.raw
-    } ${this.right.toString()}>`;
+    return `(${this.left.toString()} ${this.op.raw} ${this.right.toString()})`;
   }
 }
 
@@ -47,7 +45,7 @@ export class PrefixUnaryExpr extends Node {
   }
 
   toString(): string {
-    return `<UnaryExpr ${this.operator.raw} ${this.operand.toString()}>`;
+    return `(${this.operator.raw} ${this.operand.toString()})`;
   }
 }
 
@@ -62,7 +60,7 @@ export class PostfixUnaryExpr extends Node {
   }
 
   toString(): string {
-    return `<UnaryExpr ${this.operator.raw} ${this.operand.toString()}>`;
+    return '(' + this.operand.toString() + ' ' + this.operator.raw + ')';
   }
 }
 
@@ -71,6 +69,10 @@ export class Literal extends Node {
   constructor(tok: Token, value: string | number | boolean) {
     super(tok);
     this.value = value;
+  }
+
+  toString(): string {
+    return '' + this.value;
   }
 }
 

@@ -3,9 +3,14 @@ import Parser from '../parser';
 import { InfixParseFn } from './parsefn';
 import * as AST from '../astnode';
 
-export default function BinaryParselet(bp: number): InfixParseFn {
+function BinaryParselet(prec: number, rightAssoc: boolean = false): InfixParseFn {
   return (parser: Parser, left: AST.Node, op: Token): AST.BinaryExpr => {
-    const right: AST.Node = parser.parseExpression(bp);
+    // if left assosciative, then parse forward with a precedence of
+    // current precedence + 1
+    prec = prec + (rightAssoc ? 0 : 1);
+    const right: AST.Node = parser.parseExpression(prec);
     return new AST.BinaryExpr(left, op, right);
   };
 }
+
+export default BinaryParselet;

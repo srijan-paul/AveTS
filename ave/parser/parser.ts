@@ -5,6 +5,8 @@ import { PrefixParseFn, InfixParseFn } from './parselets/parsefn';
 import Precedence = require('./precedence');
 import { PrefixUnaryParser } from './parselets/preunary';
 import BinaryOpParselet from './parselets/binary';
+import PostfixUnaryParselet from './parselets/postunary';
+
 
 export default class Parser {
   private readonly prefixParseMap: Map<TokenType, PrefixParseFn>;
@@ -81,9 +83,20 @@ export default class Parser {
     this.registerPrefix(type, parseFn || PrefixUnaryParser(bp));
   }
 
-  infix(type: TokenType, bp: Precedence, parseFn?: InfixParseFn) {
+  postfix(type: TokenType, prec: number, parseFn?: InfixParseFn) {
+    this.precedenceTable.set(type, prec);
+    this.registerInfix(type, parseFn || PostfixUnaryParselet());
+  }
+  
+
+  infix(
+    type: TokenType,
+    bp: Precedence,
+    right: boolean = false,
+    parseFn?: InfixParseFn
+  ) {
     this.precedenceTable.set(type, bp);
-    this.registerInfix(type, parseFn || BinaryOpParselet(bp));
+    this.registerInfix(type, parseFn || BinaryOpParselet(bp, right));
   }
 
   getPrecedence(tokType: TokenType): number {
@@ -93,6 +106,7 @@ export default class Parser {
   parseExpression(precedence: number): AST.Node {
     const token: Token = this.next();
     const prefix = this.prefixParseFn(token.type);
+
     if (!prefix) {
       // throw error
     }
@@ -106,5 +120,9 @@ export default class Parser {
     }
 
     return left;
+  }
+
+  parse() {
+    return this.parseExpression(Precedence.ASSIGN);
   }
 }
