@@ -1,11 +1,18 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
-import * as AST from './ast';
+import * as AST from './ast/ast';
 import { PrefixParseFn, InfixParseFn } from './parselets/parsefn';
 import Precedence = require('./precedence');
 import { PrefixUnaryParser } from './parselets/preunary';
 import BinaryOpParselet from './parselets/binary';
 import PostfixUnaryParselet from './parselets/postunary';
+import {
+  AveError,
+  errorFromToken,
+  ErrorType,
+  throwError,
+} from '../error/error';
+import { ScannedData } from '../lexer/lexer';
 
 /* Parser
   This class defines the base parser.
@@ -23,14 +30,19 @@ export default class Parser {
   private readonly infixParseMap: Map<TokenType, InfixParseFn>;
   private readonly precedenceTable: Map<TokenType, number>;
   private tokenstream: Token[];
-  private current: number = 0;
-  private hasError: boolean = false;
 
-  constructor(tokens: Token[]) {
+  // current index in the tokenstream
+  protected current: number = 0;
+  protected hasError: boolean = false;
+  protected lexedData: ScannedData;
+  protected ast: AST.Program = new AST.Program();
+
+  constructor(lexData: ScannedData) {
     this.prefixParseMap = new Map();
     this.infixParseMap = new Map();
     this.precedenceTable = new Map();
-    this.tokenstream = tokens;
+    this.tokenstream = lexData.tokens;
+    this.lexedData = lexData;
   }
 
   registerInfix(toktype: TokenType, parseFn: InfixParseFn) {
@@ -65,8 +77,10 @@ export default class Parser {
 
   match(...types: TokenType[]): boolean {
     for (const type of types) {
-      if (this.check(type)) this.next();
-      return true;
+      if (this.check(type)) {
+        this.next();
+        return true;
+      }
     }
     return false;
   }
@@ -75,12 +89,15 @@ export default class Parser {
     if (this.check(tok)) this.next();
   }
 
-  expect(type: TokenType, errorMessage: string) {
-    // TODO
+  private error(msg: string, token: Token) {
+    const err: AveError = errorFromToken(token, msg);
+    this.hasError = true;
+    throwError(err, this.lexedData.source);
+  }
 
+  expect(type: TokenType, errorMessage: string) {
     if (!this.match(type)) {
-      console.error(errorMessage);
-      this.hasError = true;
+      this.error(errorMessage, this.prev());
     }
   }
 
@@ -114,9 +131,7 @@ export default class Parser {
   }
 
   getPrecedence(tokType: TokenType): number {
-    if (!this.precedenceTable.has(tokType)) {
-      return -1;
-    }
+    if (!this.precedenceTable.has(tokType)) return -1;
     return this.precedenceTable.get(tokType) as number;
   }
 
@@ -126,7 +141,8 @@ export default class Parser {
 
     if (!prefix) {
       // throw error
-      console.error(`No prefix rule for token ${token.raw}`);
+      this.error(`Expected expression near '${token.raw}'`, token);
+      return new AST.Node(token);
     }
 
     let left: AST.Node = prefix(this, token);

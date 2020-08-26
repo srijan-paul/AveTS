@@ -2,6 +2,13 @@ import TokenType = require('./tokentype');
 import Token from './token';
 import keywords from './keywords';
 import * as util from './helpers';
+import { ErrorType, throwError, AveError } from '../error/error';
+
+export interface ScannedData {
+  tokens: Token[];
+  source: string;
+  hasError: boolean;
+}
 
 // indent_specifiers are characters that
 // control whether indentation is
@@ -31,6 +38,7 @@ export default class Lexer {
   private current: number;
   private start: number;
   private line: number;
+  private column: number;
   private hasError: boolean = false;
   // private static readonly numberRegex: RegExp = /^\d+(\.\d+)?([eE][+-]?\d+)?$/;
 
@@ -41,6 +49,7 @@ export default class Lexer {
     this.indentLevels = [];
     this.indentSpecifiers = [];
     this.line = 1;
+    this.column = 0;
     this.tokens = [];
     this.current = 0;
   }
@@ -52,7 +61,13 @@ export default class Lexer {
   }
 
   private next(): string {
+    this.column++;
     return this.sourceCode[this.current++];
+  }
+
+  private newLine() {
+    this.line++;
+    this.column = 0;
   }
 
   private peek(): string {
@@ -67,7 +82,16 @@ export default class Lexer {
 
   error(message: string) {
     this.hasError = true;
-    console.error(message);
+
+    const err: AveError = {
+      message: message,
+      type: ErrorType.SyntaxError,
+      startPos: this.start,
+      line: this.line,
+      column: this.column,
+    };
+
+    throwError(err, this.sourceCode);
     // TODO
   }
 
@@ -89,37 +113,36 @@ export default class Lexer {
     raw?: string
   ) {
     raw = raw || this.sourceCode.substring(this.start, this.current);
-    value = value || null;
+    value = value == undefined ? null : value;
     const pos = {
       start: this.start,
       end: this.current,
       line: this.line,
+      column: this.column,
     };
 
-    const token: Token = {
-      raw,
-      pos,
-      type,
-      value: value || null,
-    };
-
+    const token: Token = { raw, pos, type, value };
     this.tokens.push(token);
   }
 
   // actual functions (?)
 
-  lex(): Token[] {
+  lex(): ScannedData {
     while (!(this.eof() || this.hasError)) {
       this.start = this.current;
       this.scanToken();
     }
     this.addToken(TokenType.EOF, null, '<EOF>');
-    return this.tokens;
+    return {
+      tokens: this.tokens,
+      source: this.sourceCode,
+      hasError: this.hasError,
+    };
   }
 
   private lexString(quote: string) {
     while (!this.eof() && !this.check(quote)) {
-      if (this.check('\n')) this.line++;
+      if (this.check('\n')) this.newLine();
       this.next();
     }
     if (this.eof()) this.error('Unterminated string literal');
@@ -146,8 +169,8 @@ export default class Lexer {
 
     if (!this.eof() && util.isAlpha(this.peek()))
       this.error('Identifier starts immediately after number literal.');
-
-    let number = this.sourceCode.substring(this.start, this.current);
+    
+      let number = this.sourceCode.substring(this.start, this.current);
     this.addToken(TokenType.LITERAL_NUM, parseFloat(number));
   }
 
@@ -211,7 +234,7 @@ export default class Lexer {
     if (this.match('*')) {
       while (!(this.check('*') && this.peekNext() == '#')) {
         let c: string = this.next();
-        if (c == '\n') this.line++;
+        if (c == '\n') this.newLine();
       }
       this.next(); // consume ending *
       this.next(); // consume ending #
@@ -258,6 +281,10 @@ export default class Lexer {
   private scanToken() {
     const c: string = this.next();
     switch (c) {
+      case ' ':
+      case '\t':
+        //skip white space
+        break;
       case ':':
         this.addToken(TokenType.COLON);
         break;
@@ -367,11 +394,11 @@ export default class Lexer {
       case '#':
         this.skipComment();
         break;
+      case '\r': break;
       case '\n':
         // this.addToken(TokenType.NEWLINE, null, '<NEWLINE>');
-        this.line++;
+        this.newLine();
         this.handleIndentation();
-
         break;
       default:
         if (util.isValidIdStart(c)) {
@@ -381,7 +408,7 @@ export default class Lexer {
           else if (c == '0' && this.match('x')) this.lexHexNumber();
           else this.lexNumber();
         } else {
-          this.error("Unexpected character " + c);
+          this.error(`Unexpected character '${c}'`);
         }
     }
   }

@@ -1,0 +1,34 @@
+how do I implement type checking :|
+
+a type is an object implementing some interface.
+it has one supertype and may have one ore more subtypes.
+
+a type also has some method signatures. But we'll get 
+into that later.
+
+a type has a name
+
+Every "Body" node in the has an array containing all the 
+type declarations available in that scope.
+
+a body node also contains a "varDeclarations" array that contains
+an array of hoisted (?) variable declarations within that scope.
+like function declarations, class declarations and variables declared
+with the keyword 'var'.
+
+an AST contains a top level 'Environment' at it's root node,
+the environment is responsible for mapping names to types.
+
+
+available types are:
+
+objectType -> object (all types inherit from this)
+primitiveType -> number, string, bool, Array etc
+
+
+functionType -> has a 'name' property, and a 'call_signature' property
+    call_signature -> has a 'returnType' and a 'paramTypes'
+    returnType -> any other type
+    param -> a <number, paramData> map
+        paramData -> type (any other type), defaultValue -> a value that must be of paramData.type
+

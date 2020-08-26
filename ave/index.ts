@@ -3,10 +3,14 @@ import debug = require('./debug/debug');
 import AveParser from './parser/aveparser';
 import util = require('util')
 
-const code: string = `var a = 1`;
+const code: string = 
+`1 = 2 = 3`;
 
 const lexer = new Lexer(code);
-const tokens = lexer.lex();
-const parser = new AveParser(tokens);
+const lexedata = lexer.lex();
+const parser = new AveParser(lexedata);
+// debug.printTokens(lexedata.tokens);
+
 const ast = parser.parse();
 console.log(ast.toString());
+// console.log(util.inspect(ast, true, 100))

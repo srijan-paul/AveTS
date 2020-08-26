@@ -8,7 +8,8 @@ export default interface Token {
 }
 
 export interface TokenPosition {
-  start: number;
   line: number;
+  column: number;
+  start: number;
   end: number;
 }

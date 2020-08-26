@@ -1,12 +1,14 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
 import Parser from './parser';
-import * as AST from './ast';
+import * as AST from './ast/ast';
 import Precedence = require('./precedence');
+import { ScannedData } from '../lexer/lexer';
+import AssignmentParser from './parselets/assign';
 
 export default class AveParser extends Parser {
-  constructor(tokens: Token[]) {
-    super(tokens);
+  constructor(lexData: ScannedData) {
+    super(lexData);
     this.prefix(
       TokenType.LITERAL_NUM,
       Precedence.NONE,
@@ -82,9 +84,25 @@ export default class AveParser extends Parser {
         return new AST.GroupExpr(lparen, expression);
       }
     );
+
+    // assignment (= , /= ,*=)
+    [
+      TokenType.EQ,
+      TokenType.DIV_EQ,
+      TokenType.MINUS_EQ,
+      TokenType.STAR_EQ,
+      TokenType.MOD_EQ,
+      TokenType.PLUS_EQ,
+    ].forEach(toktype => {
+      this.infix(toktype, Precedence.ASSIGN, true, AssignmentParser());
+    });
   }
 
   parse(): AST.Node {
+    return this.statement();
+  }
+
+  statement(): AST.Node {
     return this.declaration();
   }
 
@@ -119,10 +137,7 @@ export default class AveParser extends Parser {
     if (this.match(TokenType.EQ)) {
       value = this.parseExpression(Precedence.ASSIGN);
     }
+
     return new AST.VarDeclarator(varName, value);
   }
-
-  // statement(): AST.Node {
-
-  // }
 }

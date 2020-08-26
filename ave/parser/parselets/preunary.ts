@@ -1,7 +1,7 @@
 import Token from "../../lexer/token";
 import Parser from "../parser";
 import {PrefixParseFn} from "./parsefn";
-import * as AST from '../ast';
+import * as AST from '../ast/ast';
 
 export function PrefixUnaryParser(bp: number): PrefixParseFn {
   return (parser: Parser, op: Token) => {

@@ -11,7 +11,7 @@ function runLexer(filePath: string) {
   console.log('running lexer on ' + chalk.yellow(filePath), '\n');
   const fileContents = fs.readFileSync(filePath, 'utf8');
   const lexer = new Lexer(fileContents);
-  debug.printTokens(lexer.lex());
+  debug.printTokens(lexer.lex().tokens);
   console.log('\n'.repeat(3));
 }
 
