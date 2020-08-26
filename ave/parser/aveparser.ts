@@ -135,7 +135,7 @@ export default class AveParser extends Parser {
   }
 
   varDeclarator(): AST.VarDeclarator {
-    const varName = this.next();
+    const varName = this.expect(TokenType.NAME, 'Expected variable name.');
     let value = null;
 
     if (this.match(TokenType.EQ)) {

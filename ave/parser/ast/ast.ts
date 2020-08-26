@@ -50,7 +50,7 @@ export class AssignExpr extends BinaryExpr {
 
 export class Program extends Node {
   readonly sourceFile: any = [];
-  readonly hasError: boolean = false;
+  public hasError: boolean = false;
   readonly body: Body = new Body();
   readonly kind = NodeKind.Body;
 

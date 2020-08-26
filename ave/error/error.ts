@@ -36,7 +36,7 @@ function nthIndex(s: string, c: string, n: number): number {
 function makeErrorLine(source: string, line: number) {
   const lineNumber = chalk.bgWhite.black(line + '| ');
   const lineContents = source.substring(
-    nthIndex(source, '\n', line - 1) + 1,
+    nthIndex(source, '\n', line - 1) + (line == 1 ? 0 : 1),
     nthIndex(source, '\n', line)
   );
 
@@ -57,8 +57,12 @@ function makeLine(source: string, line: number) {
 function makeUnderLine(source: string, line: number, err: AveError): string {
   const lineLength =
     nthIndex(source, '\n', line) - nthIndex(source, '\n', line - 1) + 1;
-  return chalk.rgb(229, 80, 57)(
-    ' '.repeat(lineLength - err.column + `${err.line} | `.length) +
+  return chalk.rgb(
+    229,
+    80,
+    57
+  )(
+    ' '.repeat(lineLength - err.column + `${err.line}| `.length) +
       '^'.repeat((err.endPos || 1) - err.startPos)
   );
 }

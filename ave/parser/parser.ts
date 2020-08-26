@@ -92,13 +92,15 @@ export default class Parser {
   public error(msg: string, token: Token) {
     const err: AveError = errorFromToken(token, msg);
     this.hasError = true;
+    this.ast.hasError = true;
     throwError(err, this.lexedData.source);
   }
 
   expect(type: TokenType, errorMessage: string) {
     if (!this.match(type)) {
-      this.error(errorMessage, this.prev());
+      this.error(errorMessage, this.next());
     }
+    return this.prev();
   }
 
   //--
