@@ -89,7 +89,7 @@ export default class Parser {
     if (this.check(tok)) this.next();
   }
 
-  private error(msg: string, token: Token) {
+  public error(msg: string, token: Token) {
     const err: AveError = errorFromToken(token, msg);
     this.hasError = true;
     throwError(err, this.lexedData.source);

@@ -99,7 +99,11 @@ export default class AveParser extends Parser {
   }
 
   parse(): AST.Node {
-    return this.statement();
+
+    while (!this.ast.hasError && !this.match(TokenType.EOF)) {
+      this.ast.body.statements.push(this.statement());
+    }
+    return this.ast;
   }
 
   statement(): AST.Node {

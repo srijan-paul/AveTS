@@ -1,5 +1,6 @@
 import Token from '../../lexer/token';
 import NodeKind = require('./nodekind');
+import chalk = require('chalk');
 
 interface ASTNode {
   toString(): string;
@@ -41,17 +42,20 @@ export class BinaryExpr extends Node {
 
 export class AssignExpr extends BinaryExpr {
   readonly kind = NodeKind.AssignmentExpr;
+
+  toString() {
+    return 'assign ' + BinaryExpr.prototype.toString.call(this);
+  }
 }
 
 export class Program extends Node {
-  readonly statements: Node[] = [];
   readonly sourceFile: any = [];
   readonly hasError: boolean = false;
   readonly body: Body = new Body();
   readonly kind = NodeKind.Body;
 
   toString() {
-    return '<program>:\n';
+    return ` program:\n ${this.body.toString()}`;
   }
 }
 
@@ -61,7 +65,10 @@ export class Body extends Node {
   readonly kind = NodeKind.Body;
 
   toString() {
-    return '<body>\n';
+    const coloredIndent = chalk.bold.rgb(255, 71, 87)(' --> ');
+    return `body:\n${coloredIndent}${this.statements
+      .map(e => e.toString())
+      .join('\n' + coloredIndent)}`;
   }
 }
 
@@ -152,7 +159,7 @@ export class VarDeclaration extends Node {
   }
 
   toString() {
-    return `<vardecl (${this.declarators.map(e => e.toString()).join(', ')})>`;
+    return `vardecl (${this.declarators.map(e => e.toString()).join(', ')})`;
   }
 }
 
