@@ -6,12 +6,7 @@ import Precedence = require('./precedence');
 import { PrefixUnaryParser } from './parselets/preunary';
 import BinaryOpParselet from './parselets/binary';
 import PostfixUnaryParselet from './parselets/postunary';
-import {
-  AveError,
-  errorFromToken,
-  ErrorType,
-  throwError,
-} from '../error/error';
+import { AveError, errorFromToken, throwError } from '../error/error';
 import { ScannedData } from '../lexer/lexer';
 
 /* Parser
@@ -90,7 +85,7 @@ export default class Parser {
   }
 
   public error(msg: string, token: Token) {
-    const err: AveError = errorFromToken(token, msg);
+    const err: AveError = errorFromToken(token, msg, this.lexedData.fileName);
     this.hasError = true;
     this.ast.hasError = true;
     throwError(err, this.lexedData.source);

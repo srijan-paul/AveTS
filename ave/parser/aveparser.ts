@@ -93,13 +93,13 @@ export default class AveParser extends Parser {
       TokenType.STAR_EQ,
       TokenType.MOD_EQ,
       TokenType.PLUS_EQ,
+      TokenType.POW_EQ,
     ].forEach(toktype => {
       this.infix(toktype, Precedence.ASSIGN, true, AssignmentParser());
     });
   }
 
   parse(): AST.Node {
-
     while (!this.ast.hasError && !this.match(TokenType.EOF)) {
       this.ast.body.statements.push(this.statement());
     }
@@ -125,12 +125,14 @@ export default class AveParser extends Parser {
       // TODO: fix, not working
       while (this.check(TokenType.NAME)) {
         varDecl.declarators.push(this.varDeclarator());
+        this.consume(TokenType.COMMA);
       }
       this.expect(TokenType.R_PAREN, "Expected closing ')' after declaration.");
       return varDecl;
     }
 
     varDecl.declarators.push(this.varDeclarator());
+    this.consume(TokenType.SEMI_COLON);
     return varDecl;
   }
 
@@ -141,7 +143,6 @@ export default class AveParser extends Parser {
     if (this.match(TokenType.EQ)) {
       value = this.parseExpression(Precedence.ASSIGN);
     }
-
     return new AST.VarDeclarator(varName, value);
   }
 }

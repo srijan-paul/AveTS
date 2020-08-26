@@ -4,12 +4,13 @@ import AveParser from './parser/aveparser';
 import util = require('util')
 
 const code: string = 
-`var abcv = 1
-let fo12 = 2
-const bar = 300
-foo = 123 = 1`;
 
-const lexer = new Lexer(code);
+`const pi = 3.14
+var 456 = 1;
+let bar = 32;
+foo = 123 =  1`;
+
+const lexer = new Lexer('testfile.ave', code);
 const lexedata = lexer.lex();
 const parser = new AveParser(lexedata);
 // debug.printTokens(lexedata.tokens);

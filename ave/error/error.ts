@@ -13,6 +13,7 @@ export interface AveError {
   line: number;
   column: number;
   type: ErrorType;
+  fileName: string;
 }
 
 function getErrorTypeName(et: ErrorType) {
@@ -47,7 +48,7 @@ function makeErrorLine(source: string, line: number) {
 function makeLine(source: string, line: number) {
   const lineNumber = chalk.rgb(127, 140, 141)(line + '| ');
   const lineContents = source.substring(
-    nthIndex(source, '\n', line - 1) + 1,
+    nthIndex(source, '\n', line - 1) + (line == 1 ? 0 : 1),
     nthIndex(source, '\n', line)
   );
 
@@ -57,14 +58,12 @@ function makeLine(source: string, line: number) {
 function makeUnderLine(source: string, line: number, err: AveError): string {
   const lineLength =
     nthIndex(source, '\n', line) - nthIndex(source, '\n', line - 1) + 1;
-  return chalk.rgb(
-    229,
-    80,
-    57
-  )(
-    ' '.repeat(lineLength - err.column + `${err.line}| `.length) +
-      '^'.repeat((err.endPos || 1) - err.startPos)
-  );
+
+  const text =
+    ' '.repeat(err.column + `${err.line}| `.length) +
+    '^'.repeat((err.endPos || 1) - err.startPos);
+
+  return chalk.rgb(229, 80, 57)(text);
 }
 
 function makeErrorInfo(source: string, line: number, err: AveError) {
@@ -74,23 +73,29 @@ function makeErrorInfo(source: string, line: number, err: AveError) {
   if (line - 1) lines.push(makeLine(source, line - 1));
   // line where the error happened
   lines.push(makeErrorLine(source, line));
+
   if (err.endPos) {
     lines.push(makeUnderLine(source, line, err));
   }
+
   return lines.join('\n');
 }
 
 export function throwError(err: AveError, source: string) {
   const errType: string = getErrorTypeName(err.type);
-  const message = `\n ${chalk.red(errType)} at [line ${err.line}: ${
-    err.column
-  }]: ${err.message}`;
+  const message = `\n ${chalk.red(errType)}: ${chalk.yellow(
+    err.fileName
+  )} at [line ${err.line}: ${err.column}]: ${err.message}`;
 
   console.error(message);
   console.log(makeErrorInfo(source, err.line, err));
 }
 
-export function errorFromToken(token: Token, message: string): AveError {
+export function errorFromToken(
+  token: Token,
+  message: string,
+  fileName: string
+): AveError {
   return {
     type: ErrorType.SyntaxError,
     startPos: token.pos.start,
@@ -98,5 +103,6 @@ export function errorFromToken(token: Token, message: string): AveError {
     line: token.pos.line,
     column: token.pos.column,
     message: message,
+    fileName,
   };
 }

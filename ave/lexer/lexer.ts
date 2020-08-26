@@ -8,6 +8,7 @@ export interface ScannedData {
   tokens: Token[];
   source: string;
   hasError: boolean;
+  fileName: string;
 }
 
 // indent_specifiers are characters that
@@ -30,28 +31,22 @@ type indent_specifier = '(' | '[' | '->';
 export default class Lexer {
   private readonly sourceCode: string;
   // current Indentation level
-  private currentIndentLevel: number;
+  private currentIndentLevel: number = 0;
   // indentation level stack
-  private indentLevels: number[];
-  private indentSpecifiers: indent_specifier[];
-  private tokens: Token[];
-  private current: number;
-  private start: number;
-  private line: number;
-  private column: number;
+  private indentLevels: number[] = [];
+  private indentSpecifiers: indent_specifier[] = [];
+  private tokens: Token[] = [];
+  private current: number = 0;
+  private start: number = 0;
+  private line: number = 1;
+  private column: number = 0;
   private hasError: boolean = false;
+  private fileName: string;
   // private static readonly numberRegex: RegExp = /^\d+(\.\d+)?([eE][+-]?\d+)?$/;
 
-  constructor(source: string) {
+  constructor(fileName: string, source: string) {
     this.sourceCode = source;
-    this.currentIndentLevel = 0;
-    this.start = 0;
-    this.indentLevels = [];
-    this.indentSpecifiers = [];
-    this.line = 1;
-    this.column = 0;
-    this.tokens = [];
-    this.current = 0;
+    this.fileName = fileName;
   }
 
   // helper functions
@@ -80,7 +75,7 @@ export default class Lexer {
     return this.sourceCode[this.current + 1];
   }
 
-  error(message: string) {
+  error(message: string, endPos?: number) {
     this.hasError = true;
 
     const err: AveError = {
@@ -89,6 +84,8 @@ export default class Lexer {
       startPos: this.start,
       line: this.line,
       column: this.column,
+      endPos: endPos,
+      fileName: this.fileName
     };
 
     throwError(err, this.sourceCode);
@@ -118,7 +115,7 @@ export default class Lexer {
       start: this.start,
       end: this.current,
       line: this.line,
-      column: this.column,
+      column: this.column - (this.current - this.start) + 1,
     };
 
     const token: Token = { raw, pos, type, value };
@@ -137,6 +134,7 @@ export default class Lexer {
       tokens: this.tokens,
       source: this.sourceCode,
       hasError: this.hasError,
+      fileName: this.fileName,
     };
   }
 
@@ -168,9 +166,12 @@ export default class Lexer {
     }
 
     if (!this.eof() && util.isAlpha(this.peek()))
-      this.error('Identifier starts immediately after number literal.');
-    
-      let number = this.sourceCode.substring(this.start, this.current);
+      this.error(
+        'Identifier starts immediately after numeric literal.',
+        this.current + 1
+      );
+
+    let number = this.sourceCode.substring(this.start, this.current);
     this.addToken(TokenType.LITERAL_NUM, parseFloat(number));
   }
 
@@ -394,7 +395,8 @@ export default class Lexer {
       case '#':
         this.skipComment();
         break;
-      case '\r': break;
+      case '\r':
+        break;
       case '\n':
         // this.addToken(TokenType.NEWLINE, null, '<NEWLINE>');
         this.newLine();
