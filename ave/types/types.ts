@@ -62,7 +62,7 @@ export const t_error: Type = {
   tag: 'error',
   superType: null,
   toString() {
-    return 'error';
+    return '<%error%>';
   },
 };
 
@@ -97,16 +97,6 @@ type UnaryRule = (operand: Type) => Type;
 const mBinaryRules: Map<TokenType, BinaryRule> = new Map();
 const mUnaryRules: Map<TokenType, UnaryRule> = new Map();
 
-export function binaryOp(l: Type, op: TokenType, r: Type): Type {
-  if (mBinaryRules.has(op)) return (<BinaryRule>mBinaryRules.get(op))(l, r);
-  return t_error;
-}
-
-export function unaryOp(operator: TokenType, t_operand: Type): Type {
-  if (mUnaryRules.has(operator))
-    return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
-  return t_error;
-}
 
 // addition table maps two operand types
 // to the addition result type. the table is
@@ -142,3 +132,15 @@ makeBinaryRule(TokenType.STAR);
 makeBinaryRule(TokenType.DIV);
 makeBinaryRule(TokenType.FLOOR_DIV);
 makeBinaryRule(TokenType.POW);
+
+
+export function binaryOp(l: Type, op: TokenType, r: Type): Type {
+  if (mBinaryRules.has(op)) return (<BinaryRule>mBinaryRules.get(op))(l, r);
+  return t_error;
+}
+
+export function unaryOp(operator: TokenType, t_operand: Type): Type {
+  if (mUnaryRules.has(operator))
+    return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
+  return t_error;
+}
