@@ -2,8 +2,8 @@ import Token, { TokenPosition } from '../lexer/token';
 import chalk = require('chalk');
 
 export enum ErrorType {
-  TypeError,
   SyntaxError,
+  TypeError,
   ReferenceError,
 }
 
@@ -18,7 +18,7 @@ export interface AveError {
 }
 
 function getErrorTypeName(et: ErrorType) {
-  return ['TypeError', 'SyntaxError', 'ReferenceError'][et];
+  return ['SyntaxError', 'TypeError', 'ReferenceError'][et];
 }
 
 // some helpher functions

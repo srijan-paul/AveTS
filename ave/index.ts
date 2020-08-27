@@ -11,7 +11,7 @@ var bar = 5
 let baz = 9
 bar = baz
 baz = foo = bar
-foo = 2`;
+ad = 2`;
 
 const lexer = new Lexer('testfile.ave', code);
 const lexedata = lexer.lex();
