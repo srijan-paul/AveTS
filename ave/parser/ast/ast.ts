@@ -1,4 +1,4 @@
-import Token from '../../lexer/token';
+import Token, { tokenvalue } from '../../lexer/token';
 import NodeKind = require('./nodekind');
 import chalk = require('chalk');
 
@@ -119,10 +119,10 @@ export class GroupExpr extends Node {
 }
 
 export class Literal extends Node {
-  readonly value: string | number | boolean;
+  readonly value: tokenvalue;
   readonly kind = NodeKind.Literal;
 
-  constructor(tok: Token, value: string | number | boolean) {
+  constructor(tok: Token, value: tokenvalue) {
     super(tok);
     this.value = value;
   }

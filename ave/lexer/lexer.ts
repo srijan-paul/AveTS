@@ -243,7 +243,7 @@ export default class Lexer {
     }
 
     // single line comments #comment... <NEWLINE>
-    while (!this.check('\n')) this.next();
+    while (!this.check('\n') && !this.eof()) this.next();
   }
 
   private handleIndentation() {
@@ -281,6 +281,7 @@ export default class Lexer {
 
   private scanToken() {
     const c: string = this.next();
+    // console.log(c)
     switch (c) {
       case ' ':
       case '\t':

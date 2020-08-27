@@ -1,0 +1,8 @@
+const a = 1
+a = 2 # expect type error
+
+let myint: num = 123; 
+myint = 'string' #expect type error
+
+let mystring: str = 'abcdef'
+mystring = '1234' #no error

@@ -3,7 +3,7 @@ import TokenType = require('./tokentype');
 export default interface Token {
   raw: string;
   type: TokenType;
-  value: null | string | number;
+  value: tokenvalue | null;
   pos: TokenPosition;
 }
 
@@ -13,3 +13,5 @@ export interface TokenPosition {
   start: number;
   end: number;
 }
+
+export type tokenvalue = string | number | boolean;

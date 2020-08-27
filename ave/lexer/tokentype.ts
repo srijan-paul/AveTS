@@ -87,6 +87,14 @@ enum TokenType {
   IMPORT,
   EXPORT,
 
+  // primary data types
+  // (also keywords)
+
+  STRING,
+  NUMBER,
+  BOOL,
+  OBJECT,
+
   // literals
   LITERAL_NUM,
   LITERAL_STR,

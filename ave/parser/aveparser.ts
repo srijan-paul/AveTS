@@ -4,6 +4,7 @@ import Parser, { ParsedData } from './parser';
 import * as AST from './ast/ast';
 import Precedence = require('./precedence');
 import { ScannedData } from '../lexer/lexer';
+import * as Type from '../types/types'
 import AssignmentParser from './parselets/assign';
 
 export default class AveParser extends Parser {
@@ -150,6 +151,11 @@ export default class AveParser extends Parser {
   varDeclarator(): AST.VarDeclarator {
     const varName = this.expect(TokenType.NAME, 'Expected variable name.');
     let value = null;
+    let type = Type.t_any
+
+    if (this.match(TokenType.COLON)) {
+      
+    }
 
     if (this.match(TokenType.EQ)) {
       value = this.parseExpression(Precedence.ASSIGN);

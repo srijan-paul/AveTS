@@ -33,7 +33,11 @@ const keywords: Map<string, TokenType> = new Map([
   ['when'     , TokenType.WHEN],
   ['set'      , TokenType.SET],
   ['get'      , TokenType.GET],
-  ['new'      , TokenType.NEW],  
+  ['new'      , TokenType.NEW],
+  ['str'      , TokenType.STRING],
+  ['num'      , TokenType.NUMBER],
+  ['bool'     , TokenType.BOOL],
+  ['object'   , TokenType.OBJECT],
 ]);
 
 export default keywords;
