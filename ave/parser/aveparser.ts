@@ -24,6 +24,22 @@ export default class AveParser extends Parser {
       (parser:Parser, token: Token) => {
         return new AST.Literal(token, token.value as string);
       }
+    );
+
+    this.prefix(
+      TokenType.TRUE,
+      Precedence.NONE,
+      (parser:Parser, token: Token) => {
+        return new AST.Literal(token, true);
+      }
+    );
+
+    this.prefix(
+      TokenType.FALSE,
+      Precedence.NONE,
+      (parser:Parser, token: Token) => {
+        return new AST.Literal(token, false);
+      }
     )
 
     this.prefix(

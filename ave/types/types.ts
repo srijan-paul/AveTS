@@ -8,6 +8,7 @@ export interface Type {
   tag: string;
   superType: Type | null;
   toString(): string;
+  id: number;
 }
 
 export const enum TypeName {
@@ -21,6 +22,7 @@ export const enum TypeName {
 export const t_any: Type = {
   tag: TypeName.any,
   superType: null,
+  id: 0,
   toString() {
     return TypeName.any;
   },
@@ -29,6 +31,7 @@ export const t_any: Type = {
 export const t_Object: Type = {
   tag: TypeName.object,
   superType: null,
+  id: 1,
   toString() {
     return TypeName.object;
   },
@@ -37,6 +40,7 @@ export const t_Object: Type = {
 export const t_string: Type = {
   tag: TypeName.string,
   superType: t_any,
+  id: 2,
   toString() {
     return TypeName.string;
   },
@@ -45,6 +49,7 @@ export const t_string: Type = {
 export const t_number: Type = {
   tag: TypeName.number,
   superType: t_any,
+  id: 3,
   toString() {
     return TypeName.number;
   },
@@ -53,6 +58,7 @@ export const t_number: Type = {
 export const t_bool: Type = {
   tag: TypeName.bool,
   superType: t_any,
+  id: 4,
   toString() {
     return TypeName.bool;
   },
@@ -61,6 +67,7 @@ export const t_bool: Type = {
 export const t_error: Type = {
   tag: 'error',
   superType: null,
+  id: 5,
   toString() {
     return '<%error%>';
   },
@@ -97,21 +104,22 @@ type UnaryRule = (operand: Type) => Type;
 const mBinaryRules: Map<TokenType, BinaryRule> = new Map();
 const mUnaryRules: Map<TokenType, UnaryRule> = new Map();
 
-
 // addition table maps two operand types
 // to the addition result type. the table is
 // queried by the concatenation of the type tags
 
-const additionTable: Map<string, Type> = new Map([
-  [`${TypeName.number}-${TypeName.number}`, t_number],
-  [`${TypeName.string}-${TypeName.number}`, t_string],
-  [`${TypeName.number}-${TypeName.string}`, t_string],
-  [`${TypeName.string}-${TypeName.string}`, t_string],
-]);
+const addTable: Array<Array<Type>> = new Array(t_number.id + 1);
+
+for (let i = 0; i < addTable.length; i++)
+  addTable[i] = new Array(t_number.id + 1);
+
+addTable[t_number.id][t_number.id] = t_number;
+addTable[t_string.id][t_number.id] = t_string;
+addTable[t_number.id][t_string.id] = t_string;
+addTable[t_string.id][t_string.id] = t_string;
 
 mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {
-  const key: string = lt.tag + '-' + rt.tag;
-  if (additionTable.has(key)) return additionTable.get(key) as Type;
+  if (addTable[lt.id] && addTable[lt.id][rt.id]) return addTable[lt.id][rt.id];
   return t_error;
 });
 
@@ -132,7 +140,6 @@ makeBinaryRule(TokenType.STAR);
 makeBinaryRule(TokenType.DIV);
 makeBinaryRule(TokenType.FLOOR_DIV);
 makeBinaryRule(TokenType.POW);
-
 
 export function binaryOp(l: Type, op: TokenType, r: Type): Type {
   if (mBinaryRules.has(op)) return (<BinaryRule>mBinaryRules.get(op))(l, r);

@@ -72,7 +72,7 @@ export default class Checker {
         this.checkDeclaration(<AST.VarDeclaration>stmt);
         break;
       default:
-        // this.checkExpression(stmt);
+        this.checkExpression(stmt);
         break;
     }
   }
@@ -92,6 +92,13 @@ export default class Checker {
 
     if (node.value) currentType = this.typeOf(node.value);
 
+    if (!Type.isValidAssignment(type, currentType)) {
+      this.error(
+        `cannot intialize '${node.name}' with type '${currentType.toString()}'`,
+        node.token as Token
+      );
+    }
+
     const declaration: SymbolData = {
       name: node.name,
       declType: kind,
@@ -102,12 +109,27 @@ export default class Checker {
     this.env.define(node.name, declaration);
   }
 
+  // for checking expression statements
+  // expressions that are on the right side
+  // of an assignment of an arguement to function
+  // call are type checked separately and
+  // don't have to go through this check
+  // since their type is inferred anyway.
+
+  private checkExpression(expr: AST.Node) {
+    this.typeOf(expr);
+  }
+
   private typeOf(node: AST.Node): Type.Type {
     switch (node.kind) {
       case NodeKind.Literal:
         return this.literalType(node.token as Token);
       case NodeKind.BinaryExpr:
         return this.binaryType(<AST.BinaryExpr>node);
+      case NodeKind.AssignmentExpr:
+        return this.assignmentType(<AST.AssignExpr>node);
+      case NodeKind.Identifier:
+        return this.identifierType(<AST.Identifier>node);
     }
     return Type.t_error;
   }
@@ -128,15 +150,63 @@ export default class Checker {
     }
   }
 
-  private binaryType(node: AST.BinaryExpr): Type.Type {
+  private identifierType(id: AST.Identifier): Type.Type {
+    const name: string = id.name;
+    const symbolData = this.env.find(name);
+    if (symbolData) {
+      // if the data type is a free type,
+      // return the last known type of the
+      // variable.
+      return symbolData.dataType == Type.t_any
+        ? symbolData.currentType
+        : symbolData.dataType;
+    }
+
+    return Type.t_error;
+  }
+
+  private binaryType(expr: AST.BinaryExpr): Type.Type {
+    const operator = expr.op.type;
+
+    const lType = this.typeOf(expr.left);
+    const rType = this.typeOf(expr.right);
+
+    const type = Type.binaryOp(lType, operator, rType);
+
+    if (type == Type.t_error) {
+      this.error(
+        `Cannot use operator '${expr.op.raw}' on operands of type '${lType.tag}' and '${rType.tag}'`,
+        expr.op,
+        ErrorType.TypeError
+      );
+    }
+
+    return type;
+  }
+
+  private assignmentType(node: AST.AssignExpr): Type.Type {
     const left = node.left;
     const right = node.right;
-    const operator = node.op.type;
 
-    const ltype = this.typeOf(left);
-    const rtype = this.typeOf(right);
+    if (!this.isValidAssignTarget(left)) return Type.t_error;
 
-    return Type.binaryOp(ltype, operator, rtype);
+    const lType = this.typeOf(left);
+    const rType = this.typeOf(right);
+
+    // if the left or right side is erratic
+    // and error has already been reported
+    // and there is no need to report again.
+    if (lType == Type.t_error || rType == Type.t_error) return rType;
+
+    if (!Type.isValidAssignment(lType, rType)) {
+      this.error(
+        `cannot assign type '${rType.toString()}' to type '${lType.toString()}'.`,
+        node.op,
+        ErrorType.TypeError
+      );
+    }
+
+    return rType;
   }
 
   private isValidAssignTarget(node: AST.Node): boolean {

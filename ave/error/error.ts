@@ -84,9 +84,9 @@ function makeErrorInfo(source: string, line: number, err: AveError) {
 
 export function throwError(err: AveError, source: string) {
   const errType: string = getErrorTypeName(err.type);
-  const message = `\n ${chalk.red(errType)}: ${chalk.yellow(
+  const message = `\n${chalk.yellow(
     err.fileName
-  )} at [line ${err.line}:${err.column}]: ${err.message}`;
+  )}:${err.line}:${err.column} - [${chalk.red(errType)}] ${err.message}`;
 
   console.error(message);
   console.log(makeErrorInfo(source, err.line, err));
