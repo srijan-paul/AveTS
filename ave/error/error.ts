@@ -4,6 +4,7 @@ import chalk = require('chalk');
 export enum ErrorType {
   TypeError,
   SyntaxError,
+  ReferenceError,
 }
 
 export interface AveError {
@@ -17,7 +18,7 @@ export interface AveError {
 }
 
 function getErrorTypeName(et: ErrorType) {
-  return ['TypeError', 'SyntaxError'][et];
+  return ['TypeError', 'SyntaxError', 'ReferenceError'][et];
 }
 
 // some helpher functions
@@ -85,7 +86,7 @@ export function throwError(err: AveError, source: string) {
   const errType: string = getErrorTypeName(err.type);
   const message = `\n ${chalk.red(errType)}: ${chalk.yellow(
     err.fileName
-  )} at [line ${err.line}: ${err.column}]: ${err.message}`;
+  )} at [line ${err.line}:${err.column}]: ${err.message}`;
 
   console.error(message);
   console.log(makeErrorInfo(source, err.line, err));
@@ -94,10 +95,11 @@ export function throwError(err: AveError, source: string) {
 export function errorFromToken(
   token: Token,
   message: string,
-  fileName: string
+  fileName: string,
+  type?: ErrorType
 ): AveError {
   return {
-    type: ErrorType.SyntaxError,
+    type: type || ErrorType.SyntaxError,
     startPos: token.pos.start,
     endPos: token.pos.end,
     line: token.pos.line,

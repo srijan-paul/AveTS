@@ -9,6 +9,13 @@ import PostfixUnaryParselet from './parselets/postunary';
 import { AveError, errorFromToken, throwError } from '../error/error';
 import { ScannedData } from '../lexer/lexer';
 
+export interface ParsedData {
+  hasError: boolean;
+  ast: AST.Program;
+  sourceCode: string;
+  fileName: string;
+}
+
 /* Parser
   This class defines the base parser.
   The Expression parser at it's core is a simple pratt parser.
@@ -153,7 +160,17 @@ export default class Parser {
     return left;
   }
 
-  parse() {
-    return this.parseExpression(Precedence.ASSIGN);
+  makeParseTree(): ParsedData {
+    return {
+      sourceCode: this.lexedData.source,
+      fileName: this.lexedData.fileName,
+      ast: this.ast,
+      hasError: this.ast.hasError,
+    };
+  }
+
+  parse(): ParsedData {
+    const expr =  this.parseExpression(Precedence.ASSIGN);
+    return this.makeParseTree();
   }
 }

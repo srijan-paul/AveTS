@@ -61,7 +61,7 @@ export class Program extends Node {
 
 export class Body extends Node {
   readonly statements: Node[] = [];
-  readonly declarations: any[] = [];
+  readonly declarations: Set<string> = new Set();
   readonly kind = NodeKind.Body;
 
   toString() {

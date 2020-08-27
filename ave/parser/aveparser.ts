@@ -1,6 +1,6 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
-import Parser from './parser';
+import Parser, { ParsedData } from './parser';
 import * as AST from './ast/ast';
 import Precedence = require('./precedence');
 import { ScannedData } from '../lexer/lexer';
@@ -99,11 +99,19 @@ export default class AveParser extends Parser {
     });
   }
 
-  parse(): AST.Node {
+  parse(): ParsedData {
     while (!this.ast.hasError && !this.match(TokenType.EOF)) {
       this.ast.body.statements.push(this.statement());
     }
-    return this.ast;
+
+    const parseData: ParsedData = {
+      sourceCode: this.lexedData.source,
+      fileName: this.lexedData.fileName,
+      ast: this.ast,
+      hasError: this.ast.hasError,
+    };
+
+    return parseData;
   }
 
   statement(): AST.Node {
@@ -114,7 +122,10 @@ export default class AveParser extends Parser {
     if (this.match(TokenType.VAR, TokenType.CONST, TokenType.LET)) {
       return this.varDeclaration(this.prev());
     } else {
-      return this.parseExpression(Precedence.NONE);
+      // expression statement
+      const expr = this.parseExpression(Precedence.NONE);
+      this.consume(TokenType.SEMI_COLON);
+      return expr;
     }
   }
 
