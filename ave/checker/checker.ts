@@ -1,3 +1,4 @@
+import { type } from 'os';
 import { deflate } from 'zlib';
 import {
   AveError,
@@ -6,6 +7,7 @@ import {
   throwError,
 } from '../error/error';
 import Token from '../lexer/token';
+import TokenType = require('../lexer/tokentype');
 import * as AST from '../parser/ast/ast';
 import NodeKind = require('../parser/ast/nodekind');
 import { ParsedData } from '../parser/parser';
@@ -28,6 +30,7 @@ export default class Checker {
     this.parseData = parseData;
     this.currentNode = parseData.ast;
     this.env = this.rootEnv;
+    // TODO add all function declarations to environment
   }
 
   private error(message: string, token: Token, errType?: ErrorType) {
@@ -53,26 +56,8 @@ export default class Checker {
     return DeclarationKind.BlockScope;
   }
 
-  private getType(node: AST.Node): Type.Type {
-    if (node.kind == NodeKind.Identifier) {
-      const name = (<AST.Identifier>node).name;
-      const data = this.env.find(name);
-      if (data) return data.dataType;
-    }
-
-    return Type.typeOf(node);
-  }
-
   check() {
     this.checkBody(this.ast.body);
-  }
-
-  private checkExpression(node: AST.Node): boolean {
-    switch (node.kind) {
-      case NodeKind.AssignmentExpr:
-        return this.checkAssign(<AST.AssignExpr>node);
-    }
-    return true;
   }
 
   private checkBody(body: AST.Body) {
@@ -87,7 +72,7 @@ export default class Checker {
         this.checkDeclaration(<AST.VarDeclaration>stmt);
         break;
       default:
-        this.checkExpression(stmt);
+        // this.checkExpression(stmt);
         break;
     }
   }
@@ -102,37 +87,56 @@ export default class Checker {
   }
 
   private checkDeclarator(node: AST.VarDeclarator, kind: DeclarationKind) {
+    let type = Type.fromString(node.typeTag);
+    let currentType = type;
+
+    if (node.value) currentType = this.typeOf(node.value);
+
     const declaration: SymbolData = {
       name: node.name,
       declType: kind,
-      dataType: Type.fromString(node.typeTag),
-      currentType: Type.t_any,
+      dataType: type,
+      currentType: currentType,
     };
 
     this.env.define(node.name, declaration);
   }
 
-  private checkAssign(assignNode: AST.AssignExpr) {
-    // if (!Types.isAssignable(assi))
-    const lhs = assignNode.left;
-    const rhs = assignNode.right;
-
-    if (!this.isValidAssignTarget(lhs)) return false;
-    if (!this.checkExpression(rhs)) return false;
-
-    const lType = this.getType(lhs);
-    const rType = this.getType(rhs);
-
-
-    if (!Type.isValidAssignment(lType, rType)) {
-      this.error(
-        `Cannot assign type '${rType.tag}' to type '${lType.tag}'`,
-        <Token>lhs.token,
-        ErrorType.TypeError
-      );
-      return false;
+  private typeOf(node: AST.Node): Type.Type {
+    switch (node.kind) {
+      case NodeKind.Literal:
+        return this.literalType(node.token as Token);
+      case NodeKind.BinaryExpr:
+        return this.binaryType(<AST.BinaryExpr>node);
     }
-    return true;
+    return Type.t_error;
+  }
+
+  private literalType(token: Token): Type.Type {
+    switch (token.type) {
+      case TokenType.LITERAL_NUM:
+      case TokenType.LITERAL_HEX:
+      case TokenType.LITERAL_BINARY:
+        return Type.t_number;
+      case TokenType.LITERAL_STR:
+        return Type.t_string;
+      case TokenType.TRUE:
+      case TokenType.FALSE:
+        return Type.t_bool;
+      default:
+        return Type.t_any;
+    }
+  }
+
+  private binaryType(node: AST.BinaryExpr): Type.Type {
+    const left = node.left;
+    const right = node.right;
+    const operator = node.op.type;
+
+    const ltype = this.typeOf(left);
+    const rtype = this.typeOf(right);
+
+    return Type.binaryOp(ltype, operator, rtype);
   }
 
   private isValidAssignTarget(node: AST.Node): boolean {

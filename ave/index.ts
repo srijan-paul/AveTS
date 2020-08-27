@@ -7,9 +7,7 @@ import Checker from './checker/checker';
 const code: string = 
 
 `let foo: num = 4;
-foo = "abcde";
-let bar: str = "jssucks"
-bar = 12.5`;
+foo = 1 + 2`;
 
 const lexer = new Lexer('testfile.ave', code);
 const lexedata = lexer.lex();
@@ -22,3 +20,4 @@ checker.check();
 
 console.log(parsedata.ast.toString());
 // console.log(util.inspect(ast, true, 100))
+
