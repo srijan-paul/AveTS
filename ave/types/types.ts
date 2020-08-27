@@ -6,6 +6,15 @@ import NodeKind = require('../parser/ast/nodekind');
 export interface Type {
   tag: string;
   superType: Type | null;
+  toString(): string;
+}
+
+export const enum TypeName {
+  string = 'str',
+  number = 'num',
+  any = 'any',
+  object = 'object',
+  bool = 'bool',
 }
 
 export interface Rule {
@@ -13,28 +22,43 @@ export interface Rule {
 }
 
 export const t_any: Type = {
-  tag: 'any',
+  tag: TypeName.any,
   superType: null,
+  toString() {
+    return TypeName.any;
+  },
 };
 
 export const t_Object: Type = {
-  tag: 'object',
+  tag: TypeName.object,
   superType: null,
+  toString() {
+    return TypeName.object;
+  },
 };
 
 export const t_string: Type = {
-  tag: 'string',
+  tag: TypeName.string,
   superType: t_any,
+  toString() {
+    return TypeName.string;
+  },
 };
 
 export const t_number: Type = {
-  tag: 'number',
+  tag: TypeName.number,
   superType: t_any,
+  toString() {
+    return TypeName.number;
+  },
 };
 
 export const t_bool: Type = {
-  tag: 'bool',
+  tag: TypeName.bool,
   superType: t_any,
+  toString() {
+    return TypeName.bool;
+  },
 };
 
 export function typeOf(node: AST.Node): Type {
@@ -42,7 +66,6 @@ export function typeOf(node: AST.Node): Type {
     case NodeKind.AssignmentExpr:
       // assignment returns type of it's right operand
       return typeOf((<AST.AssignExpr>node).right);
-      break;
 
     case NodeKind.Literal:
       return literalType((<AST.Literal>node).token as Token);
@@ -69,4 +92,21 @@ function literalType(token: Token): Type {
 
 export function isValidAssignment(ta: Type, tb: Type) {
   return ta == t_any || ta == tb;
+}
+
+export function fromString(str: string): Type {
+  switch (str) {
+    case TypeName.string:
+      return t_string;
+    case TypeName.any:
+      return t_any;
+    case TypeName.number:
+      return t_number;
+    case TypeName.bool:
+      return t_bool;
+    case TypeName.object:
+      return t_Object;
+  }
+
+  return t_any;
 }

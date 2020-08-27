@@ -4,7 +4,7 @@ import Parser, { ParsedData } from './parser';
 import * as AST from './ast/ast';
 import Precedence = require('./precedence');
 import { ScannedData } from '../lexer/lexer';
-import * as Type from '../types/types'
+import * as Type from '../types/types';
 import AssignmentParser from './parselets/assign';
 
 export default class AveParser extends Parser {
@@ -17,6 +17,14 @@ export default class AveParser extends Parser {
         return new AST.Literal(token, token.value as number);
       }
     );
+
+    this.prefix(
+      TokenType.LITERAL_STR,
+      Precedence.NONE,
+      (parser:Parser, token: Token) => {
+        return new AST.Literal(token, token.value as string);
+      }
+    )
 
     this.prefix(
       TokenType.NAME,
@@ -100,6 +108,13 @@ export default class AveParser extends Parser {
     });
   }
 
+  isValidType(token: Token) {
+    if (token.type >= TokenType.STRING || token.type <= TokenType.ANY)
+      return true;
+    if (token.type == TokenType.NAME) return true;
+    return false;
+  }
+
   parse(): ParsedData {
     while (!this.ast.hasError && !this.match(TokenType.EOF)) {
       this.ast.body.statements.push(this.statement());
@@ -151,15 +166,19 @@ export default class AveParser extends Parser {
   varDeclarator(): AST.VarDeclarator {
     const varName = this.expect(TokenType.NAME, 'Expected variable name.');
     let value = null;
-    let type = Type.t_any
+    let type = Type.t_any.tag;
 
-    if (this.match(TokenType.COLON)) {
+    if (this.match(TokenType.COLON) && !this.check(TokenType.EQ)) {
+      const typeToken = this.next();
       
+      if (!this.isValidType(typeToken))
+        this.error(`Expected data type near ${typeToken.raw}.`, typeToken);
+      type = typeToken.raw;
     }
 
     if (this.match(TokenType.EQ)) {
       value = this.parseExpression(Precedence.ASSIGN);
     }
-    return new AST.VarDeclarator(varName, value);
+    return new AST.VarDeclarator(varName, value, type);
   }
 }

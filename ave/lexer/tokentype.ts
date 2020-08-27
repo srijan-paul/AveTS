@@ -94,6 +94,7 @@ enum TokenType {
   NUMBER,
   BOOL,
   OBJECT,
+  ANY,
 
   // literals
   LITERAL_NUM,

@@ -6,12 +6,10 @@ import Checker from './checker/checker';
 
 const code: string = 
 
-`const foo = 4
-var bar = 5
-let baz = 9
-bar = baz
-baz = foo = bar
-ad = 2`;
+`let foo: num = 4;
+foo = "abcde";
+let bar: str = "jssucks"
+bar = 12.5`;
 
 const lexer = new Lexer('testfile.ave', code);
 const lexedata = lexer.lex();

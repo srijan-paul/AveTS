@@ -1,3 +1,4 @@
+import { TypeName } from '../types/types';
 import TokenType = require('./tokentype');
 
 // prettier-ignore
@@ -34,10 +35,11 @@ const keywords: Map<string, TokenType> = new Map([
   ['set'      , TokenType.SET],
   ['get'      , TokenType.GET],
   ['new'      , TokenType.NEW],
-  ['str'      , TokenType.STRING],
-  ['num'      , TokenType.NUMBER],
-  ['bool'     , TokenType.BOOL],
-  ['object'   , TokenType.OBJECT],
+  [TypeName.string      , TokenType.STRING],
+  [TypeName.number      , TokenType.NUMBER],
+  [TypeName.bool        , TokenType.BOOL],
+  [TypeName.any         , TokenType.ANY],
+  [TypeName.object      , TokenType.OBJECT],
 ]);
 
 export default keywords;

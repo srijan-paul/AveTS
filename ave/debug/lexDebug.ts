@@ -150,6 +150,7 @@ export function tokenName(t: TokenType): string {
     case TokenType.FALSE:          return 'FALSE';
     case TokenType.NIL:            return 'NIL';
     case TokenType.NAME:           return 'NAME';
+    case TokenType.ANY:            return 'ANY';
 
     default:
       return 'UNKNOWN';

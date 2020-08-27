@@ -11,7 +11,7 @@ import NodeKind = require('../parser/ast/nodekind');
 import { ParsedData } from '../parser/parser';
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
-import * as Types from '../types/types';
+import * as Type from '../types/types';
 
 export default class Checker {
   private readonly ast: AST.Program;
@@ -53,6 +53,16 @@ export default class Checker {
     return DeclarationKind.BlockScope;
   }
 
+  private getType(node: AST.Node): Type.Type {
+    if (node.kind == NodeKind.Identifier) {
+      const name = (<AST.Identifier>node).name;
+      const data = this.env.find(name);
+      if (data) return data.dataType;
+    }
+
+    return Type.typeOf(node);
+  }
+
   check() {
     this.checkBody(this.ast.body);
   }
@@ -62,7 +72,7 @@ export default class Checker {
       case NodeKind.AssignmentExpr:
         return this.checkAssign(<AST.AssignExpr>node);
     }
-    return false;
+    return true;
   }
 
   private checkBody(body: AST.Body) {
@@ -95,8 +105,8 @@ export default class Checker {
     const declaration: SymbolData = {
       name: node.name,
       declType: kind,
-      dataType: Types.t_any,
-      currentType: Types.t_any,
+      dataType: Type.fromString(node.typeTag),
+      currentType: Type.t_any,
     };
 
     this.env.define(node.name, declaration);
@@ -109,7 +119,19 @@ export default class Checker {
 
     if (!this.isValidAssignTarget(lhs)) return false;
     if (!this.checkExpression(rhs)) return false;
-    // TODO type checking
+
+    const lType = this.getType(lhs);
+    const rType = this.getType(rhs);
+
+
+    if (!Type.isValidAssignment(lType, rType)) {
+      this.error(
+        `Cannot assign type '${rType.tag}' to type '${lType.tag}'`,
+        <Token>lhs.token,
+        ErrorType.TypeError
+      );
+      return false;
+    }
     return true;
   }
 
