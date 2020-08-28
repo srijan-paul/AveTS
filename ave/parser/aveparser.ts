@@ -21,7 +21,7 @@ export default class AveParser extends Parser {
     this.prefix(
       TokenType.LITERAL_STR,
       Precedence.NONE,
-      (parser:Parser, token: Token) => {
+      (parser: Parser, token: Token) => {
         return new AST.Literal(token, token.value as string);
       }
     );
@@ -29,7 +29,7 @@ export default class AveParser extends Parser {
     this.prefix(
       TokenType.TRUE,
       Precedence.NONE,
-      (parser:Parser, token: Token) => {
+      (parser: Parser, token: Token) => {
         return new AST.Literal(token, true);
       }
     );
@@ -37,10 +37,10 @@ export default class AveParser extends Parser {
     this.prefix(
       TokenType.FALSE,
       Precedence.NONE,
-      (parser:Parser, token: Token) => {
+      (parser: Parser, token: Token) => {
         return new AST.Literal(token, false);
       }
-    )
+    );
 
     this.prefix(
       TokenType.NAME,
@@ -153,12 +153,21 @@ export default class AveParser extends Parser {
   declaration(): AST.Node {
     if (this.match(TokenType.VAR, TokenType.CONST, TokenType.LET)) {
       return this.varDeclaration(this.prev());
+    } else if (this.check(TokenType.NAME) && this.checkNext(TokenType.COLON)) {
+      return this.sugarDeclaration();
     } else {
       // expression statement
       const expr = this.parseExpression(Precedence.NONE);
       this.consume(TokenType.SEMI_COLON);
       return expr;
     }
+  }
+
+  sugarDeclaration(): AST.VarDeclaration {
+    // intialize the declaration with 'colon' as the token
+    const varDecl = new AST.VarDeclaration(this.peek());
+    varDecl.declarators.push(this.varDeclarator())
+    return varDecl;
   }
 
   varDeclaration(tok: Token): AST.VarDeclaration {
@@ -182,19 +191,21 @@ export default class AveParser extends Parser {
   varDeclarator(): AST.VarDeclarator {
     const varName = this.expect(TokenType.NAME, 'Expected variable name.');
     let value = null;
-    let type = Type.t_any.tag;
+    let type = Type.t_any;
 
-    if (this.match(TokenType.COLON) && !this.check(TokenType.EQ)) {
-      const typeToken = this.next();
-      
-      if (!this.isValidType(typeToken))
-        this.error(`Expected data type near ${typeToken.raw}.`, typeToken);
-      type = typeToken.raw;
-    }
+    if (this.match(TokenType.COLON) && !this.check(TokenType.EQ))
+      type = this.parseType();
 
-    if (this.match(TokenType.EQ)) {
+    if (this.match(TokenType.EQ))
       value = this.parseExpression(Precedence.ASSIGN);
-    }
+
     return new AST.VarDeclarator(varName, value, type);
+  }
+
+  parseType(): Type.Type {
+    if (this.isValidType(this.peek())) {
+      return Type.fromToken(this.next());
+    }
+    return Type.t_any;
   }
 }

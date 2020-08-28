@@ -1,7 +1,7 @@
 import Token, { tokenvalue } from '../../lexer/token';
 import NodeKind = require('./nodekind');
 import chalk = require('chalk');
-import { TypeName } from '../../types/types';
+import { Type, TypeName, t_any } from '../../types/types';
 
 interface ASTNode {
   toString(): string;
@@ -168,17 +168,17 @@ export class VarDeclarator extends Node {
   readonly name: string;
   readonly value: Node | null;
   readonly kind = NodeKind.VarDeclarator;
-  readonly typeTag: string = TypeName.any;
+  readonly type: Type = t_any;
 
-  constructor(name: Token, value: Node | null, typeTag: string) {
+  constructor(name: Token, value: Node | null, type: Type) {
     super(name);
     this.name = name.raw;
     this.value = value;
-    this.typeTag = typeTag;
+    this.type = type;
   }
 
   toString() {
-    return `${this.name}: ${this.typeTag} = ${
+    return `${this.name}: ${this.type.tag} = ${
       this.value ? this.value.toString() : ''
     }`;
   }

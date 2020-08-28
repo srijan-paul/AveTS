@@ -6,8 +6,10 @@ import Checker from './checker/checker';
 
 const code: string = 
 
-`const foo: str = false;
-foo = true`;
+`foo: str = "aa"
+foo = foo + "a"
+bar := 1
+bar = bar + 2`;
 
 const lexer = new Lexer('testfile.ave', code);
 const lexedata = lexer.lex();

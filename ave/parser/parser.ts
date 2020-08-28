@@ -73,8 +73,16 @@ export default class Parser {
     return this.tokenstream[this.current];
   }
 
+  peekNext(): Token | undefined {
+    return this.tokenstream[this.current + 1];
+  }
+
   check(t: TokenType): boolean {
     return !this.eof() && this.peek().type == t;
+  }
+
+  checkNext(t: TokenType): boolean {
+    return !this.eof() && this.peekNext()?.type == t;
   }
 
   match(...types: TokenType[]): boolean {
@@ -170,7 +178,7 @@ export default class Parser {
   }
 
   parse(): ParsedData {
-    const expr =  this.parseExpression(Precedence.ASSIGN);
+    const expr = this.parseExpression(Precedence.ASSIGN);
     return this.makeParseTree();
   }
 }

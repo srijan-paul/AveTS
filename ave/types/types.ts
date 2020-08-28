@@ -9,6 +9,7 @@ export interface Type {
   superType: Type | null;
   toString(): string;
   id: number;
+  unresolved?: boolean;
 }
 
 export const enum TypeName {
@@ -19,6 +20,7 @@ export const enum TypeName {
   bool = 'bool',
 }
 
+
 export const t_any: Type = {
   tag: TypeName.any,
   superType: null,
@@ -28,7 +30,7 @@ export const t_any: Type = {
   },
 };
 
-export const t_Object: Type = {
+export const t_object: Type = {
   tag: TypeName.object,
   superType: null,
   id: 1,
@@ -73,6 +75,27 @@ export const t_error: Type = {
   },
 };
 
+
+// create a new unresolved type
+// used as a place holder type 
+// in the parser, for when the 
+// user defined type isn't known
+// this is later resolved in the
+// Checker.
+
+export function unknown(tag: string): Type {
+  return {
+    tag, 
+    superType: null,
+    // the ID doesn't really matter here
+    id: Math.random() * Date.now(),
+    unresolved: true,
+    toString() {
+      return "<%unknown%>"
+    }
+  }
+}
+
 export function isValidAssignment(ta: Type, tb: Type) {
   return ta == t_any || ta == tb;
 }
@@ -88,10 +111,27 @@ export function fromString(str: string): Type {
     case TypeName.bool:
       return t_bool;
     case TypeName.object:
-      return t_Object;
+      return t_object;
   }
 
-  return t_any;
+  return unknown(str);
+}
+
+export function fromToken(tok: Token): Type {
+  switch(tok.type) {
+    case TokenType.STRING:
+      return t_string;
+    case TokenType.BOOL:
+      return t_bool;
+    case TokenType.NUMBER:
+      return t_number;
+    case TokenType.OBJECT:
+      return t_object;
+    case TokenType.ANY:
+      return t_any;
+  }
+
+  return unknown(tok.raw);
 }
 
 // a rule specifies the data type of the result
@@ -108,15 +148,18 @@ const mUnaryRules: Map<TokenType, UnaryRule> = new Map();
 // to the addition result type. the table is
 // queried by the concatenation of the type tags
 
-const addTable: Array<Array<Type>> = new Array(t_number.id + 1);
+const numberID = t_number.id as number;
+const strID = t_string.id as number;
+
+const addTable: Array<Array<Type>> = new Array(numberID + 1);
 
 for (let i = 0; i < addTable.length; i++)
-  addTable[i] = new Array(t_number.id + 1);
+  addTable[i] = new Array(numberID + 1);
 
-addTable[t_number.id][t_number.id] = t_number;
-addTable[t_string.id][t_number.id] = t_string;
-addTable[t_number.id][t_string.id] = t_string;
-addTable[t_string.id][t_string.id] = t_string;
+addTable[numberID][numberID] = t_number;
+addTable[strID][numberID] = t_string;
+addTable[numberID][strID] = t_string;
+addTable[strID][strID] = t_string;
 
 mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {
   if (addTable[lt.id] && addTable[lt.id][rt.id]) return addTable[lt.id][rt.id];

@@ -87,7 +87,7 @@ export default class Checker {
   }
 
   private checkDeclarator(node: AST.VarDeclarator, kind: DeclarationKind) {
-    let type = Type.fromString(node.typeTag);
+    let type = node.type;
     let currentType = type;
 
     if (node.value) currentType = this.typeOf(node.value);
