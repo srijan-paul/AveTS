@@ -112,7 +112,7 @@ export default class Checker {
       );
     }
 
-    if (!Type.isValidAssignment(type, currentType)) {
+    if (!Type.isValidAssignment(type, currentType, TokenType.EQ)) {
       this.error(
         `cannot intialize '${node.name}' with type '${currentType.toString()}'`,
         node.token as Token
@@ -194,6 +194,12 @@ export default class Checker {
         : symbolData.dataType;
     }
 
+    this.error(
+      `Cannot find name ${name}.`,
+      id.token as Token,
+      ErrorType.ReferenceError
+    );
+
     return Type.t_error;
   }
 
@@ -230,12 +236,15 @@ export default class Checker {
     // and there is no need to report again.
     if (lType == Type.t_error || rType == Type.t_error) return rType;
 
-    if (!Type.isValidAssignment(lType, rType)) {
-      this.error(
-        `Cannot assign type '${rType.toString()}' to type '${lType.toString()}'.`,
-        node.op,
-        ErrorType.TypeError
-      );
+    if (!Type.isValidAssignment(lType, rType, node.op.type)) {
+      let message =
+        node.op.type == TokenType.EQ
+          ? `Cannot assign type '${rType.toString()}' to type '${lType.toString()}'.`
+          : `Cannot use operator '${
+              node.op.raw
+            }' on operand types '${rType.toString()}' and '${lType.toString()}'`;
+      
+            this.error(message, node.op, ErrorType.TypeError);
     }
 
     return rType;

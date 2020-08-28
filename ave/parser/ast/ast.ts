@@ -3,6 +3,7 @@ import NodeKind = require('./nodekind');
 import chalk = require('chalk');
 import { Type, TypeName, t_any } from '../../types/types';
 import { DeclarationKind } from '../symbol_table/symtable';
+import TokenType = require('../../lexer/tokentype');
 
 interface ASTNode {
   toString(): string;
@@ -13,7 +14,7 @@ interface ASTNode {
 // used for debug prints
 
 let indentLevel = 0;
-let line = 0;
+const baseColor = chalk.gray;
 
 function indentstr() {
   return chalk.rgb(150, 85, 60)('  '.repeat(indentLevel - 1) + '.|');
@@ -63,7 +64,9 @@ export class AssignExpr extends BinaryExpr {
   readonly kind = NodeKind.AssignmentExpr;
 
   toString() {
-    return 'assign ' + BinaryExpr.prototype.toString.call(this);
+    return `${baseColor('vardecl')} ${BinaryExpr.prototype.toString.call(
+      this
+    )}`;
   }
 }
 
@@ -74,7 +77,7 @@ export class Program extends Node {
   readonly kind = NodeKind.Body;
 
   toString() {
-    return ` program:\n${this.body.toString()}`;
+    return ` ${baseColor('program')}:\n${this.body.toString()}`;
   }
 }
 
@@ -85,7 +88,9 @@ export class Body extends Node {
 
   toString() {
     indent();
-    const str = `${indentstr()}body:\n${indentstr()}${this.statements
+    const str = `${indentstr()}${baseColor(
+      'body'
+    )}:\n${indentstr()}${this.statements
       .map(e => e.toString())
       .join('\n' + indentstr())}`;
     dedent();
@@ -149,7 +154,9 @@ export class Literal extends Node {
   }
 
   toString(): string {
-    return '' + (this.token as Token).raw;
+    let color = chalk.yellow;
+    if (this.token?.type == TokenType.LITERAL_STR) color = chalk.green;
+    return '' + color((this.token as Token).raw);
   }
 }
 
@@ -163,7 +170,7 @@ export class Identifier extends Node {
   }
 
   toString(): string {
-    return `id: "${this.name}"`;
+    return `${baseColor('id:')} "${this.name}"`;
   }
 }
 
@@ -180,7 +187,9 @@ export class VarDeclaration extends Node {
   }
 
   toString() {
-    return `vardecl (${this.declarators.map(e => e.toString()).join(', ')})`;
+    return `${baseColor('vardecl')} (${this.declarators
+      .map(e => e.toString())
+      .join(', ')})`;
   }
 }
 

@@ -107,8 +107,25 @@ export function unknown(tag: string): Type {
   };
 }
 
-export function isValidAssignment(ta: Type, tb: Type) {
-  return ta == t_any || ta == tb;
+export function isValidAssignment(ta: Type, tb: Type, type: TokenType): boolean {
+  if (type == TokenType.EQ) {
+    return ta == t_any || ta == tb;
+  }
+
+  // compound assignment operators,
+
+  if (type == TokenType.PLUS_EQ) {
+    switch (ta) {
+      case t_any:
+      case t_string:
+        return true;
+      case t_number:
+        return tb == t_number;
+      default:
+        return false;
+    }
+  }
+  return ta == t_any || (ta == t_number && tb == t_number);
 }
 
 export function fromString(str: string): Type {
@@ -166,8 +183,7 @@ const strID = t_string.id as number;
 
 const addTable: Array<Array<Type>> = new Array(numberID + 1);
 
-for (let i = 0; i < addTable.length; i++) 
-  addTable[i] = new Array(numberID + 1);
+for (let i = 0; i < addTable.length; i++) addTable[i] = new Array(numberID + 1);
 
 addTable[numberID][numberID] = t_number;
 addTable[strID][numberID] = t_string;

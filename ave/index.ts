@@ -5,13 +5,22 @@ import util = require('util');
 import Checker from './checker/checker';
 
 const code: string = 
-`const a = 1
-b: any = 1;
-if a == 1:
-  b := "aa"
-  b = true
-else:
-  b := 2
+`
+a := 1 > 2
+b := 2 > 1
+
+if a:
+  d := "a string value"
+  d += 2
+  
+  if b:
+    c : = true
+    e := d + 1
+    d = "aaaaa"
+  e := 1
+  e += 5
+a = false
+
 `;
 
 const lexer = new Lexer('testfile.ave', code);
