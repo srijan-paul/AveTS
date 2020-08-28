@@ -107,7 +107,11 @@ export function unknown(tag: string): Type {
   };
 }
 
-export function isValidAssignment(ta: Type, tb: Type, type: TokenType): boolean {
+export function isValidAssignment(
+  ta: Type,
+  tb: Type,
+  type: TokenType
+): boolean {
   if (type == TokenType.EQ) {
     return ta == t_any || ta == tb;
   }
@@ -115,15 +119,8 @@ export function isValidAssignment(ta: Type, tb: Type, type: TokenType): boolean 
   // compound assignment operators,
 
   if (type == TokenType.PLUS_EQ) {
-    switch (ta) {
-      case t_any:
-      case t_string:
-        return true;
-      case t_number:
-        return tb == t_number;
-      default:
-        return false;
-    }
+    if (ta == t_number && tb == t_number) return true;
+    return ta == t_string;
   }
   return ta == t_any || (ta == t_number && tb == t_number);
 }
