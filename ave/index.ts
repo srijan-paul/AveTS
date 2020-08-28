@@ -1,15 +1,13 @@
 import Lexer from './lexer/lexer';
 import debug = require('./debug/debug');
 import AveParser from './parser/aveparser';
-import util = require('util')
+import util = require('util');
 import Checker from './checker/checker';
 
 const code: string = 
-
-`foo: str = "aa"
-foo = foo + "a"
-bar := 1
-bar = bar + 2`;
+`foo: str
+foo :bool = 1
+`;
 
 const lexer = new Lexer('testfile.ave', code);
 const lexedata = lexer.lex();
@@ -22,4 +20,3 @@ checker.check();
 
 console.log(parsedata.ast.toString());
 // console.log(util.inspect(ast, true, 100))
-

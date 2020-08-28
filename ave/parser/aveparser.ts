@@ -5,8 +5,9 @@ import * as AST from './ast/ast';
 import Precedence = require('./precedence');
 import { ScannedData } from '../lexer/lexer';
 import * as Type from '../types/types';
-import AssignmentParser from './parselets/assign';
+import { AssignmentParser } from './parselets/assign';
 import { DeclarationKind, getDeclarationKind } from './symbol_table/symtable';
+import { callParser } from './parselets/call';
 
 export default class AveParser extends Parser {
   constructor(lexData: ScannedData) {
@@ -121,8 +122,12 @@ export default class AveParser extends Parser {
       TokenType.PLUS_EQ,
       TokenType.POW_EQ,
     ].forEach(toktype => {
-      this.infix(toktype, Precedence.ASSIGN, true, AssignmentParser());
+      this.infix(toktype, Precedence.ASSIGN, true, AssignmentParser);
     });
+
+    // call expression func(arg1, arg2)
+
+    this.infix(TokenType.L_PAREN, Precedence.CALL, false, callParser);
   }
 
   isValidType(token: Token) {

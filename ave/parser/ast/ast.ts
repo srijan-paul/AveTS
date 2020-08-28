@@ -184,3 +184,18 @@ export class VarDeclarator extends Node {
     }`;
   }
 }
+
+export class CallExpr extends Node {
+  readonly args: Node[] = [];
+  readonly callee: Node;
+  constructor(callee: Node) {
+    super();
+    this.callee = callee;
+  }
+
+  toString() {
+    return `${this.callee.toString()}(${this.args
+      .map(e => e.toString())
+      .join(', ')})`;
+  }
+}

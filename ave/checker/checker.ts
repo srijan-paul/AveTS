@@ -87,6 +87,17 @@ export default class Checker {
     let type = node.type;
     let currentType = type;
 
+    // check if symbol already exists
+
+    if (this.env.has(node.name)) {
+      this.error(
+        `Attempt to redeclare symbol '${node.name}'.`,
+        node.token as Token,
+        ErrorType.TypeError
+      );
+      return;
+    }
+
     // type inference
 
     if (node.value) {
@@ -107,6 +118,7 @@ export default class Checker {
       );
     }
 
+ 
     const declaration: SymbolData = {
       name: node.name,
       declType: kind,
@@ -208,7 +220,7 @@ export default class Checker {
 
     if (!Type.isValidAssignment(lType, rType)) {
       this.error(
-        `cannot assign type '${rType.toString()}' to type '${lType.toString()}'.`,
+        `Cannot assign type '${rType.toString()}' to type '${lType.toString()}'.`,
         node.op,
         ErrorType.TypeError
       );
