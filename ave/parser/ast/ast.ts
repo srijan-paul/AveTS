@@ -81,7 +81,7 @@ export class Program extends Node {
 export class Body extends Node {
   readonly statements: Node[] = [];
   readonly declarations: Set<string> = new Set();
-  readonly kind = NodeKind.Body;
+  kind = NodeKind.Body;
 
   toString() {
     indent();
@@ -229,6 +229,7 @@ export class IfStmt extends Body {
     this.thenBody = then;
     this.elseBody = _else || null;
     this.condition = cond;
+    this.kind = NodeKind.IfStmt;
   }
 
   toString() {

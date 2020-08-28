@@ -179,6 +179,7 @@ export default class AveParser extends Parser {
       DeclarationKind.BlockScope
     );
     varDecl.declarators.push(this.varDeclarator());
+    this.consume(TokenType.SEMI_COLON);
     return varDecl;
   }
 
@@ -192,6 +193,7 @@ export default class AveParser extends Parser {
         this.consume(TokenType.COMMA);
       }
       this.expect(TokenType.R_PAREN, "Expected closing ')' after declaration.");
+      this.consume(TokenType.SEMI_COLON);
       return varDecl;
     }
 

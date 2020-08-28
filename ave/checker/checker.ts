@@ -57,15 +57,20 @@ export default class Checker {
   }
 
   private checkBody(body: AST.Body) {
+    this.pushScope();
     for (let stmt of body.statements) {
       this.checkStatement(stmt);
     }
+    this.popScope();
   }
 
   private checkStatement(stmt: AST.Node) {
     switch (stmt.kind) {
       case NodeKind.VarDeclaration:
         this.checkDeclaration(<AST.VarDeclaration>stmt);
+        break;
+      case NodeKind.IfStmt:
+        this.checkIfStmt(<AST.IfStmt>stmt);
         break;
       default:
         this.checkExpression(stmt);
@@ -114,7 +119,6 @@ export default class Checker {
       );
     }
 
- 
     const declaration: SymbolData = {
       name: node.name,
       declType: kind,
@@ -123,6 +127,15 @@ export default class Checker {
     };
 
     this.env.define(node.name, declaration);
+  }
+
+  private checkIfStmt(stmt: AST.IfStmt) {
+    const _then = stmt.thenBody;
+    this.checkBody(_then);
+
+    if (stmt.elseBody) {
+      this.checkBody(stmt.elseBody);
+    }
   }
 
   // for checking expression statements
@@ -171,12 +184,13 @@ export default class Checker {
   private identifierType(id: AST.Identifier): Type.Type {
     const name: string = id.name;
     const symbolData = this.env.find(name);
+
     if (symbolData) {
       // if the data type is a free type,
       // return the last known type of the
       // variable.
       return symbolData.dataType == Type.t_any
-        ? symbolData.currentType
+        ? Type.t_any
         : symbolData.dataType;
     }
 

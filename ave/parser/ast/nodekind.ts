@@ -12,6 +12,8 @@ const enum NodeKind {
   PrefixUnaryExpr,
   AssignmentExpr,
   GroupingExpr,
+  IfStmt,
+  CallStmt
 }
 
 export = NodeKind

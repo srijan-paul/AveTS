@@ -6,8 +6,10 @@ import Checker from './checker/checker';
 
 const code: string = 
 `const a = 1
+b: any = 1;
 if a == 1:
-  b := 1
+  b := "aa"
+  b = true
 else:
   b := 2
 `;
