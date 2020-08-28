@@ -44,16 +44,12 @@ export default class Checker {
     throwError(err, this.parseData.sourceCode);
   }
 
-  private getDeclKind(kw: string): DeclarationKind {
-    switch (kw) {
-      case 'var':
-        return DeclarationKind.FunctionScope;
-      case 'const':
-        return DeclarationKind.Constant;
-      case 'let':
-        return DeclarationKind.BlockScope;
-    }
-    return DeclarationKind.BlockScope;
+  private pushScope() {
+    this.env = this.env.extend();
+  }
+
+  private popScope() {
+    this.env = this.env.pop();
   }
 
   check() {
@@ -140,6 +136,8 @@ export default class Checker {
     this.typeOf(expr);
   }
 
+  // returns the type of an expression, also catches type errors
+  // in the process of resolving the type.
   private typeOf(node: AST.Node): Type.Type {
     switch (node.kind) {
       case NodeKind.Literal:

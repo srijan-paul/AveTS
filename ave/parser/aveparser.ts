@@ -161,6 +161,8 @@ export default class AveParser extends Parser {
       return this.varDeclaration(this.prev());
     } else if (this.check(TokenType.NAME) && this.checkNext(TokenType.COLON)) {
       return this.sugarDeclaration();
+    } else if (this.check(TokenType.IF)) {
+      return this.ifStmt();
     } else {
       // expression statement
       const expr = this.parseExpression(Precedence.NONE);
@@ -217,5 +219,31 @@ export default class AveParser extends Parser {
       return Type.fromToken(this.next());
     }
     return Type.t_any;
+  }
+
+  ifStmt(): AST.IfStmt {
+    const kw = this.next();
+    const cond = this.parseExpression(Precedence.NONE);
+    const _then = new AST.Body();
+    let _else;
+
+    this.consume(TokenType.COLON);
+    this.expect(TokenType.INDENT, "Expected indent before 'if' body.");
+
+    while (!this.eof() && !this.match(TokenType.DEDENT))
+      _then.statements.push(this.statement());
+
+    if (this.check(TokenType.ELIF)) {
+      _else = this.ifStmt();
+    } else if (this.match(TokenType.ELSE)) {
+      _else = new AST.Body();
+      this.consume(TokenType.COLON);
+      this.expect(TokenType.INDENT, "Expected indent before 'else' body.");
+
+      while (!this.eof() && !this.match(TokenType.DEDENT))
+        _else.statements.push(this.statement());
+    }
+
+    return new AST.IfStmt(kw, cond, _then, _else);
   }
 }

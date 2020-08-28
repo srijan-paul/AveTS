@@ -5,8 +5,11 @@ import util = require('util');
 import Checker from './checker/checker';
 
 const code: string = 
-`foo: str
-foo :bool = 1
+`const a = 1
+if a == 1:
+  b := 1
+else:
+  b := 2
 `;
 
 const lexer = new Lexer('testfile.ave', code);
@@ -19,4 +22,4 @@ const checker = new Checker(parsedata);
 checker.check();
 
 console.log(parsedata.ast.toString());
-// console.log(util.inspect(ast, true, 100))
+// console.log(util.inspect(parsedata.ast, true, 100))

@@ -10,6 +10,23 @@ interface ASTNode {
   kind: NodeKind;
 }
 
+// used for debug prints
+
+let indentLevel = 0;
+let line = 0;
+
+function indentstr() {
+  return chalk.rgb(150, 85, 60)('  '.repeat(indentLevel - 1) + '.|');
+}
+
+function indent() {
+  indentLevel++;
+}
+
+function dedent() {
+  indentLevel--;
+}
+
 export class Node implements ASTNode {
   readonly token?: Token;
   readonly kind: NodeKind = NodeKind.Node;
@@ -57,7 +74,7 @@ export class Program extends Node {
   readonly kind = NodeKind.Body;
 
   toString() {
-    return ` program:\n ${this.body.toString()}`;
+    return ` program:\n${this.body.toString()}`;
   }
 }
 
@@ -67,10 +84,12 @@ export class Body extends Node {
   readonly kind = NodeKind.Body;
 
   toString() {
-    const coloredIndent = chalk.bold.rgb(255, 71, 87)(' --> ');
-    return `body:\n${coloredIndent}${this.statements
+    indent();
+    const str = `${indentstr()}body:\n${indentstr()}${this.statements
       .map(e => e.toString())
-      .join('\n' + coloredIndent)}`;
+      .join('\n' + indentstr())}`;
+    dedent();
+    return str;
   }
 }
 
@@ -130,7 +149,7 @@ export class Literal extends Node {
   }
 
   toString(): string {
-    return '' + this.token?.raw;
+    return '' + (this.token as Token).raw;
   }
 }
 
@@ -194,8 +213,34 @@ export class CallExpr extends Node {
   }
 
   toString() {
-    return `${this.callee.toString()}(${this.args
+    return `<callexpr> ${this.callee.toString()}(${this.args
       .map(e => e.toString())
       .join(', ')})`;
+  }
+}
+
+export class IfStmt extends Body {
+  readonly condition: Node;
+  readonly thenBody: Body;
+  readonly elseBody: Body | null;
+
+  constructor(kw: Token, cond: Node, then: Body, _else?: Body) {
+    super(kw);
+    this.thenBody = then;
+    this.elseBody = _else || null;
+    this.condition = cond;
+  }
+
+  toString() {
+    let str = `if ${this.condition.toString()}:\n`;
+    indent();
+    str += this.thenBody.toString();
+    dedent();
+    if (this.elseBody) {
+      indent();
+      str += `\n${indentstr()}else: ${this.elseBody.toString()}`;
+      dedent();
+    }
+    return str;
   }
 }
