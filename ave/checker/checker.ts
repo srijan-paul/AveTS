@@ -132,7 +132,7 @@ export default class Checker {
   private checkIfStmt(stmt: AST.IfStmt) {
     const _then = stmt.thenBody;
     this.checkBody(_then);
-
+    this.checkExpression(stmt.condition);
     if (stmt.elseBody) {
       this.checkBody(stmt.elseBody);
     }

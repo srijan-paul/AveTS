@@ -20,7 +20,6 @@ export const enum TypeName {
   bool = 'bool',
 }
 
-
 export const t_any: Type = {
   tag: TypeName.any,
   superType: null,
@@ -75,38 +74,37 @@ export const t_error: Type = {
   },
 };
 
-// used as a place holder for types that need 
+// used as a place holder for types that need
 // to be infererenced from the declaration
 export const t_infer: Type = {
   tag: '<%infer%>',
   superType: null,
   id: 6,
   toString() {
-    return '<%infer%>'
-  }
-}
-
+    return '<%infer%>';
+  },
+};
 
 // create a new unresolved type to
-// be used as a place holder type 
-// in the parser for when the 
+// be used as a place holder type
+// in the parser for when the
 // user defined type isn't known.
 // This is later resolved in the
-// Checker. If a subsitute type 
+// Checker. If a subsitute type
 // is not found, a NameError is
 // thrown.
 
 export function unknown(tag: string): Type {
   return {
-    tag, 
+    tag,
     superType: null,
     // the ID doesn't really matter here
     id: Math.random() * Date.now(),
     unresolved: true,
     toString() {
-      return "<%unknown%>"
-    }
-  }
+      return '<%unknown%>';
+    },
+  };
 }
 
 export function isValidAssignment(ta: Type, tb: Type) {
@@ -131,7 +129,7 @@ export function fromString(str: string): Type {
 }
 
 export function fromToken(tok: Token): Type {
-  switch(tok.type) {
+  switch (tok.type) {
     case TokenType.STRING:
       return t_string;
     case TokenType.BOOL:
@@ -159,14 +157,16 @@ const mUnaryRules: Map<TokenType, UnaryRule> = new Map();
 
 // addition table maps two operand types
 // to the addition result type. the table is
-// queried by the concatenation of the type tags
+// basically a 2D array where addTable[i][j]
+// gives the return type of an addition operation
+// whose operands have the type IDs i and j
 
 const numberID = t_number.id as number;
 const strID = t_string.id as number;
 
 const addTable: Array<Array<Type>> = new Array(numberID + 1);
 
-for (let i = 0; i < addTable.length; i++)
+for (let i = 0; i < addTable.length; i++) 
   addTable[i] = new Array(numberID + 1);
 
 addTable[numberID][numberID] = t_number;
@@ -179,8 +179,37 @@ mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {
   return t_error;
 });
 
+// equality operators == and !=
+
+mBinaryRules.set(TokenType.EQ_EQ, (lt: Type, rt: Type) => {
+  if (lt != t_error && rt != t_error) return t_bool;
+  return t_error;
+});
+
+mBinaryRules.set(TokenType.BANG_EQ, (lt: Type, rt: Type) => {
+  if (lt != t_error && rt != t_error) return t_bool;
+  return t_error;
+});
+
+// comparison operators > < >= <= have similar rules
+// (both operands must be numbers). so I'll
+// use this small helper function to generate
+// those rules
+
+function makeComparisonRule(t: TokenType) {
+  mBinaryRules.set(t, (lt: Type, rt: Type) => {
+    if (lt == t_number && rt == t_number) return t_bool;
+    return t_error;
+  });
+}
+
+makeComparisonRule(TokenType.LESS);
+makeComparisonRule(TokenType.LESS_EQ);
+makeComparisonRule(TokenType.GREATER);
+makeComparisonRule(TokenType.GREATER_EQ);
+
 // except '+', all other binary operators
-// always take two numbers and return the same
+// always take two numbers and return a number
 // so I'll use this small helper function to
 // generate the functions for -, * , / and %
 
@@ -191,11 +220,14 @@ function makeBinaryRule(toktype: TokenType) {
   });
 }
 
-makeBinaryRule(TokenType.MINUS);
-makeBinaryRule(TokenType.STAR);
-makeBinaryRule(TokenType.DIV);
-makeBinaryRule(TokenType.FLOOR_DIV);
-makeBinaryRule(TokenType.POW);
+makeBinaryRule(TokenType.MINUS); // a - b
+makeBinaryRule(TokenType.STAR); // a * b
+makeBinaryRule(TokenType.DIV); // a / b
+makeBinaryRule(TokenType.FLOOR_DIV); // a // b (compiles to Math.floor(a/b))
+makeBinaryRule(TokenType.POW); // a**b
+makeBinaryRule(TokenType.AMP); // a & b
+makeBinaryRule(TokenType.PIPE); // a | b
+makeBinaryRule(TokenType.XOR); // a ^ b
 
 export function binaryOp(l: Type, op: TokenType, r: Type): Type {
   if (mBinaryRules.has(op)) return (<BinaryRule>mBinaryRules.get(op))(l, r);
