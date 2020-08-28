@@ -6,6 +6,7 @@ import Precedence = require('./precedence');
 import { ScannedData } from '../lexer/lexer';
 import * as Type from '../types/types';
 import AssignmentParser from './parselets/assign';
+import { DeclarationKind, getDeclarationKind } from './symbol_table/symtable';
 
 export default class AveParser extends Parser {
   constructor(lexData: ScannedData) {
@@ -165,13 +166,17 @@ export default class AveParser extends Parser {
 
   sugarDeclaration(): AST.VarDeclaration {
     // intialize the declaration with 'colon' as the token
-    const varDecl = new AST.VarDeclaration(this.peek());
-    varDecl.declarators.push(this.varDeclarator())
+    // and block scoped symbol
+    const varDecl = new AST.VarDeclaration(
+      this.peek(),
+      DeclarationKind.BlockScope
+    );
+    varDecl.declarators.push(this.varDeclarator());
     return varDecl;
   }
 
   varDeclaration(tok: Token): AST.VarDeclaration {
-    const varDecl = new AST.VarDeclaration(tok);
+    const varDecl = new AST.VarDeclaration(tok, getDeclarationKind(tok.raw));
 
     if (this.match(TokenType.L_PAREN)) {
       // TODO: fix, not working
@@ -191,7 +196,7 @@ export default class AveParser extends Parser {
   varDeclarator(): AST.VarDeclarator {
     const varName = this.expect(TokenType.NAME, 'Expected variable name.');
     let value = null;
-    let type = Type.t_any;
+    let type = Type.t_infer;
 
     if (this.match(TokenType.COLON) && !this.check(TokenType.EQ))
       type = this.parseType();

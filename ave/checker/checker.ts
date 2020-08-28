@@ -79,10 +79,7 @@ export default class Checker {
 
   private checkDeclaration(declNode: AST.VarDeclaration) {
     for (let declartor of declNode.declarators) {
-      this.checkDeclarator(
-        declartor,
-        this.getDeclKind(declNode.declarationType)
-      );
+      this.checkDeclarator(declartor, declNode.declarationType);
     }
   }
 
@@ -90,7 +87,18 @@ export default class Checker {
     let type = node.type;
     let currentType = type;
 
-    if (node.value) currentType = this.typeOf(node.value);
+    // type inference
+
+    if (node.value) {
+      currentType = this.typeOf(node.value);
+      if (type == Type.t_infer) type = currentType;
+    } else if (type == Type.t_infer) {
+      this.error(
+        `'${node.name}' must either be initliazed or type annotated`,
+        node.token as Token,
+        ErrorType.TypeError
+      );
+    }
 
     if (!Type.isValidAssignment(type, currentType)) {
       this.error(

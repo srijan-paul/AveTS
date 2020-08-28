@@ -6,6 +6,19 @@ export const enum DeclarationKind {
   FunctionScope,
 }
 
+export function getDeclarationKind(kw: string): DeclarationKind {
+  switch(kw) {
+    case "let":
+      return DeclarationKind.BlockScope;
+    case "var":
+      return DeclarationKind.FunctionScope;
+    case "const":
+      return DeclarationKind.Constant;
+  }
+  // deafault to block scoped
+  return DeclarationKind.BlockScope;
+}
+
 export interface SymbolData {
   name: string;
   declType: DeclarationKind;

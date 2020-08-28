@@ -75,13 +75,26 @@ export const t_error: Type = {
   },
 };
 
+// used as a place holder for types that need 
+// to be infererenced from the declaration
+export const t_infer: Type = {
+  tag: '<%infer%>',
+  superType: null,
+  id: 6,
+  toString() {
+    return '<%infer%>'
+  }
+}
 
-// create a new unresolved type
-// used as a place holder type 
-// in the parser, for when the 
-// user defined type isn't known
-// this is later resolved in the
-// Checker.
+
+// create a new unresolved type to
+// be used as a place holder type 
+// in the parser for when the 
+// user defined type isn't known.
+// This is later resolved in the
+// Checker. If a subsitute type 
+// is not found, a NameError is
+// thrown.
 
 export function unknown(tag: string): Type {
   return {

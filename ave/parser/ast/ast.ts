@@ -2,6 +2,7 @@ import Token, { tokenvalue } from '../../lexer/token';
 import NodeKind = require('./nodekind');
 import chalk = require('chalk');
 import { Type, TypeName, t_any } from '../../types/types';
+import { DeclarationKind } from '../symbol_table/symtable';
 
 interface ASTNode {
   toString(): string;
@@ -148,15 +149,15 @@ export class Identifier extends Node {
 }
 
 export class VarDeclaration extends Node {
-  readonly declarationType: string;
+  readonly declarationType: DeclarationKind;
   readonly declarators: VarDeclarator[];
   readonly kind = NodeKind.VarDeclaration;
 
   // kw: var / let / const
-  constructor(kw: Token) {
+  constructor(kw: Token, type: DeclarationKind) {
     super(kw);
     this.declarators = [];
-    this.declarationType = kw.raw;
+    this.declarationType = type;
   }
 
   toString() {
