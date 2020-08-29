@@ -70,6 +70,16 @@ export default class Checker {
 
   private checkBody(body: AST.Body) {
     this.pushScope();
+
+    // push the declarations of functions,
+    // 'var' variables, to the top
+    // so we can access them throughout 
+    // the body.
+
+    for (let decl of body.declarations) {
+      decl.defineIn(this.env);
+    }
+
     for (let stmt of body.statements) {
       this.checkStatement(stmt);
     }
@@ -341,7 +351,6 @@ export default class Checker {
       );
     }
 
-    
     this.checkBody(forStmt.body);
   }
 }

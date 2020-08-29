@@ -8,6 +8,7 @@ import * as Type from '../types/types';
 import { AssignmentParser } from './parselets/assign';
 import { DeclarationKind, getDeclarationKind } from './symbol_table/symtable';
 import { callParser } from './parselets/call';
+import { HoistedVarDeclaration } from '../types/declaration';
 
 export default class AveParser extends Parser {
   constructor(lexData: ScannedData) {
@@ -278,6 +279,13 @@ export default class AveParser extends Parser {
     while (!this.match(TokenType.DEDENT)) {
       forstmt.body.statements.push(this.statement());
     }
+
+    // add the iterator as a declaration
+    // to the top of the body node.
+
+    const iDecl = new HoistedVarDeclaration(i.name, Type.t_number);
+
+    forstmt.body.declarations.push(iDecl);
 
     return forstmt;
   }

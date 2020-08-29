@@ -4,6 +4,7 @@ import chalk = require('chalk');
 import { Type, TypeName, t_any } from '../../types/types';
 import { DeclarationKind } from '../symbol_table/symtable';
 import TokenType = require('../../lexer/tokentype');
+import { Declaration } from '../../types/declaration';
 
 interface ASTNode {
   toString(): string;
@@ -42,14 +43,14 @@ export class Node implements ASTNode {
 }
 
 export abstract class Expression extends Node {
-  readonly operator :Token;
+  readonly operator: Token;
   constructor(op: Token) {
     super(op);
     this.operator = op;
   }
 
   toString() {
-    return '<Expression>'
+    return '<Expression>';
   }
 }
 
@@ -68,7 +69,9 @@ export class BinaryExpr extends Expression {
   }
 
   toString(): string {
-    return `(${this.left.toString()} ${this.operator.raw} ${this.right.toString()})`;
+    return `(${this.left.toString()} ${
+      this.operator.raw
+    } ${this.right.toString()})`;
   }
 }
 
@@ -95,7 +98,7 @@ export class Program extends Node {
 
 export class Body extends Node {
   readonly statements: Node[] = [];
-  readonly declarations: Set<string> = new Set();
+  readonly declarations: Declaration[] = [];
   kind = NodeKind.Body;
 
   toString() {
@@ -258,6 +261,7 @@ export class IfStmt extends Node {
     indent();
     str += this.thenBody.toString();
     dedent();
+
     if (this.elseBody) {
       indent();
       str += `\n${indentstr()}else:\n${this.elseBody.toString()}`;
@@ -275,7 +279,13 @@ export class ForStmt extends Node {
   readonly body: Body;
   readonly kind = NodeKind.ForStmt;
 
-  constructor(kw: Token, i: Identifier, start: Expression, stop: Expression, step?: Expression) {
+  constructor(
+    kw: Token,
+    i: Identifier,
+    start: Expression,
+    stop: Expression,
+    step?: Expression
+  ) {
     super(kw);
     this.iterator = i;
     this.start = start;

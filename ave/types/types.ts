@@ -1,14 +1,15 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
-import * as AST from '../parser/ast/ast';
-import NodeKind = require('../parser/ast/nodekind');
-import Environment from '../parser/symbol_table/environment';
 
 export interface Type {
   tag: string;
   superType: Type | null;
   toString(): string;
-  id: number;
+  // only pre-defined types need to
+  // have IDs to resolve operations 
+  // like addition internally for
+  // type checking
+  id?: number;
   unresolved?: boolean;
 }
 
@@ -185,6 +186,7 @@ addTable[numberID][strID] = t_string;
 addTable[strID][strID] = t_string;
 
 mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {
+  if (!lt.id || !rt.id) return t_error;
   if (addTable[lt.id] && addTable[lt.id][rt.id]) return addTable[lt.id][rt.id];
   return t_error;
 });
@@ -292,4 +294,37 @@ export function unaryOp(operator: TokenType, t_operand: Type): Type {
   if (mUnaryRules.has(operator))
     return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
   return t_error;
+}
+
+// Function Types
+// declared as (p1: t1, p2: t2) => rt
+
+export interface ParameterTypeInfo {
+  type: Type;
+  required: boolean;
+  hasDefault?: boolean;
+}
+
+export class FunctionType implements Type {
+  readonly tag: string;
+  readonly superType = null;
+  readonly params: ParameterTypeInfo[];
+  readonly returnType: Type = t_any;
+
+  constructor(name: string, params?: []) {
+    this.tag = name;
+    this.params = params || [];
+  }
+
+  addParam(type: Type, required: boolean, hasDefault?: boolean) {
+    this.params.push({
+      type,
+      required,
+      hasDefault,
+    });
+  }
+
+  toString() {
+    return this.tag;
+  }
 }

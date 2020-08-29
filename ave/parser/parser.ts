@@ -173,7 +173,7 @@ export default class Parser {
       sourceCode: this.lexedData.source,
       fileName: this.lexedData.fileName,
       ast: this.ast,
-      hasError: this.ast.hasError,
+      hasError: this.ast.hasError
     };
   }
 
