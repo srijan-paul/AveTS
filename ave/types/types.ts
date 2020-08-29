@@ -209,8 +209,7 @@ mBinaryRules.set(TokenType.BANG_EQ, (lt: Type, rt: Type) => {
 const comparisonTypeCheck: BinaryRule = (lt: Type, rt: Type) => {
   if (lt == t_number && rt == t_number) return t_bool;
   return t_error;
-}
-
+};
 
 function makeComparisonRule(t: TokenType) {
   mBinaryRules.set(t, comparisonTypeCheck);
@@ -229,8 +228,7 @@ makeComparisonRule(TokenType.GREATER_EQ);
 const binaryTypeCheck: BinaryRule = (lt: Type, rt: Type) => {
   if (lt == t_number && rt == t_number) return t_number;
   return t_error;
-}
-
+};
 
 function makeBinaryRule(toktype: TokenType) {
   mBinaryRules.set(toktype, binaryTypeCheck);
@@ -247,10 +245,10 @@ makeBinaryRule(TokenType.XOR); // a ^ b
 
 // conditional operators (or, and)
 
-const checkConditionalType: BinaryRule = (l: Type, r:Type): Type => {
+const checkConditionalType: BinaryRule = (l: Type, r: Type): Type => {
   if (l == t_error || r == t_error) return t_error;
   return t_bool;
-}
+};
 
 function makeConditionalRule(t: TokenType) {
   mBinaryRules.set(t, checkConditionalType);
@@ -259,24 +257,24 @@ function makeConditionalRule(t: TokenType) {
 makeConditionalRule(TokenType.OR);
 makeConditionalRule(TokenType.AND);
 
-
 export function binaryOp(l: Type, op: TokenType, r: Type): Type {
   if (mBinaryRules.has(op)) return (<BinaryRule>mBinaryRules.get(op))(l, r);
   return t_error;
 }
 
-
 // similarly, with unary rules for operators
 // +, -, ++ and --, they only take operands
 // of number type and return the same.
 
+const unaryTypeCheck: UnaryRule = (tOperand: Type) => {
+  return tOperand == t_number ? t_number : t_error;
+};
+
 function makeUnaryRule(t: TokenType) {
-  mUnaryRules.set(t, (tOperand: Type) => {
-    return (tOperand == t_number) ? t_number : t_error;
-  });
+  mUnaryRules.set(t, unaryTypeCheck);
 }
 
-// both prefix and postfix -- and ++ 
+// both prefix and postfix -- and ++
 // have the same rule
 makeUnaryRule(TokenType.PLUS_PLUS);
 makeUnaryRule(TokenType.MINUS_MINUS);
@@ -287,8 +285,8 @@ makeUnaryRule(TokenType.MINUS);
 // and returns a bool
 
 mUnaryRules.set(TokenType.BANG, (to: Type) => {
-  return (to == t_error) ? t_error : t_bool;
-})
+  return to == t_error ? t_error : t_bool;
+});
 
 export function unaryOp(operator: TokenType, t_operand: Type): Type {
   if (mUnaryRules.has(operator))

@@ -13,7 +13,8 @@ const enum NodeKind {
   AssignmentExpr,
   GroupingExpr,
   IfStmt,
-  CallStmt
+  CallStmt,
+  ForStmt
 }
 
 export = NodeKind

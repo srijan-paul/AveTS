@@ -163,6 +163,8 @@ export default class AveParser extends Parser {
       return this.sugarDeclaration();
     } else if (this.check(TokenType.IF)) {
       return this.ifStmt();
+    } else if (this.check(TokenType.FOR)) {
+      return this.forStmt();
     } else {
       // expression statement
       const expr = this.parseExpression(Precedence.NONE);
@@ -248,5 +250,35 @@ export default class AveParser extends Parser {
     }
 
     return new AST.IfStmt(kw, cond, _then, _else);
+  }
+
+  forStmt(): AST.ForStmt {
+    const kw = this.next();
+    const i = new AST.Identifier(
+      this.expect(TokenType.NAME, 'Expected name as for initilializer.')
+    );
+
+    this.expect(TokenType.EQ, "Expected '='.");
+    const start = this.parseExpression(Precedence.ASSIGN);
+    this.expect(TokenType.COMMA, "Expected ','.");
+
+    const stop = this.parseExpression(Precedence.ASSIGN);
+    let step;
+
+    if (this.match(TokenType.COMMA)) {
+      step = this.parseExpression(Precedence.ASSIGN);
+    }
+
+    this.consume(TokenType.COLON);
+
+    const forstmt = new AST.ForStmt(kw, i, start, stop, step);
+
+    this.expect(TokenType.INDENT, 'Expected indented block as for loop body.');
+
+    while (!this.match(TokenType.DEDENT)) {
+      forstmt.body.statements.push(this.statement());
+    }
+
+    return forstmt;
   }
 }

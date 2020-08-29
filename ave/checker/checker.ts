@@ -52,6 +52,18 @@ export default class Checker {
     this.env = this.env.pop();
   }
 
+  private assertType(node: AST.Node, type: Type.Type, msg?: string): boolean {
+    const t = this.typeOf(node);
+
+    if (t == type) return true;
+    msg =
+      msg ||
+      `Expected ${(<Token>node.token).raw} to be of type ${type.toString()}`;
+
+    this.error(msg, <Token>node.token);
+    return false;
+  }
+
   check() {
     this.checkBody(this.ast.body);
   }
@@ -71,6 +83,9 @@ export default class Checker {
         break;
       case NodeKind.IfStmt:
         this.checkIfStmt(<AST.IfStmt>stmt);
+        break;
+      case NodeKind.ForStmt:
+        this.checkFor(<AST.ForStmt>stmt);
         break;
       default:
         this.checkExpression(stmt);
@@ -286,20 +301,47 @@ export default class Checker {
     }
   }
 
-  private checkUnary(expr: AST.PrefixUnaryExpr | AST.PostfixUnaryExpr): Type.Type {
+  private checkUnary(
+    expr: AST.PrefixUnaryExpr | AST.PostfixUnaryExpr
+  ): Type.Type {
     const tOperand = this.typeOf(expr.operand);
-    
-    if (tOperand == Type.t_error) return Type.t_error; 
+
+    if (tOperand == Type.t_error) return Type.t_error;
     const type = Type.unaryOp(expr.operator.type, tOperand);
-    
+
     if (type == Type.t_error) {
       const message = `Cannot apply operator '${
         expr.operator.raw
       } on operand of type '${tOperand.toString()}''`;
       this.error(message, expr.operator);
-      return Type.t_error
+      return Type.t_error;
     }
 
     return type;
+  }
+
+  private checkFor(forStmt: AST.ForStmt) {
+    this.assertType(
+      forStmt.start,
+      Type.t_number,
+      'loop start must be a number.'
+    );
+
+    this.assertType(
+      forStmt.stop,
+      Type.t_number,
+      'loop limit must be a number.'
+    );
+
+    if (forStmt.step) {
+      this.assertType(
+        forStmt.step,
+        Type.t_number,
+        'loop step must be a number.'
+      );
+    }
+
+    
+    this.checkBody(forStmt.body);
   }
 }

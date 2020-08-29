@@ -268,13 +268,16 @@ export class IfStmt extends Node {
 }
 
 export class ForStmt extends Node {
-  readonly start: Node;
-  readonly stop: Node;
-  readonly step?: Node;
+  readonly start: Expression;
+  readonly stop: Expression;
+  readonly step?: Expression;
+  readonly iterator: Identifier;
   readonly body: Body;
+  readonly kind = NodeKind.ForStmt;
 
-  constructor(kw: Token, start: Node, stop: Node, step?: Node) {
+  constructor(kw: Token, i: Identifier, start: Expression, stop: Expression, step?: Expression) {
     super(kw);
+    this.iterator = i;
     this.start = start;
     this.stop = stop;
     this.step = step;
@@ -285,7 +288,7 @@ export class ForStmt extends Node {
     let str = `for ${this.start.toString()}, ${this.stop.toString()}, `;
     if (this.step) str += this.step.toString();
     indent();
-    str += this.body.toString();
+    str += '\n' + this.body.toString();
     dedent();
     return str;
   }

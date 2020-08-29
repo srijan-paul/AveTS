@@ -1,2 +1,2 @@
 b := "aa"
-a: string = b + 'aa'
+a: str = 'a' + b
