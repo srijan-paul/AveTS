@@ -1,5 +1,5 @@
 a := "a string literal" 
 a += "aaa"
 
-if a > 1: #expect type error
+if a >= 1: #expect type error
     a := 1

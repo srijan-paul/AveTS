@@ -1,0 +1,2 @@
+b := "aa"
+a: string = b + 'aa'

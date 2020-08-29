@@ -1,0 +1,11 @@
+let a = 1
+let b = 2
+
+if a < b
+    a = b + 1
+elif a > b
+    a = b - 1
+elif a == b and b == 1
+    b = a - 1
+else
+    a = b++

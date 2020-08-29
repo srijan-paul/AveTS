@@ -260,7 +260,7 @@ export class IfStmt extends Node {
     dedent();
     if (this.elseBody) {
       indent();
-      str += `\n${indentstr()}else: ${this.elseBody.toString()}`;
+      str += `\n${indentstr()}else:\n${this.elseBody.toString()}`;
       dedent();
     }
     return str;

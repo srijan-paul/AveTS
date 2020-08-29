@@ -85,7 +85,7 @@ export default class Lexer {
       line: this.line,
       column: this.column,
       endPos: endPos,
-      fileName: this.fileName
+      fileName: this.fileName,
     };
 
     throwError(err, this.sourceCode);
@@ -129,7 +129,15 @@ export default class Lexer {
       this.start = this.current;
       this.scanToken();
     }
+    
+    while (this.indentLevels.length) {
+      this.indentLevels.pop();
+      this.addToken(TokenType.DEDENT, null, '<DEDENT>');
+    }
+    
     this.addToken(TokenType.EOF, null, '<EOF>');
+
+
     return {
       tokens: this.tokens,
       source: this.sourceCode,
