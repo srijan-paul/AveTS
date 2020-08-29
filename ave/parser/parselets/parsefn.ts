@@ -6,6 +6,6 @@ export type InfixParseFn = (
   parser: Parser,
   left: AST.Node,
   op: Token
-) => AST.Node;
+) => AST.Expression;
 
-export type PrefixParseFn = (parser: Parser, op: Token) => AST.Node;
+export type PrefixParseFn = (parser: Parser, op: Token) => AST.Expression;

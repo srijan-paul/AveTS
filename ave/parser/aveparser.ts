@@ -105,7 +105,7 @@ export default class AveParser extends Parser {
     this.prefix(
       TokenType.L_PAREN,
       Precedence.GROUPING,
-      (parser: Parser, lparen: Token): AST.Node => {
+      (parser: Parser, lparen: Token): AST.Expression => {
         const expression = parser.parseExpression(Precedence.NONE);
         parser.expect(TokenType.R_PAREN, "Expected ')'.");
         return new AST.GroupExpr(lparen, expression);
@@ -236,7 +236,8 @@ export default class AveParser extends Parser {
       _then.statements.push(this.statement());
 
     if (this.check(TokenType.ELIF)) {
-      _else = this.ifStmt();
+      _else = new AST.Body();
+      _else.statements.push(this.ifStmt());
     } else if (this.match(TokenType.ELSE)) {
       _else = new AST.Body();
       this.consume(TokenType.COLON);

@@ -17,7 +17,7 @@ let indentLevel = 0;
 const baseColor = chalk.gray;
 
 function indentstr() {
-  return chalk.rgb(150, 85, 60)('  '.repeat(indentLevel - 1) + '.|');
+  return chalk.rgb(150, 85, 60)('  '.repeat(indentLevel - 1) + '|* ');
 }
 
 function indent() {
@@ -41,8 +41,20 @@ export class Node implements ASTNode {
   }
 }
 
-export class BinaryExpr extends Node {
-  readonly op: Token;
+export abstract class Expression extends Node {
+  readonly operator :Token;
+  constructor(op: Token) {
+    super(op);
+    this.operator = op;
+  }
+
+  toString() {
+    return '<Expression>'
+  }
+}
+
+export class BinaryExpr extends Expression {
+  readonly operator: Token;
   readonly left: Node;
   readonly right: Node;
   readonly kind: NodeKind;
@@ -50,13 +62,13 @@ export class BinaryExpr extends Node {
   constructor(left: Node, op: Token, right: Node) {
     super(op);
     this.left = left;
-    this.op = op;
+    this.operator = op;
     this.right = right;
     this.kind = NodeKind.BinaryExpr;
   }
 
   toString(): string {
-    return `(${this.left.toString()} ${this.op.raw} ${this.right.toString()})`;
+    return `(${this.left.toString()} ${this.operator.raw} ${this.right.toString()})`;
   }
 }
 
@@ -98,7 +110,7 @@ export class Body extends Node {
   }
 }
 
-export class PrefixUnaryExpr extends Node {
+export class PrefixUnaryExpr extends Expression {
   readonly operator: Token;
   readonly operand: Node;
   readonly kind = NodeKind.PrefixUnaryExpr;
@@ -114,7 +126,7 @@ export class PrefixUnaryExpr extends Node {
   }
 }
 
-export class PostfixUnaryExpr extends Node {
+export class PostfixUnaryExpr extends Expression {
   readonly operator: Token;
   readonly operand: Node;
   readonly kind = NodeKind.PostfixUnaryExpr;
@@ -130,7 +142,7 @@ export class PostfixUnaryExpr extends Node {
   }
 }
 
-export class GroupExpr extends Node {
+export class GroupExpr extends Expression {
   readonly expr: Node;
   readonly kind = NodeKind.GroupingExpr;
 
@@ -144,7 +156,7 @@ export class GroupExpr extends Node {
   }
 }
 
-export class Literal extends Node {
+export class Literal extends Expression {
   readonly value: tokenvalue;
   readonly kind = NodeKind.Literal;
 
@@ -160,7 +172,7 @@ export class Literal extends Node {
   }
 }
 
-export class Identifier extends Node {
+export class Identifier extends Expression {
   readonly name: string;
   readonly kind = NodeKind.Identifier;
 
@@ -213,11 +225,11 @@ export class VarDeclarator extends Node {
   }
 }
 
-export class CallExpr extends Node {
+export class CallExpr extends Expression {
   readonly args: Node[] = [];
   readonly callee: Node;
-  constructor(callee: Node) {
-    super();
+  constructor(callee: Node, lparen: Token) {
+    super(lparen);
     this.callee = callee;
   }
 
@@ -228,17 +240,17 @@ export class CallExpr extends Node {
   }
 }
 
-export class IfStmt extends Body {
-  readonly condition: Node;
+export class IfStmt extends Node {
+  readonly condition: Expression;
   readonly thenBody: Body;
   readonly elseBody: Body | null;
+  readonly kind = NodeKind.IfStmt;
 
-  constructor(kw: Token, cond: Node, then: Body, _else?: Body) {
+  constructor(kw: Token, cond: Expression, then: Body, _else?: Body) {
     super(kw);
     this.thenBody = then;
     this.elseBody = _else || null;
     this.condition = cond;
-    this.kind = NodeKind.IfStmt;
   }
 
   toString() {
@@ -251,6 +263,30 @@ export class IfStmt extends Body {
       str += `\n${indentstr()}else: ${this.elseBody.toString()}`;
       dedent();
     }
+    return str;
+  }
+}
+
+export class ForStmt extends Node {
+  readonly start: Node;
+  readonly stop: Node;
+  readonly step?: Node;
+  readonly body: Body;
+
+  constructor(kw: Token, start: Node, stop: Node, step?: Node) {
+    super(kw);
+    this.start = start;
+    this.stop = stop;
+    this.step = step;
+    this.body = new Body();
+  }
+
+  toString() {
+    let str = `for ${this.start.toString()}, ${this.stop.toString()}, `;
+    if (this.step) str += this.step.toString();
+    indent();
+    str += this.body.toString();
+    dedent();
     return str;
   }
 }

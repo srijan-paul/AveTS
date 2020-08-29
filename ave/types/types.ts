@@ -112,16 +112,13 @@ export function isValidAssignment(
   tb: Type,
   type: TokenType
 ): boolean {
-  if (type == TokenType.EQ) {
-    return ta == t_any || ta == tb;
-  }
+  if (type == TokenType.EQ) return ta == t_any || ta == tb;
 
   // compound assignment operators,
 
-  if (type == TokenType.PLUS_EQ) {
-    if (ta == t_number && tb == t_number) return true;
-    return ta == t_string;
-  }
+  if (type == TokenType.PLUS_EQ)
+    return (ta == t_number && tb == t_number) || ta == t_string;
+
   return ta == t_any || (ta == t_number && tb == t_number);
 }
 
@@ -209,11 +206,14 @@ mBinaryRules.set(TokenType.BANG_EQ, (lt: Type, rt: Type) => {
 // use this small helper function to generate
 // those rules
 
+const comparisonTypeCheck: BinaryRule = (lt: Type, rt: Type) => {
+  if (lt == t_number && rt == t_number) return t_bool;
+  return t_error;
+}
+
+
 function makeComparisonRule(t: TokenType) {
-  mBinaryRules.set(t, (lt: Type, rt: Type) => {
-    if (lt == t_number && rt == t_number) return t_bool;
-    return t_error;
-  });
+  mBinaryRules.set(t, comparisonTypeCheck);
 }
 
 makeComparisonRule(TokenType.LESS);
@@ -226,11 +226,14 @@ makeComparisonRule(TokenType.GREATER_EQ);
 // so I'll use this small helper function to
 // generate the functions for -, * , / and %
 
+const binaryTypeCheck: BinaryRule = (lt: Type, rt: Type) => {
+  if (lt == t_number && rt == t_number) return t_number;
+  return t_error;
+}
+
+
 function makeBinaryRule(toktype: TokenType) {
-  mBinaryRules.set(toktype, (lt: Type, rt: Type) => {
-    if (lt == t_number && rt == t_number) return t_number;
-    return t_error;
-  });
+  mBinaryRules.set(toktype, binaryTypeCheck);
 }
 
 makeBinaryRule(TokenType.MINUS); // a - b
@@ -242,10 +245,50 @@ makeBinaryRule(TokenType.AMP); // a & b
 makeBinaryRule(TokenType.PIPE); // a | b
 makeBinaryRule(TokenType.XOR); // a ^ b
 
+// conditional operators (or, and)
+
+const checkConditionalType: BinaryRule = (l: Type, r:Type): Type => {
+  if (l == t_error || r == t_error) return t_error;
+  return t_bool;
+}
+
+function makeConditionalRule(t: TokenType) {
+  mBinaryRules.set(t, checkConditionalType);
+}
+
+makeConditionalRule(TokenType.OR);
+makeConditionalRule(TokenType.AND);
+
+
 export function binaryOp(l: Type, op: TokenType, r: Type): Type {
   if (mBinaryRules.has(op)) return (<BinaryRule>mBinaryRules.get(op))(l, r);
   return t_error;
 }
+
+
+// similarly, with unary rules for operators
+// +, -, ++ and --, they only take operands
+// of number type and return the same.
+
+function makeUnaryRule(t: TokenType) {
+  mUnaryRules.set(t, (tOperand: Type) => {
+    return (tOperand == t_number) ? t_number : t_error;
+  });
+}
+
+// both prefix and postfix -- and ++ 
+// have the same rule
+makeUnaryRule(TokenType.PLUS_PLUS);
+makeUnaryRule(TokenType.MINUS_MINUS);
+makeUnaryRule(TokenType.PLUS);
+makeUnaryRule(TokenType.MINUS);
+
+// prefix ! can accept operand of type any
+// and returns a bool
+
+mUnaryRules.set(TokenType.BANG, (to: Type) => {
+  return (to == t_error) ? t_error : t_bool;
+})
 
 export function unaryOp(operator: TokenType, t_operand: Type): Type {
   if (mUnaryRules.has(operator))

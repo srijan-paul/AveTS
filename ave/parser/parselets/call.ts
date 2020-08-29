@@ -10,7 +10,7 @@ export const callParser: InfixParseFn = (
   left: AST.Node,
   op: Token
 ): AST.CallExpr => {
-  const call = new AST.CallExpr(left);
+  const call = new AST.CallExpr(left, op);
   while (!parser.match(TokenType.R_PAREN)) {
     call.args.push(parser.parseExpression(Precedence.ASSIGN));
     if (!parser.match(TokenType.COMMA)) {

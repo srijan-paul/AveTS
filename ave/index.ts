@@ -5,23 +5,9 @@ import util = require('util');
 import Checker from './checker/checker';
 
 const code: string = 
-`
-a := 1 > 2
-b := 2 > 1
-
-if a:
-  d := "a string value"
-  d += 2
-  
-  if b:
-    c : = true
-    e := d + 1
-    d = "aaaaa"
-  e := 1
-  e += 5
-a = false
-
-`;
+`a :bool = true;
+a = !1 and 2
+a = 1 or 2`;
 
 const lexer = new Lexer('testfile.ave', code);
 const lexedata = lexer.lex();

@@ -147,17 +147,17 @@ export default class Parser {
     return this.precedenceTable.get(tokType) as number;
   }
 
-  parseExpression(precedence: number): AST.Node {
+  parseExpression(precedence: number): AST.Expression {
     const token: Token = this.next();
     const prefix = this.prefixParseFn(token.type);
 
     if (!prefix) {
       // throw error
       this.error(`Expected expression near '${token.raw}'`, token);
-      return new AST.Node(token);
+      return new AST.Node(token) as AST.Expression;
     }
 
-    let left: AST.Node = prefix(this, token);
+    let left: AST.Expression = prefix(this, token);
 
     while (precedence <= this.getPrecedence(this.peek().type)) {
       const token: Token = this.next();

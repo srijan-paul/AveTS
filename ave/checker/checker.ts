@@ -161,6 +161,11 @@ export default class Checker {
         return this.assignmentType(<AST.AssignExpr>node);
       case NodeKind.Identifier:
         return this.identifierType(<AST.Identifier>node);
+      case NodeKind.GroupingExpr:
+        return this.typeOf((<AST.GroupExpr>node).expr);
+      case NodeKind.PrefixUnaryExpr:
+      case NodeKind.PostfixUnaryExpr:
+        return this.checkUnary(<AST.PostfixUnaryExpr>node);
     }
     return Type.t_error;
   }
@@ -204,7 +209,7 @@ export default class Checker {
   }
 
   private binaryType(expr: AST.BinaryExpr): Type.Type {
-    const operator = expr.op.type;
+    const operator = expr.operator.type;
 
     const lType = this.typeOf(expr.left);
     const rType = this.typeOf(expr.right);
@@ -213,8 +218,8 @@ export default class Checker {
 
     if (type == Type.t_error) {
       this.error(
-        `Cannot use operator '${expr.op.raw}' on operands of type '${lType.tag}' and '${rType.tag}'`,
-        expr.op,
+        `Cannot use operator '${expr.operator.raw}' on operands of type '${lType.tag}' and '${rType.tag}'`,
+        expr.operator,
         ErrorType.TypeError
       );
     }
@@ -236,15 +241,15 @@ export default class Checker {
     // and there is no need to report again.
     if (lType == Type.t_error || rType == Type.t_error) return rType;
 
-    if (!Type.isValidAssignment(lType, rType, node.op.type)) {
+    if (!Type.isValidAssignment(lType, rType, node.operator.type)) {
       let message =
-        node.op.type == TokenType.EQ
+        node.operator.type == TokenType.EQ
           ? `Cannot assign type '${rType.toString()}' to type '${lType.toString()}'.`
           : `Cannot use operator '${
-              node.op.raw
+              node.operator.raw
             }' on operand types '${rType.toString()}' and '${lType.toString()}'`;
-      
-            this.error(message, node.op, ErrorType.TypeError);
+
+      this.error(message, node.operator, ErrorType.TypeError);
     }
 
     return rType;
@@ -279,5 +284,22 @@ export default class Checker {
       default:
         return false;
     }
+  }
+
+  private checkUnary(expr: AST.PrefixUnaryExpr | AST.PostfixUnaryExpr): Type.Type {
+    const tOperand = this.typeOf(expr.operand);
+    
+    if (tOperand == Type.t_error) return Type.t_error; 
+    const type = Type.unaryOp(expr.operator.type, tOperand);
+    
+    if (type == Type.t_error) {
+      const message = `Cannot apply operator '${
+        expr.operator.raw
+      } on operand of type '${tOperand.toString()}''`;
+      this.error(message, expr.operator);
+      return Type.t_error
+    }
+
+    return type;
   }
 }

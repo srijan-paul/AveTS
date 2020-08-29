@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lextest": "node build/tests/lexTests.js",
+    "parsetest": "node build/tests/parseTests.js",
     "build": "tsc"
   },
   "repository": {
