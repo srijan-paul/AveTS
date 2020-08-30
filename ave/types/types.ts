@@ -11,7 +11,7 @@ export const enum TypeName {
 }
 
 export class Type {
-  static nextID: number = 10;
+  static nextID: number = 0;
 
   readonly tag: string;
   readonly superType: Type | null;
