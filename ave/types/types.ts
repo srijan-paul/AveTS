@@ -1,17 +1,6 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
 
-export interface Type {
-  tag: string;
-  superType: Type | null;
-  toString(): string;
-  // only pre-defined types need to
-  // have IDs to resolve operations 
-  // like addition internally for
-  // type checking
-  id?: number;
-  unresolved?: boolean;
-}
 
 export const enum TypeName {
   string = 'str',
@@ -19,72 +8,45 @@ export const enum TypeName {
   any = 'any',
   object = 'object',
   bool = 'bool',
+  infer = "<%infer%>"
 }
 
-export const t_any: Type = {
-  tag: TypeName.any,
-  superType: null,
-  id: 0,
-  toString() {
-    return TypeName.any;
-  },
-};
+export class Type {
 
-export const t_object: Type = {
-  tag: TypeName.object,
-  superType: null,
-  id: 1,
-  toString() {
-    return TypeName.object;
-  },
-};
+  static nextID: number = 10;
 
-export const t_string: Type = {
-  tag: TypeName.string,
-  superType: t_any,
-  id: 2,
-  toString() {
-    return TypeName.string;
-  },
-};
+  readonly tag: string;
+  readonly superType: Type | null;
+  readonly id: number;
+  unresolved : boolean = false;
+  
+  constructor(tag : string, tSuper?: Type) {
+    this.id = Type.nextID++;
+    this.tag = tag;
+    this.superType = tSuper || null;
+  }
 
-export const t_number: Type = {
-  tag: TypeName.number,
-  superType: t_any,
-  id: 3,
   toString() {
-    return TypeName.number;
-  },
-};
+    return this.tag;
+  }
+}
 
-export const t_bool: Type = {
-  tag: TypeName.bool,
-  superType: t_any,
-  id: 4,
-  toString() {
-    return TypeName.bool;
-  },
-};
+// primitive types that are built 
+// into Javascript.
 
-export const t_error: Type = {
-  tag: 'error',
-  superType: null,
-  id: 5,
-  toString() {
-    return '<%error%>';
-  },
-};
+export const t_any: Type = new Type(TypeName.any);
+export const t_object: Type = new Type(TypeName.object);
+export const t_string: Type = new Type(TypeName.string);
+export const t_number: Type = new Type(TypeName.number);
+export const t_bool: Type = new Type(TypeName.bool);
+
+// error type is returned in places where
+// an operator is used on unexpected operand types
+export const t_error = new Type('<%error%>')
 
 // used as a place holder for types that need
 // to be infererenced from the declaration
-export const t_infer: Type = {
-  tag: '<%infer%>',
-  superType: null,
-  id: 6,
-  toString() {
-    return '<%infer%>';
-  },
-};
+export const t_infer = new Type('<%infer%>');
 
 // create a new unresolved type to
 // be used as a place holder type
@@ -96,16 +58,9 @@ export const t_infer: Type = {
 // thrown.
 
 export function unknown(tag: string): Type {
-  return {
-    tag,
-    superType: null,
-    // the ID doesn't really matter here
-    id: Math.random() * Date.now(),
-    unresolved: true,
-    toString() {
-      return '<%unknown%>';
-    },
-  };
+  const t_unknown = new Type(tag);
+  t_unknown.unresolved = true;
+  return t_unknown;
 }
 
 export function isValidAssignment(
@@ -173,8 +128,8 @@ const mUnaryRules: Map<TokenType, UnaryRule> = new Map();
 // gives the return type of an addition operation
 // whose operands have the type IDs i and j
 
-const numberID = t_number.id as number;
-const strID = t_string.id as number;
+const numberID = t_number.id;
+const strID = t_string.id;
 
 const addTable: Array<Array<Type>> = new Array(numberID + 1);
 
@@ -296,35 +251,3 @@ export function unaryOp(operator: TokenType, t_operand: Type): Type {
   return t_error;
 }
 
-// Function Types
-// declared as (p1: t1, p2: t2) => rt
-
-export interface ParameterTypeInfo {
-  type: Type;
-  required: boolean;
-  hasDefault?: boolean;
-}
-
-export class FunctionType implements Type {
-  readonly tag: string;
-  readonly superType = null;
-  readonly params: ParameterTypeInfo[];
-  readonly returnType: Type = t_any;
-
-  constructor(name: string, params?: []) {
-    this.tag = name;
-    this.params = params || [];
-  }
-
-  addParam(type: Type, required: boolean, hasDefault?: boolean) {
-    this.params.push({
-      type,
-      required,
-      hasDefault,
-    });
-  }
-
-  toString() {
-    return this.tag;
-  }
-}

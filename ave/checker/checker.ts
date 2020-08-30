@@ -1,5 +1,3 @@
-import { type } from 'os';
-import { deflate } from 'zlib';
 import {
   AveError,
   errorFromToken,
@@ -13,7 +11,7 @@ import NodeKind = require('../parser/ast/nodekind');
 import { ParsedData } from '../parser/parser';
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
-import * as Type from '../types/types';
+import * as Typing from '../types/types';
 
 export default class Checker {
   private readonly ast: AST.Program;
@@ -52,7 +50,7 @@ export default class Checker {
     this.env = this.env.pop();
   }
 
-  private assertType(node: AST.Node, type: Type.Type, msg?: string): boolean {
+  private assertType(node: AST.Node, type: Typing.Type, msg?: string): boolean {
     const t = this.typeOf(node);
 
     if (t == type) return true;
@@ -128,8 +126,8 @@ export default class Checker {
 
     if (node.value) {
       currentType = this.typeOf(node.value);
-      if (type == Type.t_infer) type = currentType;
-    } else if (type == Type.t_infer) {
+      if (type == Typing.t_infer) type = currentType;
+    } else if (type == Typing.t_infer) {
       this.error(
         `'${node.name}' must either be initliazed or type annotated`,
         node.token as Token,
@@ -137,7 +135,7 @@ export default class Checker {
       );
     }
 
-    if (!Type.isValidAssignment(type, currentType, TokenType.EQ)) {
+    if (!Typing.isValidAssignment(type, currentType, TokenType.EQ)) {
       this.error(
         `cannot intialize '${node.name}' with type '${currentType.toString()}'`,
         node.token as Token
@@ -176,7 +174,7 @@ export default class Checker {
 
   // returns the type of an expression, also catches type errors
   // in the process of resolving the type.
-  private typeOf(node: AST.Node): Type.Type {
+  private typeOf(node: AST.Node): Typing.Type {
     switch (node.kind) {
       case NodeKind.Literal:
         return this.literalType(node.token as Token);
@@ -192,26 +190,26 @@ export default class Checker {
       case NodeKind.PostfixUnaryExpr:
         return this.checkUnary(<AST.PostfixUnaryExpr>node);
     }
-    return Type.t_error;
+    return Typing.t_error;
   }
 
-  private literalType(token: Token): Type.Type {
+  private literalType(token: Token): Typing.Type {
     switch (token.type) {
       case TokenType.LITERAL_NUM:
       case TokenType.LITERAL_HEX:
       case TokenType.LITERAL_BINARY:
-        return Type.t_number;
+        return Typing.t_number;
       case TokenType.LITERAL_STR:
-        return Type.t_string;
+        return Typing.t_string;
       case TokenType.TRUE:
       case TokenType.FALSE:
-        return Type.t_bool;
+        return Typing.t_bool;
       default:
-        return Type.t_any;
+        return Typing.t_any;
     }
   }
 
-  private identifierType(id: AST.Identifier): Type.Type {
+  private identifierType(id: AST.Identifier): Typing.Type {
     const name: string = id.name;
     const symbolData = this.env.find(name);
 
@@ -219,8 +217,8 @@ export default class Checker {
       // if the data type is a free type,
       // return the last known type of the
       // variable.
-      return symbolData.dataType == Type.t_any
-        ? Type.t_any
+      return symbolData.dataType == Typing.t_any
+        ? Typing.t_any
         : symbolData.dataType;
     }
 
@@ -230,18 +228,18 @@ export default class Checker {
       ErrorType.ReferenceError
     );
 
-    return Type.t_error;
+    return Typing.t_error;
   }
 
-  private binaryType(expr: AST.BinaryExpr): Type.Type {
+  private binaryType(expr: AST.BinaryExpr): Typing.Type {
     const operator = expr.operator.type;
 
     const lType = this.typeOf(expr.left);
     const rType = this.typeOf(expr.right);
 
-    const type = Type.binaryOp(lType, operator, rType);
+    const type = Typing.binaryOp(lType, operator, rType);
 
-    if (type == Type.t_error) {
+    if (type == Typing.t_error) {
       this.error(
         `Cannot use operator '${expr.operator.raw}' on operands of type '${lType.tag}' and '${rType.tag}'`,
         expr.operator,
@@ -252,11 +250,11 @@ export default class Checker {
     return type;
   }
 
-  private assignmentType(node: AST.AssignExpr): Type.Type {
+  private assignmentType(node: AST.AssignExpr): Typing.Type {
     const left = node.left;
     const right = node.right;
 
-    if (!this.isValidAssignTarget(left)) return Type.t_error;
+    if (!this.isValidAssignTarget(left)) return Typing.t_error;
 
     const lType = this.typeOf(left);
     const rType = this.typeOf(right);
@@ -264,9 +262,9 @@ export default class Checker {
     // if the left or right side is erratic
     // and error has already been reported
     // and there is no need to report again.
-    if (lType == Type.t_error || rType == Type.t_error) return rType;
+    if (lType == Typing.t_error || rType == Typing.t_error) return rType;
 
-    if (!Type.isValidAssignment(lType, rType, node.operator.type)) {
+    if (!Typing.isValidAssignment(lType, rType, node.operator.type)) {
       let message =
         node.operator.type == TokenType.EQ
           ? `Cannot assign type '${rType.toString()}' to type '${lType.toString()}'.`
@@ -313,18 +311,18 @@ export default class Checker {
 
   private checkUnary(
     expr: AST.PrefixUnaryExpr | AST.PostfixUnaryExpr
-  ): Type.Type {
+  ): Typing.Type {
     const tOperand = this.typeOf(expr.operand);
 
-    if (tOperand == Type.t_error) return Type.t_error;
-    const type = Type.unaryOp(expr.operator.type, tOperand);
+    if (tOperand == Typing.t_error) return Typing.t_error;
+    const type = Typing.unaryOp(expr.operator.type, tOperand);
 
-    if (type == Type.t_error) {
+    if (type == Typing.t_error) {
       const message = `Cannot apply operator '${
         expr.operator.raw
       } on operand of type '${tOperand.toString()}''`;
       this.error(message, expr.operator);
-      return Type.t_error;
+      return Typing.t_error;
     }
 
     return type;
@@ -333,20 +331,20 @@ export default class Checker {
   private checkFor(forStmt: AST.ForStmt) {
     this.assertType(
       forStmt.start,
-      Type.t_number,
+      Typing.t_number,
       'loop start must be a number.'
     );
 
     this.assertType(
       forStmt.stop,
-      Type.t_number,
+      Typing.t_number,
       'loop limit must be a number.'
     );
 
     if (forStmt.step) {
       this.assertType(
         forStmt.step,
-        Type.t_number,
+        Typing.t_number,
         'loop step must be a number.'
       );
     }
