@@ -1,26 +1,24 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
 
-
 export const enum TypeName {
   string = 'str',
   number = 'num',
   any = 'any',
   object = 'object',
   bool = 'bool',
-  infer = "<%infer%>"
+  infer = '<%infer%>',
 }
 
 export class Type {
-
   static nextID: number = 10;
 
   readonly tag: string;
   readonly superType: Type | null;
   readonly id: number;
-  unresolved : boolean = false;
-  
-  constructor(tag : string, tSuper?: Type) {
+  unresolved: boolean = false;
+
+  constructor(tag: string, tSuper?: Type) {
     this.id = Type.nextID++;
     this.tag = tag;
     this.superType = tSuper || null;
@@ -31,7 +29,7 @@ export class Type {
   }
 }
 
-// primitive types that are built 
+// primitive types that are built
 // into Javascript.
 
 export const t_any: Type = new Type(TypeName.any);
@@ -42,7 +40,7 @@ export const t_bool: Type = new Type(TypeName.bool);
 
 // error type is returned in places where
 // an operator is used on unexpected operand types
-export const t_error = new Type('<%error%>')
+export const t_error = new Type('<%error%>');
 
 // used as a place holder for types that need
 // to be infererenced from the declaration
@@ -250,4 +248,3 @@ export function unaryOp(operator: TokenType, t_operand: Type): Type {
     return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
   return t_error;
 }
-
