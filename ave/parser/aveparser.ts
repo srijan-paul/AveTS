@@ -9,6 +9,7 @@ import { AssignmentParser } from './parselets/assign';
 import { DeclarationKind, getDeclarationKind } from './symbol_table/symtable';
 import { callParser } from './parselets/call';
 import { HoistedVarDeclaration } from '../types/declaration';
+import { ArrayParser } from './parselets/array';
 
 export default class AveParser extends Parser {
   constructor(lexData: ScannedData) {
@@ -52,6 +53,9 @@ export default class AveParser extends Parser {
         return new AST.Identifier(token);
       }
     );
+
+    // arrays [a, b, c]
+    this.prefix(TokenType.L_SQ_BRACE, Precedence.NONE, ArrayParser);
 
     // + - * / infix
 
@@ -260,7 +264,7 @@ export default class AveParser extends Parser {
     );
 
     this.expect(TokenType.EQ, "Expected '='.");
-    const start = this.parseExpression(Precedence.ASSIGN);
+    const start = this.parseExpression(Precedence.NONE);
     this.expect(TokenType.COMMA, "Expected ','.");
 
     const stop = this.parseExpression(Precedence.ASSIGN);

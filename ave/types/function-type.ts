@@ -9,7 +9,7 @@ export interface ParameterTypeInfo {
   hasDefault?: boolean;
 }
 
-export class FunctionType extends Type {
+export default class FunctionType extends Type {
   readonly params: ParameterTypeInfo[];
   readonly returnType: Type = t_any;
 

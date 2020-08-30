@@ -1,0 +1,4 @@
+a := [1, 2, 3, 4]
+b := [false, true]
+let as: str
+b = [true]

@@ -243,6 +243,20 @@ export class CallExpr extends Expression {
   }
 }
 
+export class ArrayExpr extends Expression {
+  readonly elements: Expression[];
+  readonly kind = NodeKind.ArrayExpr;
+
+  constructor(lbrace: Token, els?: Expression[]) {
+    super(lbrace);
+    this.elements = els || [];
+  }
+
+  toString() {
+    return `[${this.elements.map(e => e.toString()).join(',')}]`;
+  }
+}
+
 export class IfStmt extends Node {
   readonly condition: Expression;
   readonly thenBody: Body;

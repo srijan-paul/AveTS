@@ -1,5 +1,6 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
+import ArrayType from './array-type';
 
 export const enum TypeName {
   string = 'str',
@@ -17,6 +18,7 @@ export class Type {
   readonly superType: Type | null;
   readonly id: number;
   unresolved: boolean = false;
+  isArray = false;
 
   constructor(tag: string, tSuper?: Type) {
     this.id = Type.nextID++;
@@ -66,7 +68,14 @@ export function isValidAssignment(
   tb: Type,
   type: TokenType
 ): boolean {
-  if (type == TokenType.EQ) return ta == t_any || ta == tb;
+  if (type == TokenType.EQ) {
+    if (ta == t_any) return true;
+    if (ta.isArray) {
+      if (!tb.isArray) return false;
+      return (<ArrayType>ta).elType == (<ArrayType>tb).elType;
+    }
+    return ta == tb;
+  }
 
   // compound assignment operators,
 
@@ -126,16 +135,16 @@ const mUnaryRules: Map<TokenType, UnaryRule> = new Map();
 // gives the return type of an addition operation
 // whose operands have the type IDs i and j
 
-const numberID = t_number.id;
+const numID = t_number.id;
 const strID = t_string.id;
 
-const addTable: Array<Array<Type>> = new Array(numberID + 1);
+const addTable: Type[][] = new Array(numID + 1);
 
-for (let i = 0; i < addTable.length; i++) addTable[i] = new Array(numberID + 1);
+for (let i = 0; i < addTable.length; i++) addTable[i] = new Array(numID + 1);
 
-addTable[numberID][numberID] = t_number;
-addTable[strID][numberID] = t_string;
-addTable[numberID][strID] = t_string;
+addTable[numID][numID] = t_number;
+addTable[strID][numID] = t_string;
+addTable[numID][strID] = t_string;
 addTable[strID][strID] = t_string;
 
 mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {

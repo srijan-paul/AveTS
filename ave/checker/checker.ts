@@ -11,6 +11,7 @@ import NodeKind = require('../parser/ast/nodekind');
 import { ParsedData } from '../parser/parser';
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
+import ArrayType from '../types/array-type';
 import * as Typing from '../types/types';
 
 export default class Checker {
@@ -71,7 +72,7 @@ export default class Checker {
 
     // push the declarations of functions,
     // 'var' variables, to the top
-    // so we can access them throughout 
+    // so we can access them throughout
     // the body.
 
     for (let decl of body.declarations) {
@@ -188,7 +189,9 @@ export default class Checker {
         return this.typeOf((<AST.GroupExpr>node).expr);
       case NodeKind.PrefixUnaryExpr:
       case NodeKind.PostfixUnaryExpr:
-        return this.checkUnary(<AST.PostfixUnaryExpr>node);
+        return this.unaryType(<AST.PostfixUnaryExpr>node);
+      case NodeKind.ArrayExpr:
+        return this.arrayType(<AST.ArrayExpr>node);
     }
     return Typing.t_error;
   }
@@ -309,7 +312,7 @@ export default class Checker {
     }
   }
 
-  private checkUnary(
+  private unaryType(
     expr: AST.PrefixUnaryExpr | AST.PostfixUnaryExpr
   ): Typing.Type {
     const tOperand = this.typeOf(expr.operand);
@@ -326,6 +329,20 @@ export default class Checker {
     }
 
     return type;
+  }
+
+  private arrayType(arr: AST.ArrayExpr): Typing.Type {
+    if (arr.elements.length == 0) return new ArrayType(Typing.t_any);
+
+    let type = this.typeOf(arr.elements[0]);
+
+    for (let el of arr.elements) {
+      const t = this.typeOf(el);
+      if (t == Typing.t_error) return Typing.t_error;
+      type = t;
+    }
+
+    return new ArrayType(type);
   }
 
   private checkFor(forStmt: AST.ForStmt) {
