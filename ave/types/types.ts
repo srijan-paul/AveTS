@@ -32,11 +32,11 @@ export class Type {
 // primitive types that are built
 // into Javascript.
 
-export const t_any: Type = new Type(TypeName.any);
-export const t_object: Type = new Type(TypeName.object);
-export const t_string: Type = new Type(TypeName.string);
-export const t_number: Type = new Type(TypeName.number);
-export const t_bool: Type = new Type(TypeName.bool);
+export const t_any = new Type(TypeName.any);
+export const t_object = new Type(TypeName.object);
+export const t_string = new Type(TypeName.string);
+export const t_number = new Type(TypeName.number);
+export const t_bool = new Type(TypeName.bool);
 
 // error type is returned in places where
 // an operator is used on unexpected operand types
@@ -139,7 +139,6 @@ addTable[numberID][strID] = t_string;
 addTable[strID][strID] = t_string;
 
 mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {
-  if (!lt.id || !rt.id) return t_error;
   if (addTable[lt.id] && addTable[lt.id][rt.id]) return addTable[lt.id][rt.id];
   return t_error;
 });
