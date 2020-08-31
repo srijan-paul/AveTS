@@ -6,6 +6,7 @@ import { Type, t_any } from './types';
 export interface ParameterTypeInfo {
   type: Type;
   required: boolean;
+  spread?: boolean;
   hasDefault?: boolean;
 }
 
@@ -13,7 +14,7 @@ export default class FunctionType extends Type {
   readonly params: ParameterTypeInfo[];
   readonly returnType: Type = t_any;
 
-  constructor(name: string, params?: []) {
+  constructor(name: string, params?: ParameterTypeInfo[]) {
     super(name);
     this.params = params || [];
   }
@@ -26,3 +27,11 @@ export default class FunctionType extends Type {
     });
   }
 }
+
+export const t_Function = new FunctionType('Function', [
+  {
+    type: t_any,
+    required: false,
+    spread: true,
+  },
+]);
