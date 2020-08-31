@@ -39,7 +39,7 @@ export class GenericTypeInstance extends Type {
   ): boolean {
     if (t1.parentId != t2.parentId || t1.typeCount != t2.typeCount)
       return false;
-    
+
     for (let i = 0; i < t1.types.length; i++) {
       if (t2.types[i] != t1.types[i]) return false;
     }

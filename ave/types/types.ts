@@ -81,13 +81,6 @@ export function isValidAssignment(
   return ta == t_any || (ta == t_number && tb == t_number);
 }
 
-function canAssignGeneric(t1: Type, t2: Type) {
-  if (t1 instanceof GenericTypeInstance && t2 instanceof GenericTypeInstance) {
-    return GenericTypeInstance.areEquivalent(t1, t2);
-  }
-  return false;
-}
-
 export function fromString(str: string): Type {
   switch (str) {
     case TypeName.string:
