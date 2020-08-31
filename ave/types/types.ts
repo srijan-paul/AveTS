@@ -1,6 +1,6 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
-import ArrayType from './array-type';
+import GenericType, { GenericTypeInstance } from './generic-type';
 
 export const enum TypeName {
   string = 'str',
@@ -8,7 +8,6 @@ export const enum TypeName {
   any = 'any',
   object = 'object',
   bool = 'bool',
-  infer = '<%infer%>',
 }
 
 export class Type {
@@ -18,12 +17,16 @@ export class Type {
   readonly superType: Type | null;
   readonly id: number;
   unresolved: boolean = false;
-  isArray = false;
+  isPrimitive = true;
 
   constructor(tag: string, tSuper?: Type) {
     this.id = Type.nextID++;
     this.tag = tag;
     this.superType = tSuper || null;
+  }
+
+  canAssign(tb: Type) {
+    return this.id == t_any.id || tb.id == this.id;
   }
 
   toString() {
@@ -69,11 +72,8 @@ export function isValidAssignment(
   type: TokenType
 ): boolean {
   if (type == TokenType.EQ) {
+    if (!ta.isPrimitive && !tb.isPrimitive) return canAssignGeneric(ta, tb);
     if (ta == t_any) return true;
-    if (ta.isArray) {
-      if (!tb.isArray) return false;
-      return (<ArrayType>ta).elType == (<ArrayType>tb).elType;
-    }
     return ta == tb;
   }
 
@@ -83,6 +83,13 @@ export function isValidAssignment(
     return (ta == t_number && tb == t_number) || ta == t_string;
 
   return ta == t_any || (ta == t_number && tb == t_number);
+}
+
+function canAssignGeneric(t1: Type, t2: Type) {
+  if (t1 instanceof GenericTypeInstance && t2 instanceof GenericTypeInstance) {
+    return GenericTypeInstance.areEquivalent(t1, t2);
+  }
+  return false;
 }
 
 export function fromString(str: string): Type {

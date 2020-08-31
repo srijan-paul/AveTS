@@ -11,7 +11,7 @@ import NodeKind = require('../parser/ast/nodekind');
 import { ParsedData } from '../parser/parser';
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
-import ArrayType from '../types/array-type';
+import GenericType, { t_Array } from '../types/generic-type';
 import * as Typing from '../types/types';
 
 export default class Checker {
@@ -332,7 +332,7 @@ export default class Checker {
   }
 
   private arrayType(arr: AST.ArrayExpr): Typing.Type {
-    if (arr.elements.length == 0) return new ArrayType(Typing.t_any);
+    if (arr.elements.length == 0) return t_Array.create(Typing.t_any);
 
     let type = this.typeOf(arr.elements[0]);
 
@@ -342,7 +342,7 @@ export default class Checker {
       type = t;
     }
 
-    return new ArrayType(type);
+    return t_Array.create(type);
   }
 
   private checkFor(forStmt: AST.ForStmt) {
