@@ -13,6 +13,13 @@ export default class GenericType extends Type {
     this.paramTypeCount = n;
   }
 
+  canAssign(t: Type): boolean {
+    if (t instanceof GenericType) {
+      return GenericType.areEquivalent(this, t);
+    }
+    return false;
+  }
+
   create(...t: Type[]): GenericTypeInstance {
     if (t.length != this.paramTypeCount)
       throw new Error('incorrect number of arguments to generic type.');
@@ -45,6 +52,13 @@ export class GenericTypeInstance extends Type {
     this.typeCount = t.length;
     this.types = t;
     this.parentId = parentId;
+  }
+
+  canAssign(t: Type): boolean {
+    if (t instanceof GenericTypeInstance) {
+      return GenericTypeInstance.areEquivalent(this, t);
+    }
+    return false;
   }
 
   toString() {

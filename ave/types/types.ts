@@ -71,11 +71,7 @@ export function isValidAssignment(
   tb: Type,
   type: TokenType
 ): boolean {
-  if (type == TokenType.EQ) {
-    if (!ta.isPrimitive && !tb.isPrimitive) return canAssignGeneric(ta, tb);
-    if (ta == t_any) return true;
-    return ta == tb;
-  }
+  if (type == TokenType.EQ) return ta.canAssign(tb);
 
   // compound assignment operators,
 
