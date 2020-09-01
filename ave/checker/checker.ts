@@ -11,7 +11,7 @@ import NodeKind = require('../parser/ast/nodekind');
 import { ParsedData } from '../parser/parser';
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
-import GenericType, { t_Array } from '../types/generic-type';
+import { t_Array } from '../types/generic-type';
 import * as Typing from '../types/types';
 
 export default class Checker {
@@ -218,8 +218,7 @@ export default class Checker {
 
     if (symbolData) {
       // if the data type is a free type,
-      // return the last known type of the
-      // variable.
+      // return t_any instead.
       return symbolData.dataType == Typing.t_any
         ? Typing.t_any
         : symbolData.dataType;
@@ -332,14 +331,14 @@ export default class Checker {
   }
 
   private arrayType(arr: AST.ArrayExpr): Typing.Type {
-    if (arr.elements.length == 0) return t_Array.create(Typing.t_any);
+    if (arr.elements.length == 0) return t_Array.create(Typing.t_bottom);
 
     let type = this.typeOf(arr.elements[0]);
 
     for (let el of arr.elements) {
       const t = this.typeOf(el);
       if (t == Typing.t_error) return Typing.t_error;
-      type = t;
+      if (t != type) return t_Array.create(Typing.t_any);
     }
 
     return t_Array.create(type);

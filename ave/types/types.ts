@@ -1,6 +1,5 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
-import GenericType, { GenericTypeInstance } from './generic-type';
 
 export const enum TypeName {
   string = 'str',
@@ -26,7 +25,7 @@ export class Type {
   }
 
   canAssign(tb: Type) {
-    return this.id == t_any.id || tb.id == this.id;
+    return this.id == t_any.id || tb.id == this.id || tb.id == t_bottom.id;
   }
 
   toString() {
@@ -34,10 +33,13 @@ export class Type {
   }
 }
 
+// top type (https://en.wikipedia.org/wiki/Top_type)
+
+export const t_any = new Type(TypeName.any);
+
 // primitive types that are built
 // into Javascript.
 
-export const t_any = new Type(TypeName.any);
 export const t_object = new Type(TypeName.object);
 export const t_string = new Type(TypeName.string);
 export const t_number = new Type(TypeName.number);
@@ -50,6 +52,9 @@ export const t_error = new Type('<%error%>');
 // used as a place holder for types that need
 // to be infererenced from the declaration
 export const t_infer = new Type('<%infer%>');
+
+// a bottom type (https://en.wikipedia.org/wiki/Bottom_type).
+export const t_bottom = new Type('bottom');
 
 // create a new unresolved type to
 // be used as a place holder type

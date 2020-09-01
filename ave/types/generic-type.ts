@@ -1,4 +1,5 @@
-import { Type } from './types';
+import TokenType = require('../lexer/tokentype');
+import { isValidAssignment, Type } from './types';
 
 export default class GenericType extends Type {
   readonly paramTypeCount: number;
@@ -47,6 +48,18 @@ export class GenericTypeInstance extends Type {
     return true;
   }
 
+  static canAssign(t1: GenericTypeInstance, t2: GenericTypeInstance) {
+    if (t1.parentId != t2.parentId || t1.typeCount != t2.typeCount)
+      return false;
+
+    for (let i = 0; i < t1.types.length; i++) {
+      if (!isValidAssignment(t1.types[i], t2.types[i], TokenType.EQ))
+        return false;
+    }
+
+    return true;
+  }
+
   constructor(tag: string, parentId: number, ...t: Type[]) {
     super(tag);
     this.typeCount = t.length;
@@ -56,7 +69,7 @@ export class GenericTypeInstance extends Type {
 
   canAssign(t: Type): boolean {
     if (t instanceof GenericTypeInstance) {
-      return GenericTypeInstance.areEquivalent(this, t);
+      return GenericTypeInstance.canAssign(this, t);
     }
     return false;
   }

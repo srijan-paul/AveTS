@@ -5,3 +5,4 @@ b = [true, 1, true]
 
 let c = [1, 2]
 c = []
+a = []
