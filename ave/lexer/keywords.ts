@@ -7,7 +7,7 @@ const keywords: Map<string, TokenType> = new Map([
   ['else'     , TokenType.ELSE],
   ['false'    , TokenType.FALSE],
   ['for'      , TokenType.FOR],
-  ['fn'       , TokenType.FUNC],
+  ['func'     , TokenType.FUNC],
   ['if'       , TokenType.IF],
   ['nil'      , TokenType.NIL],
   ['or'       , TokenType.OR],

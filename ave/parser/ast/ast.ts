@@ -5,6 +5,7 @@ import { Type, TypeName, t_any } from '../../types/types';
 import { DeclarationKind } from '../symbol_table/symtable';
 import TokenType = require('../../lexer/tokentype');
 import { Declaration } from '../../types/declaration';
+import { strict } from 'assert';
 
 interface ASTNode {
   toString(): string;
@@ -314,6 +315,46 @@ export class ForStmt extends Node {
     indent();
     str += '\n' + this.body.toString();
     dedent();
+    return str;
+  }
+}
+
+export interface FunctionParam {
+  name: string;
+  type: Type;
+  defaultValue?: Expression;
+  rest: boolean;
+  required?: boolean;
+}
+
+export class FunctionDeclaration extends Node {
+  readonly name: string;
+  params: FunctionParam[] = [];
+  readonly body: Body = new Body();
+  // return type of the function, inferred
+  // in the type checking phase.
+  type: Type = t_any;
+
+  constructor(name: Token) {
+    super(name);
+    this.name = name.raw;
+  }
+
+  addParam(p: FunctionParam) {
+    this.params.push(p);
+  }
+
+  toString() {
+    let str = `${chalk.gray('function')} ${this.name}(`;
+
+    str += this.params
+      .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.type.toString()}`)
+      .join(', ') + `) -> ${this.type.toString()}\n`;
+  
+    indent();
+    str += this.body.toString();
+    dedent();
+
     return str;
   }
 }

@@ -1,6 +1,6 @@
 a := [1, 2, 3, 4]
 b := [false, true]
-let as: str
+let as: str = "aaa"
 b = [true, 1, true]
 
 let c = [1, 2]

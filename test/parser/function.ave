@@ -1,0 +1,8 @@
+func myFunction(a: str, b: num):
+  let b = a + 1
+  if b == false:
+    c := 1
+
+func aaa() -> str:
+  a := 1
+  aaa()

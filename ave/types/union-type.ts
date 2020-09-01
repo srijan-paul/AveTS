@@ -1,5 +1,8 @@
 import { Type } from './types';
 
+// ! This type is untested and the implementation is
+// ! incomplete
+
 export default class UnionType extends Type {
   readonly types: Type[];
   isPrimitive = false;

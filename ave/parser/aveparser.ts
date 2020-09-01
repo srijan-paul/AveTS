@@ -4,7 +4,7 @@ import Parser, { ParsedData } from './parser';
 import * as AST from './ast/ast';
 import Precedence = require('./precedence');
 import { ScannedData } from '../lexer/lexer';
-import * as Type from '../types/types';
+import * as Typing from '../types/types';
 import { AssignmentParser } from './parselets/assign';
 import { DeclarationKind, getDeclarationKind } from './symbol_table/symtable';
 import { callParser } from './parselets/call';
@@ -158,7 +158,11 @@ export default class AveParser extends Parser {
   }
 
   statement(): AST.Node {
-    return this.declaration();
+    if (this.check(TokenType.IF)) {
+      return this.ifStmt();
+    } else if (this.check(TokenType.FOR)) {
+      return this.forStmt();
+    } else return this.declaration();
   }
 
   declaration(): AST.Node {
@@ -166,10 +170,8 @@ export default class AveParser extends Parser {
       return this.varDeclaration(this.prev());
     } else if (this.check(TokenType.NAME) && this.checkNext(TokenType.COLON)) {
       return this.sugarDeclaration();
-    } else if (this.check(TokenType.IF)) {
-      return this.ifStmt();
-    } else if (this.check(TokenType.FOR)) {
-      return this.forStmt();
+    } else if (this.match(TokenType.FUNC)) {
+      return this.funcDecl();
     } else {
       // expression statement
       const expr = this.parseExpression(Precedence.NONE);
@@ -212,7 +214,7 @@ export default class AveParser extends Parser {
   varDeclarator(): AST.VarDeclarator {
     const varName = this.expect(TokenType.NAME, 'Expected variable name.');
     let value = null;
-    let type = Type.t_infer;
+    let type = Typing.t_infer;
 
     if (this.match(TokenType.COLON) && !this.check(TokenType.EQ))
       type = this.parseType();
@@ -223,11 +225,11 @@ export default class AveParser extends Parser {
     return new AST.VarDeclarator(varName, value, type);
   }
 
-  parseType(): Type.Type {
+  parseType(): Typing.Type {
     if (this.isValidType(this.peek())) {
-      return Type.fromToken(this.next());
+      return Typing.fromToken(this.next());
     }
-    return Type.t_any;
+    return Typing.t_any;
   }
 
   ifStmt(): AST.IfStmt {
@@ -287,10 +289,77 @@ export default class AveParser extends Parser {
     // add the iterator as a declaration
     // to the top of the body node.
 
-    const iDecl = new HoistedVarDeclaration(i.name, Type.t_number);
+    const iDecl = new HoistedVarDeclaration(i.name, Typing.t_number);
 
     forstmt.body.declarations.push(iDecl);
 
     return forstmt;
+  }
+
+  private funcDecl(): AST.FunctionDeclaration {
+    const func = new AST.FunctionDeclaration(
+      this.expect(TokenType.NAME, 'Expected function name.')
+    );
+
+    func.params = this.parseParams();
+    
+    if (this.match(TokenType.ARROW)) {
+      func.type = this.parseType();
+    }
+
+    this.consume(TokenType.COLON);
+
+    this.expect(TokenType.INDENT, 'Expected indented block.');
+
+    while (!this.eof() && !this.match(TokenType.DEDENT))
+      func.body.statements.push(this.statement());
+
+    return func;
+  }
+
+  private parseParams(): AST.FunctionParam[] {
+    let params: AST.FunctionParam[] = [];
+    this.expect(TokenType.L_PAREN, "Expected '(' before function parameters");
+
+    while (!this.match(TokenType.R_PAREN)) {
+      params.push(this.parseParam());
+
+      if (!this.match(TokenType.COMMA)) {
+        this.expect(
+          TokenType.R_PAREN,
+          "Expected ')' after function parameters"
+        );
+        break;
+      }
+    }
+    return params;
+  }
+
+  private parseParam(): AST.FunctionParam {
+    // TODO check if rest paramter.
+
+    let name = this.expect(TokenType.NAME, 'Expected parameter name.').raw;
+    let type = Typing.t_any;
+    let required = true,
+      rest = false;
+    let defaultValue;
+
+    // TODO check if param required
+
+    if (this.match(TokenType.COLON)) {
+      type = this.parseType();
+    }
+
+    if (this.match(TokenType.EQ)) {
+      defaultValue = this.parseExpression(Precedence.NONE);
+    }
+
+    return {
+      name,
+      type,
+      required,
+      rest,
+      defaultValue,
+    };
   }
 }

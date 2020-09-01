@@ -3,6 +3,12 @@ let b = 2
 
 if a < b
     a = b + 1
+    if true:
+        wtf: str = '1'
+    else
+        wtf: num = 111
+        for i = 1, 10:
+            j := 1
 elif a > b
     a = b - 1
 elif a == b and b == 1

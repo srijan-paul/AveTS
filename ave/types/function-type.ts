@@ -6,7 +6,7 @@ import { Type, t_any } from './types';
 export interface ParameterTypeInfo {
   type: Type;
   required: boolean;
-  spread?: boolean;
+  rest?: boolean;
   hasDefault?: boolean;
 }
 
@@ -28,10 +28,11 @@ export default class FunctionType extends Type {
   }
 }
 
+// Javascript functions
 export const t_Function = new FunctionType('Function', [
   {
     type: t_any,
     required: false,
-    spread: true,
+    rest: true,
   },
 ]);
