@@ -5,7 +5,7 @@ import { Type, TypeName, t_any } from '../../types/types';
 import { DeclarationKind } from '../symbol_table/symtable';
 import TokenType = require('../../lexer/tokentype');
 import { Declaration } from '../../types/declaration';
-import { strict } from 'assert';
+
 
 interface ASTNode {
   toString(): string;
@@ -80,7 +80,7 @@ export class AssignExpr extends BinaryExpr {
   readonly kind = NodeKind.AssignmentExpr;
 
   toString() {
-    return `${baseColor('vardecl')} ${BinaryExpr.prototype.toString.call(
+    return `${baseColor('assign')} ${BinaryExpr.prototype.toString.call(
       this
     )}`;
   }
@@ -347,14 +347,43 @@ export class FunctionDeclaration extends Node {
   toString() {
     let str = `${chalk.gray('function')} ${this.name}(`;
 
-    str += this.params
-      .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.type.toString()}`)
-      .join(', ') + `) -> ${this.type.toString()}\n`;
-  
+    str +=
+      this.params
+        .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.type.toString()}`)
+        .join(', ') + `) -> ${this.type.toString()}\n`;
+
     indent();
     str += this.body.toString();
     dedent();
 
     return str;
+  }
+}
+
+export class ReturnStmt extends Node {
+  readonly expr?: Expression;
+  readonly kind = NodeKind.ReturnStmt
+
+  constructor(kw: Token, expr?: Expression) {
+    super(kw);
+    this.expr = expr;
+  }
+
+  public toString() {
+    return `return ${this.expr?.toString() || ' '}`;
+  }
+}
+
+
+export class ExprStmt extends Node {
+  readonly expr: Expression;
+  readonly kind = NodeKind.ExprStmt;
+  constructor(e: Expression) {
+    super(e.token);
+    this.expr = e;
+  }
+
+  toString() {
+    return `${chalk.gray('exprstmt')}: ${this.expr.toString()}`;
   }
 }

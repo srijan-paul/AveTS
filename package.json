@@ -26,6 +26,7 @@
   "homepage": "https://github.com/inJuly0/AveJS#readme",
   "devDependencies": {
     "@types/node": "^14.6.0",
-    "chalk": "^4.1.0"
+    "chalk": "^4.1.0",
+    "prettier": "^2.1.1"
   }
 }

@@ -11,6 +11,8 @@ import { callParser } from './parselets/call';
 import { HoistedVarDeclaration } from '../types/declaration';
 import { ArrayParser } from './parselets/array';
 
+
+
 export default class AveParser extends Parser {
   constructor(lexData: ScannedData) {
     super(lexData);
@@ -162,6 +164,8 @@ export default class AveParser extends Parser {
       return this.ifStmt();
     } else if (this.check(TokenType.FOR)) {
       return this.forStmt();
+    } else if (this.check(TokenType.RETURN)) {
+      return this.returnStmt();
     } else return this.declaration();
   }
 
@@ -176,7 +180,7 @@ export default class AveParser extends Parser {
       // expression statement
       const expr = this.parseExpression(Precedence.NONE);
       this.consume(TokenType.SEMI_COLON);
-      return expr;
+      return new AST.ExprStmt(expr);
     }
   }
 
@@ -302,7 +306,7 @@ export default class AveParser extends Parser {
     );
 
     func.params = this.parseParams();
-    
+
     if (this.match(TokenType.ARROW)) {
       func.type = this.parseType();
     }
@@ -361,5 +365,21 @@ export default class AveParser extends Parser {
       rest,
       defaultValue,
     };
+  }
+
+  private returnStmt(): AST.ReturnStmt {
+    const kw = this.next();
+    let expr;
+    if (
+      this.eof() ||
+      this.match(TokenType.SEMI_COLON) ||
+      this.check(TokenType.NEWLINE) ||
+      this.check(TokenType.DEDENT)
+    )
+      return new AST.ReturnStmt(kw);
+
+    expr = this.parseExpression(Precedence.NONE);
+    this.consume(TokenType.SEMI_COLON);
+    return new AST.ReturnStmt(kw, expr);
   }
 }

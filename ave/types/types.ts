@@ -1,5 +1,6 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
+// import MaybeType from './maybe-type';
 
 export const enum TypeName {
   string = 'str',
@@ -7,6 +8,8 @@ export const enum TypeName {
   any = 'any',
   object = 'object',
   bool = 'bool',
+  undef = 'undefined',
+  nil = 'nil',
 }
 
 export class Type {
@@ -24,11 +27,11 @@ export class Type {
     this.superType = tSuper || null;
   }
 
-  canAssign(tb: Type) {
+  public canAssign(tb: Type) {
     return this.id == t_any.id || tb.id == this.id || tb.id == t_bottom.id;
   }
 
-  toString() {
+  public toString() {
     return this.tag;
   }
 }
@@ -44,6 +47,8 @@ export const t_object = new Type(TypeName.object);
 export const t_string = new Type(TypeName.string);
 export const t_number = new Type(TypeName.number);
 export const t_bool = new Type(TypeName.bool);
+export const t_undef = new Type(TypeName.undef);
+export const t_nil = new Type(TypeName.nil);
 
 // error type is returned in places where
 // an operator is used on unexpected operand types
@@ -257,3 +262,76 @@ export function unaryOp(operator: TokenType, t_operand: Type): Type {
     return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
   return t_error;
 }
+
+/*
+* MaybeType:
+ MaybeType is a type used internally by the checker
+ to resolve types of if-statements that may or may
+ not return a value.
+
+An if-statement like this: 
+
+* if somecondition:
+*   return 123
+
+ has type: Maybe<number>. 
+
+ however, an if statement like so
+
+* if cond: 
+*   return 2
+* elif cond2:
+*   return "aa"
+
+  has type number | string.
+  this is achieved by joining the maybe
+  types of the if and else-if blocks.
+
+  Maybe types can be joined like so: 
+  Maybe<number> + Maybe<string> = Maybe<number|string>
+
+  joining Maybe types with concerete types results in a
+  union type. 
+
+  Maybe<number> + string = number | string
+
+  This useful in cases if
+  where there is an else block at the end like this:
+
+* if cond:
+*   return 2
+* else:
+*   return "a"
+
+if this is found inside a function, then the return
+type becomes number | string
+
+*/
+
+export class t__Maybe extends Type {
+  readonly type: Type;
+
+  // _unwraps_ a type
+  // this is used to avoid nesting in
+  // maybe types. since Maybe<Maybe<T>> is
+  // just Maybe<T>, this function just
+  // perfoms the reduction to return T.
+
+  static unwrap(mt: t__Maybe | Type) {
+    while (mt instanceof t__Maybe) {
+      mt = mt.type;
+    }
+    return mt;
+  }
+
+  constructor(type: Type) {
+    super(`<maybe ${type.toString()}>`);
+    this.type = t__Maybe.unwrap(type);
+  }
+
+  public toString() {
+    return `${this.type.toString()}|undefined`;
+  }
+}
+
+

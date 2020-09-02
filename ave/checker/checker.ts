@@ -1,3 +1,4 @@
+import { kMaxLength } from 'buffer';
 import {
   AveError,
   errorFromToken,
@@ -14,20 +15,31 @@ import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
 import { t_Array } from '../types/generic-type';
 import * as Typing from '../types/types';
 
+let t_notype = new Typing.Type('<%no type%>');
+
 export default class Checker {
   private readonly ast: AST.Program;
   private readonly parseData: ParsedData;
-  private currentNode: AST.Node;
+
   // the root (global) environment.
   // at top level scope
   private rootEnv: Environment = new Environment();
   // current environment being checked, local scope.
   private env: Environment;
 
+  // this stack keeps track of whether or not we
+  // are inside a function body. Every time we enter a
+  // function body, we push the return type (t_infer
+  // if none annotated), every time we exit
+  // a function body, pop from it. The stack stores
+  // the return types of the functions so it can
+  // also be used to determine whether a return statement
+  // returns the correct type of expression.
+  private functionReturnStack: Typing.Type[] = [];
+
   constructor(parseData: ParsedData) {
     this.ast = parseData.ast;
     this.parseData = parseData;
-    this.currentNode = parseData.ast;
     this.env = this.rootEnv;
     // TODO add all function declarations to environment
   }
@@ -51,6 +63,31 @@ export default class Checker {
     this.env = this.env.pop();
   }
 
+  private mergeTypes(t1: Typing.Type, t2: Typing.Type): Typing.Type {
+    // if there is a maybe<T> type, use it as the first
+    // argument instead.
+
+    if (t2 instanceof Typing.t__Maybe && !(t1 instanceof Typing.t__Maybe))
+      return this.mergeTypes(t2, t1);
+
+    if (t1 instanceof Typing.t__Maybe) {
+      if (t2 instanceof Typing.t__Maybe)
+        return new Typing.t__Maybe(this.mergeTypes(t1.type, t2.type));
+      // if the previous statement was typeless.
+      // (having t__notype)
+      if (t2 == t_notype) return t1;
+      if (t1.type == t2) return t2;
+      return Typing.t_any;
+    }
+
+    if (t1 == t2) return t1;
+    if (t1 == t_notype) return t2;
+    if (t2 == t_notype) return t1;
+    // TODO replace after union
+    // types are introducted.
+    return Typing.t_any;
+  }
+
   private assertType(node: AST.Node, type: Typing.Type, msg?: string): boolean {
     const t = this.typeOf(node);
 
@@ -64,10 +101,11 @@ export default class Checker {
   }
 
   check() {
-    this.checkBody(this.ast.body);
+    let t = this.body(this.ast.body);
+    console.log(t + ' ');
   }
 
-  private checkBody(body: AST.Body) {
+  private body(body: AST.Body): Typing.Type {
     this.pushScope();
 
     // push the declarations of functions,
@@ -79,33 +117,46 @@ export default class Checker {
       decl.defineIn(this.env);
     }
 
+    let type = t_notype;
+
     for (let stmt of body.statements) {
-      this.checkStatement(stmt);
+      type = this.mergeTypes(type, this.statement(stmt));
     }
+
     this.popScope();
+
+    return type == t_notype ? Typing.t_undef : type;
   }
 
-  private checkStatement(stmt: AST.Node) {
+  private statement(stmt: AST.Node): Typing.Type {
     switch (stmt.kind) {
       case NodeKind.VarDeclaration:
         this.checkDeclaration(<AST.VarDeclaration>stmt);
-        break;
+        return t_notype;
       case NodeKind.IfStmt:
-        this.checkIfStmt(<AST.IfStmt>stmt);
-        break;
+        return this.ifStmt(<AST.IfStmt>stmt);
       case NodeKind.ForStmt:
-        this.checkFor(<AST.ForStmt>stmt);
-        break;
+        return this.forStmt(<AST.ForStmt>stmt);
+      case NodeKind.ReturnStmt:
+        return this.returnStmt(<AST.ReturnStmt>stmt);
+      case NodeKind.ExprStmt:
+        // just run it through the expression
+        // to detect type errors.
+        this.expression((<AST.ExprStmt>stmt).expr);
+        // statements have no types
+        //(except return statements), so we won't
+        // return the type of the expression.
+        return t_notype;
       default:
-        this.checkExpression(stmt);
-        break;
+        return this.expression(<AST.Expression>stmt);
     }
   }
 
-  private checkDeclaration(declNode: AST.VarDeclaration) {
+  private checkDeclaration(declNode: AST.VarDeclaration): Typing.Type {
     for (let declartor of declNode.declarators) {
       this.checkDeclarator(declartor, declNode.declarationType);
     }
+    return Typing.t_undef;
   }
 
   private checkDeclarator(node: AST.VarDeclarator, kind: DeclarationKind) {
@@ -153,50 +204,50 @@ export default class Checker {
     this.env.define(node.name, declaration);
   }
 
-  private checkIfStmt(stmt: AST.IfStmt) {
+  private ifStmt(stmt: AST.IfStmt): Typing.Type {
     const _then = stmt.thenBody;
-    this.checkBody(_then);
-    this.checkExpression(stmt.condition);
+    let type: Typing.Type = new Typing.t__Maybe(this.body(_then));
+
+    // TODO check this.
+    let condType = this.expression(stmt.condition);
+
     if (stmt.elseBody) {
-      this.checkBody(stmt.elseBody);
+      let et = this.body(stmt.elseBody);
+      type = this.mergeTypes(type, et);
     }
+
+    return type;
   }
 
-  // for checking expression statements
-  // expressions that are on the right side
-  // of an assignment of an arguement to function
-  // call are type checked separately and
-  // don't have to go through this check
-  // since their type is inferred anyway.
-
-  private checkExpression(expr: AST.Node) {
-    this.typeOf(expr);
-  }
-
-  // returns the type of an expression, also catches type errors
+  // returns the type of an AST.Node, also catches type errors
   // in the process of resolving the type.
+
   private typeOf(node: AST.Node): Typing.Type {
-    switch (node.kind) {
+    return this.expression(<AST.Expression>node);
+  }
+
+  private expression(expr: AST.Expression): Typing.Type {
+    switch (expr.kind) {
       case NodeKind.Literal:
-        return this.literalType(node.token as Token);
+        return this.literal(expr.token as Token);
       case NodeKind.BinaryExpr:
-        return this.binaryType(<AST.BinaryExpr>node);
+        return this.binaryExpr(<AST.BinaryExpr>expr);
       case NodeKind.AssignmentExpr:
-        return this.assignmentType(<AST.AssignExpr>node);
+        return this.assignment(<AST.AssignExpr>expr);
       case NodeKind.Identifier:
-        return this.identifierType(<AST.Identifier>node);
+        return this.identifier(<AST.Identifier>expr);
       case NodeKind.GroupingExpr:
-        return this.typeOf((<AST.GroupExpr>node).expr);
+        return this.typeOf((<AST.GroupExpr>expr).expr);
       case NodeKind.PrefixUnaryExpr:
       case NodeKind.PostfixUnaryExpr:
-        return this.unaryType(<AST.PostfixUnaryExpr>node);
+        return this.unary(<AST.PostfixUnaryExpr>expr);
       case NodeKind.ArrayExpr:
-        return this.arrayType(<AST.ArrayExpr>node);
+        return this.array(<AST.ArrayExpr>expr);
     }
     return Typing.t_error;
   }
 
-  private literalType(token: Token): Typing.Type {
+  private literal(token: Token): Typing.Type {
     switch (token.type) {
       case TokenType.LITERAL_NUM:
       case TokenType.LITERAL_HEX:
@@ -212,7 +263,7 @@ export default class Checker {
     }
   }
 
-  private identifierType(id: AST.Identifier): Typing.Type {
+  private identifier(id: AST.Identifier): Typing.Type {
     const name: string = id.name;
     const symbolData = this.env.find(name);
 
@@ -233,7 +284,7 @@ export default class Checker {
     return Typing.t_error;
   }
 
-  private binaryType(expr: AST.BinaryExpr): Typing.Type {
+  private binaryExpr(expr: AST.BinaryExpr): Typing.Type {
     const operator = expr.operator.type;
 
     const lType = this.typeOf(expr.left);
@@ -252,7 +303,7 @@ export default class Checker {
     return type;
   }
 
-  private assignmentType(node: AST.AssignExpr): Typing.Type {
+  private assignment(node: AST.AssignExpr): Typing.Type {
     const left = node.left;
     const right = node.right;
 
@@ -311,9 +362,7 @@ export default class Checker {
     }
   }
 
-  private unaryType(
-    expr: AST.PrefixUnaryExpr | AST.PostfixUnaryExpr
-  ): Typing.Type {
+  private unary(expr: AST.PrefixUnaryExpr | AST.PostfixUnaryExpr): Typing.Type {
     const tOperand = this.typeOf(expr.operand);
 
     if (tOperand == Typing.t_error) return Typing.t_error;
@@ -330,7 +379,7 @@ export default class Checker {
     return type;
   }
 
-  private arrayType(arr: AST.ArrayExpr): Typing.Type {
+  private array(arr: AST.ArrayExpr): Typing.Type {
     if (arr.elements.length == 0) return t_Array.create(Typing.t_bottom);
 
     let type = this.typeOf(arr.elements[0]);
@@ -344,7 +393,7 @@ export default class Checker {
     return t_Array.create(type);
   }
 
-  private checkFor(forStmt: AST.ForStmt) {
+  private forStmt(forStmt: AST.ForStmt): Typing.Type {
     this.assertType(
       forStmt.start,
       Typing.t_number,
@@ -365,6 +414,11 @@ export default class Checker {
       );
     }
 
-    this.checkBody(forStmt.body);
+    return new Typing.t__Maybe(this.body(forStmt.body));
+  }
+
+  private returnStmt(stmt: AST.ReturnStmt): Typing.Type {
+    if (!stmt.expr) return Typing.t_undef;
+    return this.expression(stmt.expr);
   }
 }

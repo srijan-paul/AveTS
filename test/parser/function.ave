@@ -6,3 +6,4 @@ func myFunction(a: str, b: num):
 func aaa() -> str:
   a := 1
   aaa()
+  return 1 + 2;

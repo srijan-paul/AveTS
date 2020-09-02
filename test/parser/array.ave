@@ -1,8 +1,13 @@
 a := [1, 2, 3, 4]
 b := [false, true]
 let as: str = "aaa"
-b = [true, 1, true]
+b = [true, false, true]
 
 let c = [1, 2]
 c = []
 a = []
+
+if c:
+  return false;
+
+return true

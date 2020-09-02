@@ -1,6 +1,8 @@
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind } from '../parser/symbol_table/symtable';
 import { Type, t_any } from './types';
+import  FunctionType from './function-type';
+
 
 // declarations that need to be hoisted
 // to the top, these are stored in
@@ -33,20 +35,14 @@ export class HoistedVarDeclaration implements iDeclaration {
   }
 }
 
-interface FunctionParam {
-  type: Type;
-  name: string;
-  required: boolean;
-}
 
 export class FunctionDeclaration implements iDeclaration {
   readonly name: string;
-  readonly params: FunctionParam[] = [];
-  type: Type;
+  type: FunctionType;
 
-  constructor(name: string, type?: Type) {
+  constructor(name: string, type: FunctionType) {
     this.name = name;
-    this.type = type || t_any;
+    this.type = type;
   }
 
   defineIn(env: Environment) {
