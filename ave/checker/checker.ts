@@ -1,3 +1,4 @@
+import { builtinModules } from 'module';
 import {
   AveError,
   errorFromToken,
@@ -12,6 +13,7 @@ import { ParsedData } from '../parser/parser';
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
 import { HoistedVarDeclaration } from '../types/declaration';
+import FunctionType, { t_Function } from '../types/function-type';
 import { t_Array } from '../types/generic-type';
 import * as Typing from '../types/types';
 
@@ -247,6 +249,8 @@ export default class Checker {
         return this.unary(<AST.PostfixUnaryExpr>expr);
       case NodeKind.ArrayExpr:
         return this.array(<AST.ArrayExpr>expr);
+      case NodeKind.CallExpr:
+        return this.callExpr(<AST.CallExpr>expr);
     }
     return Typing.t_error;
   }
@@ -396,6 +400,32 @@ export default class Checker {
     return t_Array.create(type);
   }
 
+  private callExpr(expr: AST.CallExpr): Typing.Type {
+    let callee = expr.callee;
+    let type = this.typeOf(expr.callee);
+
+    if (!(type instanceof FunctionType)) {
+      this.error(
+        `Function does not exist.`,
+        callee.token as Token,
+        ErrorType.ReferenceError
+      );
+      return Typing.t_undef;
+    }
+
+    if (type == Typing.t_infer) {
+      this.error(
+        'A function that is called before it has been defined must have an explicit return type, or declared prior to call.',
+        callee.token as Token
+      );
+      return Typing.t_error;
+    }
+
+    // TODO check argument types.
+
+    return type;
+  }
+
   private forStmt(forStmt: AST.ForStmt): Typing.Type {
     this.assertType(
       forStmt.start,
@@ -449,7 +479,7 @@ export default class Checker {
   private functionDeclaration(func: AST.FunctionDeclaration): Typing.Type {
     this.verifyFunctionParams(func.params);
 
-    this.functionReturnStack.push(func.type);
+    this.functionReturnStack.push(func.returnType);
     func.params.forEach(e => {
       func.body.declarations.push(new HoistedVarDeclaration(e.name, e.type));
     });
@@ -462,11 +492,15 @@ export default class Checker {
 
     if (type == t_notype) type = Typing.t_undef;
 
-    if (func.type == Typing.t_infer) func.type = type;
+    if (func.returnType == Typing.t_infer) {
+      func.returnType = type;
+      let fntype = this.env.find(func.name);
+      (<FunctionType>fntype?.dataType).returnType = type;
+    }
 
-    if (type != func.type)
+    if (type != func.returnType)
       this.error(
-        `Function doesn't always return a value of type '${func.type}'.`,
+        `Function doesn't always return a value of type '${func.returnType}'.`,
         func.token as Token
       );
 

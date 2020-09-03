@@ -26,4 +26,4 @@ function testFile(path: string) {
 }
 
 runTests();
-console.log(chalk.cyan('Parser and type checker test suite complete.'))
+console.log(chalk.cyan('Parser and type checker test suite complete.'));

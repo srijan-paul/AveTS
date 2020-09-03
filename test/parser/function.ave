@@ -4,7 +4,8 @@ func myFunction(a: str, b: num):
     c := 1
   return "aaa"
 
-func aaa() -> str:
+func aaa():
   a := 1
-  aaa()
   return "aa";
+
+aaa();

@@ -4,7 +4,8 @@ import chalk = require('chalk');
 import { Type, t_any, t_infer } from '../../types/types';
 import { DeclarationKind } from '../symbol_table/symtable';
 import TokenType = require('../../lexer/tokentype');
-import { Declaration } from '../../types/declaration';
+import  Declaration  from '../../types/declaration';
+import { t_Function } from '../../types/function-type';
 
 interface ASTNode {
   toString(): string;
@@ -333,8 +334,9 @@ export class FunctionDeclaration extends Node {
   readonly kind = NodeKind.FunctionDecl;
   // return type of the function, inferred
   // in the type checking phase.
-  type: Type = t_infer;
-
+  returnType: Type = t_infer;
+  type: Type = t_Function;
+  
   constructor(name: Token) {
     super(name);
     this.name = name.raw;
@@ -350,7 +352,7 @@ export class FunctionDeclaration extends Node {
     str +=
       this.params
         .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.type.toString()}`)
-        .join(', ') + `) -> ${this.type.toString()}\n`;
+        .join(', ') + `) -> ${this.returnType.toString()}\n`;
 
     indent();
     str += this.body.toString();

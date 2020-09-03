@@ -8,12 +8,21 @@ import * as Typing from '../types/types';
 import { AssignmentParser } from './parselets/assign';
 import { DeclarationKind, getDeclarationKind } from './symbol_table/symtable';
 import { callParser } from './parselets/call';
-import { HoistedVarDeclaration } from '../types/declaration';
+import { FuncDeclaration, HoistedVarDeclaration } from '../types/declaration';
 import { ArrayParser } from './parselets/array';
 
 export default class AveParser extends Parser {
+  // current wrapping body. This is
+  // used to hoist up 'var' and function
+  // declarations to the top.
+  private blockScopestack: AST.Body[] = [];
+  private functionScopestack: AST.Body[] = [];
+
   constructor(lexData: ScannedData) {
     super(lexData);
+
+    this.blockScopestack.push(this.ast.body);
+
     this.prefix(
       TokenType.LITERAL_NUM,
       Precedence.NONE,
@@ -142,6 +151,10 @@ export default class AveParser extends Parser {
     return false;
   }
 
+  private currentBlockScope(): AST.Body {
+    return this.blockScopestack[this.blockScopestack.length - 1];
+  }
+
   parse(): ParsedData {
     while (!this.ast.hasError && !this.match(TokenType.EOF)) {
       this.ast.body.statements.push(this.statement());
@@ -243,19 +256,36 @@ export default class AveParser extends Parser {
     this.consume(TokenType.COLON);
     this.expect(TokenType.INDENT, "Expected indent before 'if' body.");
 
+    // set the current surrounding block scope
+    // to the if statement's then branch
+
+    // < push block scope
+    this.blockScopestack.push(_then);
+
     while (!this.eof() && !this.match(TokenType.DEDENT))
       _then.statements.push(this.statement());
 
+    this.blockScopestack.pop();
+    // > pop block scope
+
     if (this.check(TokenType.ELIF)) {
       _else = new AST.Body();
+      //> new block scope
+      this.blockScopestack.push(_else);
       _else.statements.push(this.ifStmt());
+      this.blockScopestack.pop();
+      // < pop block scope
     } else if (this.match(TokenType.ELSE)) {
       _else = new AST.Body();
+      // > new block scope
+      this.blockScopestack.push(_else);
       this.consume(TokenType.COLON);
       this.expect(TokenType.INDENT, "Expected indent before 'else' body.");
 
       while (!this.eof() && !this.match(TokenType.DEDENT))
         _else.statements.push(this.statement());
+      this.blockScopestack.pop();
+      // < pop block scope
     }
 
     return new AST.IfStmt(kw, cond, _then, _else);
@@ -284,6 +314,9 @@ export default class AveParser extends Parser {
 
     this.expect(TokenType.INDENT, 'Expected indented block as for loop body.');
 
+    // < push block scope
+    this.blockScopestack.push(forstmt.body);
+
     forstmt.body.declarations.push(
       new HoistedVarDeclaration(i.name, Typing.t_number)
     );
@@ -291,6 +324,9 @@ export default class AveParser extends Parser {
     while (!this.match(TokenType.DEDENT)) {
       forstmt.body.statements.push(this.statement());
     }
+
+    this.blockScopestack.pop();
+    // < pop block scope
 
     // add the iterator as a declaration
     // to the top of the body node.
@@ -310,15 +346,31 @@ export default class AveParser extends Parser {
     func.params = this.parseParams();
 
     if (this.match(TokenType.ARROW)) {
-      func.type = this.parseType();
+      func.returnType = this.parseType();
     }
 
     this.consume(TokenType.COLON);
 
     this.expect(TokenType.INDENT, 'Expected indented block.');
 
+    // > push func scope.
+    // > push block scope.
+    this.functionScopestack.push(func.body);
+    this.blockScopestack.push(func.body);
+
     while (!this.eof() && !this.match(TokenType.DEDENT))
       func.body.statements.push(this.statement());
+
+    this.blockScopestack.pop();
+    this.functionScopestack.pop();
+    // < pop block scope
+    // < pop func scope
+
+    // hoist the declaration so that it
+    // can be accessed from anywhere.
+    this.currentBlockScope().declarations.push(
+      FuncDeclaration.fromASTNode(func)
+    );
 
     return func;
   }
