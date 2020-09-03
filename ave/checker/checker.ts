@@ -462,9 +462,14 @@ export default class Checker {
 
     if (type == t_notype) type = Typing.t_undef;
 
-    if (func.type == Typing.t_infer) {
-      func.type = type;
-    }
+    if (func.type == Typing.t_infer) func.type = type;
+
+    if (type != func.type)
+      this.error(
+        `Function doesn't always return a value of type '${func.type}'.`,
+        func.token as Token
+      );
+
     this.functionReturnStack.pop();
     return type;
   }

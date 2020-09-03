@@ -1,4 +1,6 @@
-func foo(a: num = 'a', b: str) -> str
+func foo(a: num = 123, b: str) -> str
   c := a + b
   c = "a"
-  return c
+  if c != "b":
+    return "bbb"
+  return "a"
