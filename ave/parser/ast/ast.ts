@@ -320,6 +320,7 @@ export class ForStmt extends Node {
 export interface FunctionParam {
   name: string;
   type: Type;
+  token: Token;
   defaultValue?: Expression;
   rest: boolean;
   required?: boolean;

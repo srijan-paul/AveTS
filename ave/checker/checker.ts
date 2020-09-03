@@ -439,8 +439,8 @@ export default class Checker {
 
     if (!Typing.isValidAssignment(rtype, type, TokenType.EQ))
       this.error(
-        `Cannot assign type ${type.toString()} to type ${rtype.toString()}`,
-        stmt.token as Token
+        `Cannot assign type '${type.toString()}' to type '${rtype.toString()}'`,
+        stmt.expr?.token as Token
       );
 
     return type;
@@ -477,15 +477,30 @@ export default class Checker {
       if (params[i].rest) {
         // 1. no more than 1 rest paramters
         // 2. rest must be the last parameter.
-        if (seenRest || i >= params.length - 1) return false;
+        if (seenRest || i >= params.length - 1) {
+          this.error(
+            'rest paramter must be the last in parameter list.',
+            params[i].token,
+            ErrorType.SyntaxError
+          );
+          return false;
+        }
         seenRest = true;
       }
 
       // default value must be assignable to annotated type.
       if (params[i].defaultValue) {
         let type = this.expression(<AST.Expression>params[i].defaultValue);
-        if (!Typing.isValidAssignment(params[i].type, type, TokenType.EQ))
+
+        if (!Typing.isValidAssignment(params[i].type, type, TokenType.EQ)) {
+          this.error(
+            `Cannot assign value of type '${type.toString()}' to paramter of type '${params[
+              i
+            ].type.toString()}'`,
+            params[i].token
+          );
           return false;
+        }
       }
     }
     return true;

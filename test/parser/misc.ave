@@ -1,3 +1,4 @@
-#let a: num = 1
-#return 1 + "a"
-
+func foo(a: num = 'a', b: str) -> str
+  c := a + b
+  c = "a"
+  return c

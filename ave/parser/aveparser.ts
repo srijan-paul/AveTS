@@ -343,8 +343,8 @@ export default class AveParser extends Parser {
 
   private parseParam(): AST.FunctionParam {
     // TODO check if rest paramter.
-
-    let name = this.expect(TokenType.NAME, 'Expected parameter name.').raw;
+    let token = this.expect(TokenType.NAME, 'Expected parameter name.');
+    let name = token.raw;
     let type = Typing.t_any;
     let required = true,
       rest = false;
@@ -363,6 +363,7 @@ export default class AveParser extends Parser {
     return {
       name,
       type,
+      token,
       required,
       rest,
       defaultValue,
