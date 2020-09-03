@@ -1,4 +1,3 @@
-import { kMaxLength } from 'buffer';
 import {
   AveError,
   errorFromToken,
@@ -12,6 +11,7 @@ import NodeKind = require('../parser/ast/nodekind');
 import { ParsedData } from '../parser/parser';
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
+import { HoistedVarDeclaration } from '../types/declaration';
 import { t_Array } from '../types/generic-type';
 import * as Typing from '../types/types';
 
@@ -41,7 +41,6 @@ export default class Checker {
     this.ast = parseData.ast;
     this.parseData = parseData;
     this.env = this.rootEnv;
-    // TODO add all function declarations to environment
   }
 
   private error(message: string, token: Token, errType?: ErrorType) {
@@ -69,7 +68,6 @@ export default class Checker {
 
     if (t2 instanceof Typing.t__Maybe && !(t1 instanceof Typing.t__Maybe))
       return this.mergeTypes(t2, t1);
-
     if (t1 instanceof Typing.t__Maybe) {
       if (t2 instanceof Typing.t__Maybe)
         return new Typing.t__Maybe(this.mergeTypes(t1.type, t2.type));
@@ -102,7 +100,6 @@ export default class Checker {
 
   check() {
     let t = this.body(this.ast.body);
-    console.log(t + ' ');
   }
 
   private body(body: AST.Body): Typing.Type {
@@ -125,7 +122,7 @@ export default class Checker {
 
     this.popScope();
 
-    return type == t_notype ? Typing.t_undef : type;
+    return type;
   }
 
   private statement(stmt: AST.Node): Typing.Type {
@@ -147,6 +144,8 @@ export default class Checker {
         //(except return statements), so we won't
         // return the type of the expression.
         return t_notype;
+      case NodeKind.FunctionDecl:
+        return this.functionDeclaration(<AST.FunctionDeclaration>stmt);
       default:
         return this.expression(<AST.Expression>stmt);
     }
@@ -206,7 +205,12 @@ export default class Checker {
 
   private ifStmt(stmt: AST.IfStmt): Typing.Type {
     const _then = stmt.thenBody;
-    let type: Typing.Type = new Typing.t__Maybe(this.body(_then));
+
+    let type: Typing.Type = this.body(_then);
+
+    // if there is a return statement
+    // somewhere inside this if block.
+    if (type != t_notype) type = new Typing.t__Maybe(type);
 
     // TODO check this.
     let condType = this.expression(stmt.condition);
@@ -351,8 +355,7 @@ export default class Checker {
         if (symbolData.declType == DeclarationKind.Constant) {
           this.error(
             `Invalid assignment to constant '${name}'`,
-            node.token as Token,
-            ErrorType.TypeError
+            node.token as Token
           );
           return false;
         }
@@ -418,7 +421,73 @@ export default class Checker {
   }
 
   private returnStmt(stmt: AST.ReturnStmt): Typing.Type {
-    if (!stmt.expr) return Typing.t_undef;
-    return this.expression(stmt.expr);
+    let type = Typing.t_undef;
+    if (stmt.expr) type = this.expression(stmt.expr);
+
+    let rtype = this.functionReturnStack[this.functionReturnStack.length - 1];
+
+    if (!rtype) {
+      this.error(
+        `return statement outside function.`,
+        stmt.token as Token,
+        ErrorType.SyntaxError
+      );
+      return type;
+    }
+
+    if (rtype == Typing.t_infer) return type;
+
+    if (!Typing.isValidAssignment(rtype, type, TokenType.EQ))
+      this.error(
+        `Cannot assign type ${type.toString()} to type ${rtype.toString()}`,
+        stmt.token as Token
+      );
+
+    return type;
+  }
+
+  private functionDeclaration(func: AST.FunctionDeclaration): Typing.Type {
+    this.verifyFunctionParams(func.params);
+
+    this.functionReturnStack.push(func.type);
+    func.params.forEach(e => {
+      func.body.declarations.push(new HoistedVarDeclaration(e.name, e.type));
+    });
+
+    let type = this.body(func.body);
+
+    // if there was no return statement
+    // anywhere inside the function's body,
+    // it has a return type of undefined.
+
+    if (type == t_notype) type = Typing.t_undef;
+
+    if (func.type == Typing.t_infer) {
+      func.type = type;
+    }
+    this.functionReturnStack.pop();
+    return type;
+  }
+
+  // TODO handle optional parameters
+  private verifyFunctionParams(params: AST.FunctionParam[]) {
+    let seenRest = false;
+
+    for (let i = 0; i < params.length; i++) {
+      if (params[i].rest) {
+        // 1. no more than 1 rest paramters
+        // 2. rest must be the last parameter.
+        if (seenRest || i >= params.length - 1) return false;
+        seenRest = true;
+      }
+
+      // default value must be assignable to annotated type.
+      if (params[i].defaultValue) {
+        let type = this.expression(<AST.Expression>params[i].defaultValue);
+        if (!Typing.isValidAssignment(params[i].type, type, TokenType.EQ))
+          return false;
+      }
+    }
+    return true;
   }
 }

@@ -1,9 +1,10 @@
 func myFunction(a: str, b: num):
-  let b = a + 1
+  let c = a + 1
   if b == false:
     c := 1
+  return "aaa"
 
 func aaa() -> str:
   a := 1
   aaa()
-  return 1 + 2;
+  return "aa";

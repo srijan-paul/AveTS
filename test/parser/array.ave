@@ -7,7 +7,4 @@ let c = [1, 2]
 c = []
 a = []
 
-if c:
-  return false;
-
-return true
+return false; #expect syntax error

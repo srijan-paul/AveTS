@@ -11,8 +11,6 @@ import { callParser } from './parselets/call';
 import { HoistedVarDeclaration } from '../types/declaration';
 import { ArrayParser } from './parselets/array';
 
-
-
 export default class AveParser extends Parser {
   constructor(lexData: ScannedData) {
     super(lexData);
@@ -263,7 +261,7 @@ export default class AveParser extends Parser {
     return new AST.IfStmt(kw, cond, _then, _else);
   }
 
-  forStmt(): AST.ForStmt {
+  private forStmt(): AST.ForStmt {
     const kw = this.next();
     const i = new AST.Identifier(
       this.expect(TokenType.NAME, 'Expected name as for initilializer.')
@@ -285,6 +283,10 @@ export default class AveParser extends Parser {
     const forstmt = new AST.ForStmt(kw, i, start, stop, step);
 
     this.expect(TokenType.INDENT, 'Expected indented block as for loop body.');
+
+    forstmt.body.declarations.push(
+      new HoistedVarDeclaration(i.name, Typing.t_number)
+    );
 
     while (!this.match(TokenType.DEDENT)) {
       forstmt.body.statements.push(this.statement());

@@ -13,10 +13,11 @@ const enum NodeKind {
   AssignmentExpr,
   GroupingExpr,
   IfStmt,
-  CallStmt,
+  CallExpr,
   ForStmt,
   ArrayExpr,
-  ReturnStmt
+  ReturnStmt,
+  FunctionDecl
 }
 
 export = NodeKind

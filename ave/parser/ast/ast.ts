@@ -1,11 +1,10 @@
 import Token, { tokenvalue } from '../../lexer/token';
 import NodeKind = require('./nodekind');
 import chalk = require('chalk');
-import { Type, TypeName, t_any } from '../../types/types';
+import { Type, t_any, t_infer } from '../../types/types';
 import { DeclarationKind } from '../symbol_table/symtable';
 import TokenType = require('../../lexer/tokentype');
 import { Declaration } from '../../types/declaration';
-
 
 interface ASTNode {
   toString(): string;
@@ -80,9 +79,7 @@ export class AssignExpr extends BinaryExpr {
   readonly kind = NodeKind.AssignmentExpr;
 
   toString() {
-    return `${baseColor('assign')} ${BinaryExpr.prototype.toString.call(
-      this
-    )}`;
+    return `${baseColor('assign')} ${BinaryExpr.prototype.toString.call(this)}`;
   }
 }
 
@@ -232,6 +229,7 @@ export class VarDeclarator extends Node {
 export class CallExpr extends Expression {
   readonly args: Node[] = [];
   readonly callee: Node;
+  readonly kind = NodeKind.CallExpr;
   constructor(callee: Node, lparen: Token) {
     super(lparen);
     this.callee = callee;
@@ -331,9 +329,10 @@ export class FunctionDeclaration extends Node {
   readonly name: string;
   params: FunctionParam[] = [];
   readonly body: Body = new Body();
+  readonly kind = NodeKind.FunctionDecl;
   // return type of the function, inferred
   // in the type checking phase.
-  type: Type = t_any;
+  type: Type = t_infer;
 
   constructor(name: Token) {
     super(name);
@@ -362,7 +361,7 @@ export class FunctionDeclaration extends Node {
 
 export class ReturnStmt extends Node {
   readonly expr?: Expression;
-  readonly kind = NodeKind.ReturnStmt
+  readonly kind = NodeKind.ReturnStmt;
 
   constructor(kw: Token, expr?: Expression) {
     super(kw);
@@ -373,7 +372,6 @@ export class ReturnStmt extends Node {
     return `return ${this.expr?.toString() || ' '}`;
   }
 }
-
 
 export class ExprStmt extends Node {
   readonly expr: Expression;
