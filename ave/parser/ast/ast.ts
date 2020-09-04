@@ -4,7 +4,7 @@ import chalk = require('chalk');
 import { Type, t_any, t_infer } from '../../types/types';
 import { DeclarationKind } from '../symbol_table/symtable';
 import TokenType = require('../../lexer/tokentype');
-import  Declaration  from '../../types/declaration';
+import Declaration from '../../types/declaration';
 import { t_Function } from '../../types/function-type';
 
 interface ASTNode {
@@ -257,6 +257,21 @@ export class ArrayExpr extends Expression {
   }
 }
 
+export class ObjectExpr extends Expression {
+  readonly kvPairs: Map<Token, Expression> = new Map();
+  readonly kind = NodeKind.ObjectExpr;
+
+  constructor(indentOrBrace: Token) {
+    super(indentOrBrace);
+  }
+
+  toString() {
+    return `{${Array.from(this.kvPairs)
+      .map(e => `${e[0].raw}: ${e[1].toString()}`)
+      .join(', ')}}`;
+  }
+}
+
 export class IfStmt extends Node {
   readonly condition: Expression;
   readonly thenBody: Body;
@@ -336,7 +351,7 @@ export class FunctionDeclaration extends Node {
   // in the type checking phase.
   returnType: Type = t_infer;
   type: Type = t_Function;
-  
+
   constructor(name: Token) {
     super(name);
     this.name = name.raw;

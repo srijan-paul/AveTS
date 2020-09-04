@@ -11,6 +11,7 @@ import { callParser } from './parselets/call';
 import { FuncDeclaration, HoistedVarDeclaration } from '../types/declaration';
 import { ArrayParser } from './parselets/array';
 import { t_Array } from '../types/generic-type';
+import {ObjectParser, InfixObjectParser} from './parselets/object';
 
 export default class AveParser extends Parser {
   // current wrapping body. This is
@@ -63,6 +64,11 @@ export default class AveParser extends Parser {
         return new AST.Identifier(token);
       }
     );
+
+    // object.
+    this.prefix(TokenType.INDENT, Precedence.NONE, ObjectParser);
+
+    this.infix(TokenType.COLON, Precedence.NONE, false, InfixObjectParser);
 
     // arrays [a, b, c]
     this.prefix(TokenType.L_SQ_BRACE, Precedence.NONE, ArrayParser);
@@ -236,7 +242,7 @@ export default class AveParser extends Parser {
       type = this.parseType();
 
     if (this.match(TokenType.EQ))
-      value = this.parseExpression(Precedence.ASSIGN);
+      value = this.parseExpression(Precedence.NONE);
 
     return new AST.VarDeclarator(varName, value, type);
   }
@@ -308,11 +314,11 @@ export default class AveParser extends Parser {
     const start = this.parseExpression(Precedence.NONE);
     this.expect(TokenType.COMMA, "Expected ','.");
 
-    const stop = this.parseExpression(Precedence.ASSIGN);
+    const stop = this.parseExpression(Precedence.NONE);
     let step;
 
     if (this.match(TokenType.COMMA)) {
-      step = this.parseExpression(Precedence.ASSIGN);
+      step = this.parseExpression(Precedence.NONE);
     }
 
     this.consume(TokenType.COLON);
