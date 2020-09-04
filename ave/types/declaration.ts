@@ -2,8 +2,9 @@ import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind } from '../parser/symbol_table/symtable';
 import { Type, t_any } from './types';
 import FunctionType, { ParameterTypeInfo } from './function-type';
-import { FunctionDeclaration } from '../parser/ast/ast';
-import { type } from 'os';
+import * as AST from '../parser/ast/ast';
+import Token from '../lexer/token';
+import { Interface } from 'readline';
 
 // declarations that need to be hoisted
 // to the top, these are stored in
@@ -11,7 +12,7 @@ import { type } from 'os';
 
 interface Declaration {
   name: string;
-  type: Type;
+  type?: Type;
   // define the variable in
   // an environment.
   defineIn: (env: Environment) => void;
@@ -40,7 +41,7 @@ export class FuncDeclaration implements Declaration {
   readonly name: string;
   type: FunctionType;
 
-  static fromASTNode(node: FunctionDeclaration) {
+  static fromASTNode(node: AST.FunctionDeclaration) {
     let params: ParameterTypeInfo[] = [];
     for (let p of node.params) {
       params.push({
@@ -50,7 +51,10 @@ export class FuncDeclaration implements Declaration {
         rest: p.rest,
       });
     }
-    return new FuncDeclaration(node.name, new FunctionType('', params, node.returnType));
+    return new FuncDeclaration(
+      node.name,
+      new FunctionType('', params, node.returnType)
+    );
   }
 
   constructor(name: string, type: FunctionType) {

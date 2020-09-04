@@ -86,6 +86,7 @@ enum TokenType {
   PASS,
   IMPORT,
   EXPORT,
+  INTERFACE,
 
   // primary data types
   // (also keywords)

@@ -27,6 +27,14 @@ export interface ParsedData {
   by adding operators
 */
 
+let typeKeywords: Set<TokenType> = new Set([
+  TokenType.ANY,
+  TokenType.BOOL,
+  TokenType.NUMBER,
+  TokenType.STRING,
+  TokenType.OBJECT,
+]);
+
 export default class Parser {
   private readonly prefixParseMap: Map<TokenType, PrefixParseFn>;
   private readonly infixParseMap: Map<TokenType, InfixParseFn>;
@@ -97,6 +105,13 @@ export default class Parser {
 
   consume(tok: TokenType) {
     if (this.check(tok)) this.next();
+  }
+
+  isValidType(token: Token) {
+    return (
+      (token.type >= TokenType.STRING && token.type <= TokenType.ANY) ||
+      token.type == TokenType.NAME
+    );
   }
 
   public error(msg: string, token: Token) {
@@ -173,7 +188,7 @@ export default class Parser {
       sourceCode: this.lexedData.source,
       fileName: this.lexedData.fileName,
       ast: this.ast,
-      hasError: this.ast.hasError
+      hasError: this.ast.hasError,
     };
   }
 

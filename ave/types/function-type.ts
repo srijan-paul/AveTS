@@ -1,5 +1,5 @@
 import { throws } from 'assert';
-import { Type, t_any } from './types';
+import { isValidAssignment, Type, t_any } from './types';
 
 // Function Types
 // declared as (p1: t1, p2: t2) => rt
@@ -14,16 +14,25 @@ export interface ParameterTypeInfo {
 
 export default class FunctionType extends Type {
   readonly params: ParameterTypeInfo[];
-  returnType: Type = t_any;
+  returnType: Type;
 
-  constructor(name?: string, params?: ParameterTypeInfo[], retType ?: Type) {
+  public constructor(
+    name?: string,
+    params?: ParameterTypeInfo[],
+    retType?: Type
+  ) {
     super(name || '');
-    this.superType = t_Function;
+    this.superType = null;
     this.params = params || [];
     this.returnType = retType || t_any;
   }
 
-  addParam(name: string, type: Type, required: boolean, hasDefault?: boolean) {
+  public addParam(
+    name: string,
+    type: Type,
+    required: boolean,
+    hasDefault?: boolean
+  ) {
     this.params.push({
       name,
       type,
@@ -32,7 +41,22 @@ export default class FunctionType extends Type {
     });
   }
 
-  toString() {
+  public canAssign(t: Type) {
+    if (!(t instanceof FunctionType)) return false;
+    if (!this.returnType.canAssign(t.returnType)) return false;
+
+    if (t.params.length != this.params.length) return false;
+
+    for (let i = 0; i < this.params.length; i++) {
+      if (this.params[i].rest != t.params[i].rest) return false;
+      if (!isValidAssignment(t.params[i].type, this.params[i].type))
+        return false;
+    }
+
+    return true;
+  }
+
+  public toString() {
     if (this.tag) return this.tag;
     return `(${this.params
       .map(e => {

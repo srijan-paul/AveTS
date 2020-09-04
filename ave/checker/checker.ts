@@ -259,6 +259,8 @@ export default class Checker {
         return this.array(<AST.ArrayExpr>expr);
       case NodeKind.CallExpr:
         return this.callExpr(<AST.CallExpr>expr);
+      case NodeKind.FunctionExpr:
+        return this.funcExpr(<AST.FunctionExpr>expr);
     }
     return Typing.t_error;
   }
@@ -555,6 +557,42 @@ export default class Checker {
 
     this.functionReturnStack.pop();
     return type;
+  }
+
+  private funcExpr(func: AST.FunctionExpr) {
+    this.verifyFunctionParams(func.params);
+
+    this.functionReturnStack.push(func.returnType);
+
+    let paramTypeInfo: ParameterTypeInfo[] = [];
+
+    func.params.forEach(e => {
+      func.body.declarations.push(new HoistedVarDeclaration(e.name, e.type));
+      paramTypeInfo.push({
+        name: e.name,
+        type: e.type,
+        required: !!e.required,
+      });
+    });
+
+    let returnType = this.body(func.body);
+
+    // if there was no return statement
+    // anywhere inside the function's body,
+    // it has a return type of undefined.
+
+    if (returnType == t_notype) returnType = Typing.t_undef;
+
+    if (func.returnType == Typing.t_infer) func.returnType = returnType;
+
+    if (returnType != func.returnType)
+      this.error(
+        `Function doesn't always return a value of type '${func.returnType}'.`,
+        func.token as Token
+      );
+
+    this.functionReturnStack.pop();
+    return new FunctionType('', paramTypeInfo, returnType);
   }
 
   // TODO handle optional parameters

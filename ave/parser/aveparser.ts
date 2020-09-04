@@ -11,7 +11,8 @@ import { callParser } from './parselets/call';
 import { FuncDeclaration, HoistedVarDeclaration } from '../types/declaration';
 import { ArrayParser } from './parselets/array';
 import { t_Array } from '../types/generic-type';
-import {ObjectParser, InfixObjectParser} from './parselets/object';
+import { ObjectParser, InfixObjectParser } from './parselets/object';
+import parseType from './parselets/type-parser';
 
 export default class AveParser extends Parser {
   // current wrapping body. This is
@@ -62,6 +63,15 @@ export default class AveParser extends Parser {
       Precedence.NONE,
       (parser: Parser, token: Token) => {
         return new AST.Identifier(token);
+      }
+    );
+
+    // a stupid type case workaround but it works.
+    this.prefix(
+      TokenType.FUNC,
+      Precedence.NONE,
+      (parser: Parser, token: Token) => {
+        return (<AveParser>parser).funcExpr(token);
       }
     );
 
@@ -151,12 +161,6 @@ export default class AveParser extends Parser {
     this.infix(TokenType.L_PAREN, Precedence.CALL, false, callParser);
   }
 
-  isValidType(token: Token) {
-    if (token.type >= TokenType.STRING || token.type <= TokenType.ANY)
-      return true;
-    if (token.type == TokenType.NAME) return true;
-    return false;
-  }
 
   private currentBlockScope(): AST.Body {
     return this.blockScopestack[this.blockScopestack.length - 1];
@@ -194,6 +198,8 @@ export default class AveParser extends Parser {
       return this.sugarDeclaration();
     } else if (this.match(TokenType.FUNC)) {
       return this.funcDecl();
+    } else if (this.match(TokenType.INTERFACE)) {
+      return this.interfaceDecl();
     } else {
       // expression statement
       const expr = this.parseExpression(Precedence.NONE);
@@ -239,26 +245,13 @@ export default class AveParser extends Parser {
     let type = Typing.t_infer;
 
     if (this.match(TokenType.COLON) && !this.check(TokenType.EQ))
-      type = this.parseType();
+      type = parseType(this);
 
-    if (this.match(TokenType.EQ))
-      value = this.parseExpression(Precedence.NONE);
+    if (this.match(TokenType.EQ)) value = this.parseExpression(Precedence.NONE);
 
     return new AST.VarDeclarator(varName, value, type);
   }
 
-  parseType(): Typing.Type {
-    if (this.isValidType(this.peek())) {
-      let typeToken = this.next();
-      
-      if (this.match(TokenType.L_SQ_BRACE)) {
-        this.expect(TokenType.R_SQ_BRACE, "Expected '[' token.");
-        return t_Array.create(Typing.fromToken(typeToken));
-      }
-      return Typing.fromToken(typeToken);
-    }
-    return Typing.t_any;
-  }
 
   ifStmt(): AST.IfStmt {
     const kw = this.next();
@@ -297,7 +290,8 @@ export default class AveParser extends Parser {
 
       while (!this.eof() && !this.match(TokenType.DEDENT))
         _else.statements.push(this.statement());
-      this.blockScopestack.pop();
+      
+        this.blockScopestack.pop();
       // < pop block scope
     }
 
@@ -351,6 +345,19 @@ export default class AveParser extends Parser {
     return forstmt;
   }
 
+  private funcExpr(kw: Token): AST.FunctionExpr {
+    const func = new AST.FunctionExpr(kw);
+    func.params = this.parseParams();
+
+    if (this.match(TokenType.ARROW)) {
+      func.returnType = parseType(this);
+    }
+
+    this.parseFunctionBody(func);
+
+    return func;
+  }
+
   private funcDecl(): AST.FunctionDeclaration {
     const func = new AST.FunctionDeclaration(
       this.expect(TokenType.NAME, 'Expected function name.')
@@ -359,33 +366,39 @@ export default class AveParser extends Parser {
     func.params = this.parseParams();
 
     if (this.match(TokenType.ARROW)) {
-      func.returnType = this.parseType();
+      func.returnType = parseType(this);
     }
 
     this.consume(TokenType.COLON);
+    this.parseFunctionBody(func);
+    return func;
+  }
 
+  private parseFunctionBody(
+    func: AST.FunctionExpr | AST.FunctionDeclaration,
+    isArrow: boolean = false
+  ) {
     this.expect(TokenType.INDENT, 'Expected indented block.');
 
     // > push func scope.
     // > push block scope.
-    this.functionScopestack.push(func.body);
+    if (isArrow) this.functionScopestack.push(func.body);
     this.blockScopestack.push(func.body);
 
     while (!this.eof() && !this.match(TokenType.DEDENT))
       func.body.statements.push(this.statement());
 
     this.blockScopestack.pop();
-    this.functionScopestack.pop();
+    if (isArrow) this.functionScopestack.pop();
     // < pop block scope
     // < pop func scope
 
     // hoist the declaration so that it
     // can be accessed from anywhere.
-    this.currentBlockScope().declarations.push(
-      FuncDeclaration.fromASTNode(func)
-    );
-
-    return func;
+    if (func instanceof AST.FunctionDeclaration)
+      this.currentBlockScope().declarations.push(
+        FuncDeclaration.fromASTNode(func)
+      );
   }
 
   private parseParams(): AST.FunctionParam[] {
@@ -418,7 +431,7 @@ export default class AveParser extends Parser {
     // TODO check if param required
 
     if (this.match(TokenType.COLON)) {
-      type = this.parseType();
+      type = parseType(this);
     }
 
     if (this.match(TokenType.EQ)) {
@@ -449,5 +462,48 @@ export default class AveParser extends Parser {
     expr = this.parseExpression(Precedence.NONE);
     this.consume(TokenType.SEMI_COLON);
     return new AST.ReturnStmt(kw, expr);
+  }
+
+  private interfaceDecl(): AST.InterfaceDecl {
+    const name = this.next();
+    let isGeneric = false;
+    let typeArgs = [];
+
+    if (this.match(TokenType.LESS)) {
+      isGeneric = true;
+      typeArgs = this.parseGenericParams();
+    }
+
+    const _interface = new AST.InterfaceDecl(name, isGeneric);
+    this.consume(TokenType.COLON); // optional ':'
+    this.expect(TokenType.INDENT, 'Expected Indented block.');
+
+    while (!this.match(TokenType.DEDENT)) {
+      const name = this.expect(TokenType.NAME, 'Expected property name.');
+      // if (this.match(TokenType.L_PAREN)) {} //TODO
+      this.expect(TokenType.COLON, "Expected ':'.");
+      const type = parseType(this);
+      _interface.properties.set(name, type);
+    }
+
+    return _interface;
+  }
+
+  // private parseInterfaceMethod(): Typing.Type {
+
+  // }
+
+  private parseGenericParams(): Typing.Type[] {
+    const types: Typing.Type[] = [];
+
+    while (!this.match(TokenType.GREATER)) {
+      types.push(parseType(this));
+
+      if (!this.match(TokenType.COMMA)) {
+        this.expect(TokenType.GREATER, "Expected '>' after type arguments.");
+        break;
+      }
+    }
+    return types;
   }
 }

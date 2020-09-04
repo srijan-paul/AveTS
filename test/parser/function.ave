@@ -1,11 +1,11 @@
-func myFunction(a: str, b: num):
+func myFunction(a: str, b: num)
   let c = a + 1
-  if b == false:
+  if b == false
     c := 1
   return "aaa"
 
-func booltostr(b: bool):
-  if b:
+func booltostr(b: bool)
+  if b
     return "true"
   return"false"
 

@@ -1,6 +1,7 @@
 let a = 
   name: 'John',
   pet: 'dog',
+  fret: '',
   someRandomArray: [
     1,
     2,
@@ -11,3 +12,4 @@ let a =
   ]
 
 let person = name: 'John'
+

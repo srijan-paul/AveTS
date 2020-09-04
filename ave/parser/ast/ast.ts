@@ -272,6 +272,41 @@ export class ObjectExpr extends Expression {
   }
 }
 
+export class FunctionExpr extends Expression {
+  params: FunctionParam[] = [];
+  readonly body: Body = new Body();
+  readonly kind = NodeKind.FunctionExpr;
+  // return type of the function, inferred
+  // in the type checking phase.
+  returnType: Type = t_infer;
+  type: Type = t_Function;
+  readonly isArrow: boolean;
+
+  constructor(kw: Token, isArrow: boolean = false) {
+    super(kw);
+    this.isArrow = isArrow;
+  }
+
+  addParam(p: FunctionParam) {
+    this.params.push(p);
+  }
+
+  toString() {
+    let str = `${chalk.gray('function')} (`;
+
+    str +=
+      this.params
+        .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.type.toString()}`)
+        .join(', ') + `) -> ${this.returnType.toString()}\n`;
+
+    indent();
+    str += this.body.toString();
+    dedent();
+
+    return str;
+  }
+}
+
 export class IfStmt extends Node {
   readonly condition: Expression;
   readonly thenBody: Body;
@@ -342,6 +377,9 @@ export interface FunctionParam {
   required?: boolean;
 }
 
+// ideally this should contain a FunctionExpr
+// and just a name, to avoid code duplication.
+// but I'll just go with this for now.
 export class FunctionDeclaration extends Node {
   readonly name: string;
   params: FunctionParam[] = [];
@@ -401,5 +439,30 @@ export class ExprStmt extends Node {
 
   toString() {
     return `${chalk.gray('exprstmt')}: ${this.expr.toString()}`;
+  }
+}
+
+export class InterfaceDecl extends Node {
+  readonly name: string;
+  readonly isGeneric: boolean;
+  // only read from or written to in case
+  // the interface is a Generic.
+  readonly typeArgs: Type[] = [];
+  readonly properties: Map<Token, Type> = new Map();
+
+  constructor(name: Token, isGeneric: boolean = false) {
+    super(name);
+    this.name = name.raw;
+    this.isGeneric = isGeneric;
+  }
+
+  toString() {
+    let str = `${chalk.grey('interface')} ${this.name}:\n`;
+    indent();
+    str += Array.from(this.properties)
+      .map(e => `${indentstr()} ${e[0].raw}: ${e[1].toString()}`)
+      .join('\n');
+    dedent();
+    return str;
   }
 }

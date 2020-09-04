@@ -1,8 +1,8 @@
 start := 0
 
-for i = start, 10, 1:
+for i = start, 10, 1
   let a = 1 + i**2
   a = "a" # expect type error
 
-for i = 0, 10:
+for i = 0, 10
   k := i + 1

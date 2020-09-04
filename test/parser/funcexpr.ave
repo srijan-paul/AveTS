@@ -1,0 +1,4 @@
+let pow: (x: num) -> num
+
+pow = func (x: num)
+  return x ** 2

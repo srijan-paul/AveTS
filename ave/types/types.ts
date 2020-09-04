@@ -1,5 +1,6 @@
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
+import FunctionType from './function-type';
 // import MaybeType from './maybe-type';
 
 export const enum TypeName {
@@ -20,6 +21,7 @@ export class Type {
   readonly id: number;
   unresolved: boolean = false;
   isPrimitive = true;
+  properties: Map<string, Type> = new Map();
 
   constructor(tag: string, tSuper?: Type) {
     this.id = Type.nextID++;
@@ -33,6 +35,39 @@ export class Type {
 
   public toString() {
     return this.tag;
+  }
+
+  public hasProperty(key: string): boolean {
+    if (this == t_any) return true;
+    return this.properties.has(key);
+  }
+
+  // should only be called after checking with
+  // 'hasProperty'
+  public getProperty(name: string): Type {
+    return this.properties.get(name) as Type;
+  }
+
+  public hasMethod(name: string): boolean {
+    if (this == t_any) return true;
+    return (
+      this.properties.has(name) &&
+      this.properties.get(name) instanceof FunctionType
+    );
+  }
+
+  // should only be called after checking with
+  // 'hasMethod'
+  public getMethod(name: string): FunctionType {
+    return this.properties.get(name) as FunctionType;
+  }
+
+  public addMethod(name: string, type: FunctionType) {
+    this.properties.set(name, type);
+  }
+
+  public addProperty(name: string, type: Type) {
+    this.properties.set(name, type);
   }
 }
 
@@ -79,7 +114,7 @@ export function unknown(tag: string): Type {
 export function isValidAssignment(
   ta: Type,
   tb: Type,
-  type: TokenType
+  type: TokenType = TokenType.EQ
 ): boolean {
   if (type == TokenType.EQ) return ta.canAssign(tb);
 
@@ -333,5 +368,3 @@ export class t__Maybe extends Type {
     return `${this.type.toString()}|undefined`;
   }
 }
-
-

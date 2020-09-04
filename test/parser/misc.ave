@@ -1,6 +1,2 @@
-func foo(a: num = 123, b: str) -> str
-  c := a + b
-  c = "a"
-  if c != "b":
-    return "bbb"
-  return "a"
+let a = func (a: str) -> str
+  return a + 1

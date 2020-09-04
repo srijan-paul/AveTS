@@ -18,7 +18,9 @@ const enum NodeKind {
   ArrayExpr,
   ReturnStmt,
   FunctionDecl,
-  ObjectExpr
+  ObjectExpr,
+  InterfaceDecl,
+  FunctionExpr
 }
 
 export = NodeKind
