@@ -10,6 +10,7 @@ import { DeclarationKind, getDeclarationKind } from './symbol_table/symtable';
 import { callParser } from './parselets/call';
 import { FuncDeclaration, HoistedVarDeclaration } from '../types/declaration';
 import { ArrayParser } from './parselets/array';
+import { t_Array } from '../types/generic-type';
 
 export default class AveParser extends Parser {
   // current wrapping body. This is
@@ -242,7 +243,13 @@ export default class AveParser extends Parser {
 
   parseType(): Typing.Type {
     if (this.isValidType(this.peek())) {
-      return Typing.fromToken(this.next());
+      let typeToken = this.next();
+      
+      if (this.match(TokenType.L_SQ_BRACE)) {
+        this.expect(TokenType.R_SQ_BRACE, "Expected '[' token.");
+        return t_Array.create(Typing.fromToken(typeToken));
+      }
+      return Typing.fromToken(typeToken);
     }
     return Typing.t_any;
   }

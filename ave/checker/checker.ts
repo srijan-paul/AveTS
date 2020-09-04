@@ -13,7 +13,10 @@ import { ParsedData } from '../parser/parser';
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
 import { HoistedVarDeclaration } from '../types/declaration';
-import FunctionType, { t_Function } from '../types/function-type';
+import FunctionType, {
+  ParameterTypeInfo,
+  t_Function,
+} from '../types/function-type';
 import { t_Array } from '../types/generic-type';
 import * as Typing from '../types/types';
 
@@ -45,7 +48,11 @@ export default class Checker {
     this.env = this.rootEnv;
   }
 
-  private error(message: string, token: Token, errType?: ErrorType) {
+  private error(
+    message: string,
+    token: Token,
+    errType: ErrorType = ErrorType.TypeError
+  ) {
     const err: AveError = errorFromToken(
       token,
       message,
@@ -86,6 +93,11 @@ export default class Checker {
     // TODO replace after union
     // types are introducted.
     return Typing.t_any;
+  }
+
+  private checkMaybeType(t: Typing.Type): Typing.Type {
+    if (t == t_notype) return t;
+    return new Typing.t__Maybe(t);
   }
 
   private assertType(node: AST.Node, type: Typing.Type, msg?: string): boolean {
@@ -208,11 +220,7 @@ export default class Checker {
   private ifStmt(stmt: AST.IfStmt): Typing.Type {
     const _then = stmt.thenBody;
 
-    let type: Typing.Type = this.body(_then);
-
-    // if there is a return statement
-    // somewhere inside this if block.
-    if (type != t_notype) type = new Typing.t__Maybe(type);
+    let type: Typing.Type = this.checkMaybeType(this.body(_then));
 
     // TODO check this.
     let condType = this.expression(stmt.condition);
@@ -403,6 +411,7 @@ export default class Checker {
   private callExpr(expr: AST.CallExpr): Typing.Type {
     let callee = expr.callee;
     let type = this.typeOf(expr.callee);
+    let args = expr.args;
 
     if (!(type instanceof FunctionType)) {
       this.error(
@@ -421,9 +430,48 @@ export default class Checker {
       return Typing.t_error;
     }
 
-    // TODO check argument types.
+    this.checkArguments(args, (<FunctionType>type).params);
 
-    return type;
+    return <FunctionType>type.returnType;
+  }
+
+  private checkArguments(args: AST.Expression[], params: ParameterTypeInfo[]) {
+    let i = 0;
+    for (; i < params.length; i++) {
+      if (!args[i]) {
+        if (params[i].required) {
+          this.error(
+            `Missing argument '${params[i].name}' to function call.`,
+            args[i].token as Token
+          );
+        }
+        return;
+      }
+
+      let aType = this.expression(<AST.Expression>args[i]);
+
+      if (!Typing.isValidAssignment(params[i].type, aType, TokenType.EQ)) {
+        this.error(
+          `cannot assign argument of type '${aType.toString()}' to parameter of type ${params[
+            i
+          ].type.toString()}`,
+          args[i].token as Token
+        );
+      }
+    }
+
+    // unexpected argument
+    if (args[i]) {
+      let ord = 'th';
+      let digit = (i + 1) % 10;
+      if (digit == 2) ord = 'nd';
+      else if (digit == 3) ord = 'rd';
+      else if (digit == 1) ord = 'st';
+      this.error(
+        `Unexpected ${digit}${ord} argument to function call.`,
+        args[i].operator
+      );
+    }
   }
 
   private forStmt(forStmt: AST.ForStmt): Typing.Type {
@@ -447,7 +495,8 @@ export default class Checker {
       );
     }
 
-    return new Typing.t__Maybe(this.body(forStmt.body));
+    let type = this.body(forStmt.body);
+    return this.checkMaybeType(type);
   }
 
   private returnStmt(stmt: AST.ReturnStmt): Typing.Type {

@@ -16,7 +16,7 @@ export class Type {
   static nextID: number = 0;
 
   readonly tag: string;
-  readonly superType: Type | null;
+  superType: Type | null;
   readonly id: number;
   unresolved: boolean = false;
   isPrimitive = true;

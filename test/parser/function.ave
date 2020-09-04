@@ -4,8 +4,9 @@ func myFunction(a: str, b: num):
     c := 1
   return "aaa"
 
-func aaa():
-  a := 1
-  return "aa";
+func booltostr(b: bool):
+  if b:
+    return "true"
+  return"false"
 
-aaa();
+a :str = booltostr(true)

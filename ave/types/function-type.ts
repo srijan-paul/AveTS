@@ -18,6 +18,7 @@ export default class FunctionType extends Type {
 
   constructor(name?: string, params?: ParameterTypeInfo[], retType ?: Type) {
     super(name || '');
+    this.superType = t_Function;
     this.params = params || [];
     this.returnType = retType || t_any;
   }

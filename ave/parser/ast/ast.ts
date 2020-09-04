@@ -228,7 +228,7 @@ export class VarDeclarator extends Node {
 }
 
 export class CallExpr extends Expression {
-  readonly args: Node[] = [];
+  readonly args: Expression[] = [];
   readonly callee: Node;
   readonly kind = NodeKind.CallExpr;
   constructor(callee: Node, lparen: Token) {

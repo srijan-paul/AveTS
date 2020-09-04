@@ -1,10 +1,4 @@
-a := [1, 2, 3, 4]
-b := [false, true]
-let as: str = "aaa"
-b = [true, false, true]
-
-let c = [1, 2]
-c = []
-a = []
-
-return false; #expect syntax error
+arr1: str[] = ["aa", "abv", "adad"];
+arr2: num[] = [123, 345, 13];
+arr3: bool[] = [true, true, false]
+arr4: str[] = [1, 2, 3] #expect typeerror
