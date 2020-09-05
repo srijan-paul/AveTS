@@ -20,12 +20,13 @@ export class Type {
   superType: Type | null;
   readonly id: number;
   unresolved: boolean = false;
-  isPrimitive = true;
+  isPrimitive: boolean;
   properties: Map<string, Type> = new Map();
 
-  constructor(tag: string, tSuper?: Type) {
+  constructor(tag: string, tSuper?: Type, isPrimitive = false) {
     this.id = Type.nextID++;
     this.tag = tag;
+    this.isPrimitive = isPrimitive;
     this.superType = tSuper || null;
   }
 
@@ -39,35 +40,62 @@ export class Type {
 
   public hasProperty(key: string): boolean {
     if (this == t_any) return true;
+    if (this.superType) return this.superType.hasProperty(key);
+    return this.properties.has(key);
+  }
+
+  public hasOwnProperty(key: string): boolean {
+    if (this == t_any) return true;
     return this.properties.has(key);
   }
 
   // should only be called after checking with
   // 'hasProperty'
-  public getProperty(name: string): Type {
-    return this.properties.get(name) as Type;
+  public getProperty(name: string): Type | null {
+    if (this.properties.has(name)) this.properties.get(name) as Type;
+    if (this.superType) return this.superType.getProperty(name);
+    return null;
   }
 
   public hasMethod(name: string): boolean {
     if (this == t_any) return true;
+    if (this.properties.has(name))
+      return this.properties.get(name) instanceof FunctionType;
+    if (this.superType) this.superType.hasMethod(name);
+    return false;
+  }
+
+  public hasOwnMethod(key: string): boolean {
+    if (this == t_any) return true;
     return (
-      this.properties.has(name) &&
+      this.properties.has(key) &&
       this.properties.get(name) instanceof FunctionType
     );
   }
 
-  // should only be called after checking with
-  // 'hasMethod'
-  public getMethod(name: string): FunctionType {
-    return this.properties.get(name) as FunctionType;
-  }
-
-  public addMethod(name: string, type: FunctionType) {
-    this.properties.set(name, type);
-  }
-
   public addProperty(name: string, type: Type) {
     this.properties.set(name, type);
+  }
+
+  // returns a new type with the same properties
+  // but a different ID.
+  // a primitive when cloned returns only a reference
+  // to itself.
+  public clone(): Type {
+    if (this.isPrimitive) return this;
+    return new Type(this.tag);
+  }
+
+  // if it's a compound type, replaces
+  // all occurances of a type 'T' with 
+  // the provided type 't2'.
+  // when called on a primitive type, it 
+  // just returns t2 if the type is equal to 
+  // t1. else returns itself.
+  public substitute(t1: Type, t2: Type): Type {
+    // primtives are not compound types.
+    if (t1 == this) return t2;
+    return t1;
   }
 }
 
@@ -105,7 +133,7 @@ export const t_bottom = new Type('bottom');
 // is not found, a NameError is
 // thrown.
 
-export function unknown(tag: string): Type {
+export function unresolvedType(tag: string): Type {
   const t_unknown = new Type(tag);
   t_unknown.unresolved = true;
   return t_unknown;
@@ -140,7 +168,7 @@ export function fromString(str: string): Type {
       return t_object;
   }
 
-  return unknown(str);
+  return unresolvedType(str);
 }
 
 export function fromToken(tok: Token): Type {
@@ -157,7 +185,7 @@ export function fromToken(tok: Token): Type {
       return t_any;
   }
 
-  return unknown(tok.raw);
+  return unresolvedType(tok.raw);
 }
 
 // a rule specifies the data type of the result

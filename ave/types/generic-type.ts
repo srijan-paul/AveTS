@@ -1,30 +1,44 @@
 import TokenType = require('../lexer/tokentype');
-import { isValidAssignment, Type } from './types';
+import FunctionType from './function-type';
+import { isValidAssignment, Type, unresolvedType } from './types';
 
 export default class GenericType extends Type {
-  readonly paramTypeCount: number;
   readonly isPrimitive = false;
+  private typeParams: Type[] = [];
 
   static areEquivalent(t1: GenericType, t2: GenericType) {
     return t1.id == t2.id;
   }
 
-  constructor(tag: string, n: number) {
+  constructor(tag: string, typeargs: Type[]) {
     super(tag);
-    this.paramTypeCount = n;
+    this.typeParams = typeargs;
   }
 
-  canAssign(t: Type): boolean {
+  public canAssign(t: Type): boolean {
     if (t instanceof GenericType) {
       return GenericType.areEquivalent(this, t);
     }
     return false;
   }
 
-  create(...t: Type[]): GenericTypeInstance {
-    if (t.length != this.paramTypeCount)
+  public create(...t: Type[]): GenericTypeInstance {
+    if (t.length != this.typeParams.length)
       throw new Error('incorrect number of arguments to generic type.');
-    return new GenericTypeInstance(`${this.tag}`, this.id, ...t);
+    let instance = new GenericTypeInstance(`${this.tag}`, this.id, ...t);
+
+    for (const [name, type] of Array.from(this.properties.entries())) {
+      let _type = type.clone();
+      // replace all T, U, K etc with actual types
+      // arguments.
+      this.typeParams.forEach((e, i) =>
+        _type.substitute(e, this.typeParams[i])
+      );
+
+      instance.addProperty(name, _type);
+    }
+
+    return instance;
   }
 }
 
@@ -79,4 +93,4 @@ export class GenericTypeInstance extends Type {
   }
 }
 
-export const t_Array = new GenericType('Array', 1);
+export const t_Array = new GenericType('Array', [unresolvedType('T')]);

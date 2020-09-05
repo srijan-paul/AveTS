@@ -56,6 +56,22 @@ export default class FunctionType extends Type {
     return true;
   }
 
+  public clone(): FunctionType {
+    let fnType = new FunctionType('', [], this.returnType.clone());
+
+    for (let param of this.params) {
+      fnType.params.push({
+        name: param.name,
+        type: param.type.clone(),
+        required: param.required,
+        rest: param.rest,
+        hasDefault: param.hasDefault,
+      });
+    }
+
+    return fnType;
+  }
+
   public toString() {
     if (this.tag) return this.tag;
     return `(${this.params
@@ -66,6 +82,15 @@ export default class FunctionType extends Type {
         return s;
       })
       .join(', ')}) -> ${this.returnType.toString()}`;
+  }
+
+  public substitute(t1: Type, t2: Type): Type {
+    for (let param of this.params) {
+      param.type = param.type.substitute(t1, t2);
+    }
+
+    this.returnType = this.returnType.substitute(t1, t2);
+    return this;
   }
 }
 

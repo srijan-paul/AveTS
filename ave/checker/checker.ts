@@ -599,7 +599,7 @@ export default class Checker {
     if (returnType == t_notype) returnType = Typing.t_undef;
 
     let annotatedType = this.type(func.returnTypeInfo);
-    
+
     if (annotatedType == Typing.t_infer) func.returnTypeInfo.type = returnType;
 
     if (!Typing.isValidAssignment(func.returnTypeInfo.type, returnType))
@@ -659,6 +659,7 @@ export default class Checker {
       typeDef.addProperty(item[0].raw, this.type(item[1]));
     }
 
+    this.env.defineType(stmt.name, typeDef);
     return t_notype;
   }
 }
