@@ -168,7 +168,7 @@ export default class Parser {
 
     if (!prefix) {
       // throw error
-      this.error(`Expected expression near '${token.raw}'`, token);
+      this.error(`Unexpected'${token.raw}'`, token);
       return new AST.Node(token) as AST.Expression;
     }
 

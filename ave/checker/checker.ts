@@ -1,4 +1,5 @@
 import { builtinModules } from 'module';
+import { type } from 'os';
 import {
   AveError,
   errorFromToken,
@@ -69,6 +70,17 @@ export default class Checker {
 
   private popScope() {
     this.env = this.env.pop();
+  }
+
+  // resolves a type from provided type-info
+  // if the type is unresolvedm it looks
+  // for the type in the environment chain.
+  private type(t: AST.TypeInfo): Typing.Type {
+    if (!t.type.unresolved) return t.type;
+    let type = this.env.findType(t.type.tag);
+    if (!type) this.error(`Cannot find type ${t.type.tag}`, t.token);
+    // !
+    return type || Typing.t_undef;
   }
 
   private mergeTypes(t1: Typing.Type, t2: Typing.Type): Typing.Type {
@@ -150,6 +162,8 @@ export default class Checker {
         return this.forStmt(<AST.ForStmt>stmt);
       case NodeKind.ReturnStmt:
         return this.returnStmt(<AST.ReturnStmt>stmt);
+      case NodeKind.InterfaceDecl:
+        return this.interfaceDecl(<AST.InterfaceDecl>stmt);
       case NodeKind.ExprStmt:
         // just run it through the expression
         // to detect type errors.
@@ -173,7 +187,7 @@ export default class Checker {
   }
 
   private checkDeclarator(node: AST.VarDeclarator, kind: DeclarationKind) {
-    let type = node.type;
+    let type = this.type(node.typeInfo);
     let currentType = type;
 
     // check if symbol already exists
@@ -181,8 +195,7 @@ export default class Checker {
     if (this.env.has(node.name)) {
       this.error(
         `Attempt to redeclare symbol '${node.name}'.`,
-        node.token as Token,
-        ErrorType.TypeError
+        node.token as Token
       );
       return;
     }
@@ -195,8 +208,7 @@ export default class Checker {
     } else if (type == Typing.t_infer) {
       this.error(
         `'${node.name}' must either be initliazed or type annotated`,
-        node.token as Token,
-        ErrorType.TypeError
+        node.token as Token
       );
     }
 
@@ -313,8 +325,7 @@ export default class Checker {
     if (type == Typing.t_error) {
       this.error(
         `Cannot use operator '${expr.operator.raw}' on operands of type '${lType.tag}' and '${rType.tag}'`,
-        expr.operator,
-        ErrorType.TypeError
+        expr.operator
       );
     }
 
@@ -343,7 +354,7 @@ export default class Checker {
               node.operator.raw
             }' on operand types '${rType.toString()}' and '${lType.toString()}'`;
 
-      this.error(message, node.operator, ErrorType.TypeError);
+      this.error(message, node.operator);
     }
 
     return rType;
@@ -432,12 +443,12 @@ export default class Checker {
       return Typing.t_error;
     }
 
-    this.checkArguments(args, (<FunctionType>type).params);
+    this.verifyArguments(args, (<FunctionType>type).params);
 
     return <FunctionType>type.returnType;
   }
 
-  private checkArguments(args: AST.Expression[], params: ParameterTypeInfo[]) {
+  private verifyArguments(args: AST.Expression[], params: ParameterTypeInfo[]) {
     let i = 0;
     for (; i < params.length; i++) {
       if (!args[i]) {
@@ -530,47 +541,51 @@ export default class Checker {
   private functionDeclaration(func: AST.FunctionDeclaration): Typing.Type {
     this.verifyFunctionParams(func.params);
 
-    this.functionReturnStack.push(func.returnType);
+    this.functionReturnStack.push(this.type(func.returnTypeInfo));
     func.params.forEach(e => {
-      func.body.declarations.push(new HoistedVarDeclaration(e.name, e.type));
+      func.body.declarations.push(
+        new HoistedVarDeclaration(e.name, this.type(e.typeInfo))
+      );
     });
 
-    let type = this.body(func.body);
+    let returnType = this.body(func.body);
 
     // if there was no return statement
     // anywhere inside the function's body,
     // it has a return type of undefined.
 
-    if (type == t_notype) type = Typing.t_undef;
+    if (returnType == t_notype) returnType = Typing.t_undef;
 
-    if (func.returnType == Typing.t_infer) {
-      func.returnType = type;
+    if (this.type(func.returnTypeInfo) == Typing.t_infer) {
+      func.returnTypeInfo.type = returnType;
       let fntype = this.env.find(func.name);
-      (<FunctionType>fntype?.dataType).returnType = type;
+      (<FunctionType>fntype?.dataType).returnType = returnType;
     }
 
-    if (type != func.returnType)
+    if (!Typing.isValidAssignment(this.type(func.returnTypeInfo), returnType))
       this.error(
-        `Function doesn't always return a value of type '${func.returnType}'.`,
+        `Function doesn't always return a value of type '${func.returnTypeInfo.toString()}'.`,
         func.token as Token
       );
 
     this.functionReturnStack.pop();
-    return type;
+    return returnType;
   }
 
   private funcExpr(func: AST.FunctionExpr) {
     this.verifyFunctionParams(func.params);
 
-    this.functionReturnStack.push(func.returnType);
+    this.functionReturnStack.push(this.type(func.returnTypeInfo));
 
     let paramTypeInfo: ParameterTypeInfo[] = [];
 
     func.params.forEach(e => {
-      func.body.declarations.push(new HoistedVarDeclaration(e.name, e.type));
+      func.body.declarations.push(
+        new HoistedVarDeclaration(e.name, this.type(e.typeInfo))
+      );
       paramTypeInfo.push({
         name: e.name,
-        type: e.type,
+        type: this.type(e.typeInfo),
         required: !!e.required,
       });
     });
@@ -583,11 +598,13 @@ export default class Checker {
 
     if (returnType == t_notype) returnType = Typing.t_undef;
 
-    if (func.returnType == Typing.t_infer) func.returnType = returnType;
+    let annotatedType = this.type(func.returnTypeInfo);
+    
+    if (annotatedType == Typing.t_infer) func.returnTypeInfo.type = returnType;
 
-    if (returnType != func.returnType)
+    if (!Typing.isValidAssignment(func.returnTypeInfo.type, returnType))
       this.error(
-        `Function doesn't always return a value of type '${func.returnType}'.`,
+        `Function doesn't always return a value of type '${annotatedType.toString()}'.`,
         func.token as Token
       );
 
@@ -618,11 +635,12 @@ export default class Checker {
       if (params[i].defaultValue) {
         let type = this.expression(<AST.Expression>params[i].defaultValue);
 
-        if (!Typing.isValidAssignment(params[i].type, type, TokenType.EQ)) {
+        let annotatedType = this.type(params[i].typeInfo);
+        if (!Typing.isValidAssignment(annotatedType, type, TokenType.EQ)) {
           this.error(
             `Cannot assign value of type '${type.toString()}' to paramter of type '${params[
               i
-            ].type.toString()}'`,
+            ].typeInfo.toString()}'`,
             params[i].token
           );
           return false;
@@ -630,5 +648,17 @@ export default class Checker {
       }
     }
     return true;
+  }
+
+  private interfaceDecl(stmt: AST.InterfaceDecl) {
+    // TODO
+    let typeDef = new Typing.Type(stmt.name);
+    let propArray = Array.from(stmt.properties);
+
+    for (const item of propArray) {
+      typeDef.addProperty(item[0].raw, this.type(item[1]));
+    }
+
+    return t_notype;
   }
 }

@@ -211,17 +211,17 @@ export class VarDeclarator extends Node {
   readonly name: string;
   readonly value: Node | null;
   readonly kind = NodeKind.VarDeclarator;
-  readonly type: Type = t_any;
+  readonly typeInfo: TypeInfo;
 
-  constructor(name: Token, value: Node | null, type: Type) {
+  constructor(name: Token, value: Node | null, type: TypeInfo) {
     super(name);
     this.name = name.raw;
     this.value = value;
-    this.type = type;
+    this.typeInfo = type;
   }
 
   toString() {
-    return `${this.name}: ${this.type.tag} = ${
+    return `${this.name}: ${this.typeInfo.toString()} = ${
       this.value ? this.value.toString() : ''
     }`;
   }
@@ -278,13 +278,14 @@ export class FunctionExpr extends Expression {
   readonly kind = NodeKind.FunctionExpr;
   // return type of the function, inferred
   // in the type checking phase.
-  returnType: Type = t_infer;
+  returnTypeInfo: TypeInfo;
   type: Type = t_Function;
   readonly isArrow: boolean;
 
-  constructor(kw: Token, isArrow: boolean = false) {
+  constructor(kw: Token, returnType: TypeInfo, isArrow: boolean = false) {
     super(kw);
     this.isArrow = isArrow;
+    this.returnTypeInfo = returnType;
   }
 
   addParam(p: FunctionParam) {
@@ -296,8 +297,10 @@ export class FunctionExpr extends Expression {
 
     str +=
       this.params
-        .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.type.toString()}`)
-        .join(', ') + `) -> ${this.returnType.toString()}\n`;
+        .map(
+          p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.typeInfo.toString()}`
+        )
+        .join(', ') + `) -> ${this.returnTypeInfo.toString()}\n`;
 
     indent();
     str += this.body.toString();
@@ -370,7 +373,7 @@ export class ForStmt extends Node {
 
 export interface FunctionParam {
   name: string;
-  type: Type;
+  typeInfo: TypeInfo;
   token: Token;
   defaultValue?: Expression;
   rest: boolean;
@@ -387,12 +390,13 @@ export class FunctionDeclaration extends Node {
   readonly kind = NodeKind.FunctionDecl;
   // return type of the function, inferred
   // in the type checking phase.
-  returnType: Type = t_infer;
+  returnTypeInfo: TypeInfo;
   type: Type = t_Function;
 
-  constructor(name: Token) {
+  constructor(name: Token, returnType: TypeInfo) {
     super(name);
     this.name = name.raw;
+    this.returnTypeInfo = returnType;
   }
 
   addParam(p: FunctionParam) {
@@ -404,8 +408,10 @@ export class FunctionDeclaration extends Node {
 
     str +=
       this.params
-        .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.type.toString()}`)
-        .join(', ') + `) -> ${this.returnType.toString()}\n`;
+        .map(
+          p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.typeInfo.toString()}`
+        )
+        .join(', ') + `) -> ${this.returnTypeInfo.toString()}\n`;
 
     indent();
     str += this.body.toString();
@@ -448,7 +454,8 @@ export class InterfaceDecl extends Node {
   // only read from or written to in case
   // the interface is a Generic.
   readonly typeArgs: Type[] = [];
-  readonly properties: Map<Token, Type> = new Map();
+  readonly properties: Map<Token, TypeInfo> = new Map();
+  readonly kind = NodeKind.InterfaceDecl;
 
   constructor(name: Token, isGeneric: boolean = false) {
     super(name);
@@ -464,5 +471,35 @@ export class InterfaceDecl extends Node {
       .join('\n');
     dedent();
     return str;
+  }
+}
+
+export class TypeDef extends Node {
+  readonly name: string;
+  readonly typeInfo: TypeInfo;
+
+  constructor(tok: Token, t: TypeInfo) {
+    super(tok);
+    this.name = tok.raw;
+    this.typeInfo = t;
+  }
+
+  toString() {
+    return `typedef ${this.name} = ${this.typeInfo.toString()}`;
+  }
+}
+
+export class TypeInfo extends Node {
+  readonly token: Token;
+  type: Type;
+
+  constructor(tk: Token, t: Type) {
+    super(tk);
+    this.token = tk;
+    this.type = t;
+  }
+
+  toString() {
+    return this.type.toString();
   }
 }

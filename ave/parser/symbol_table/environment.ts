@@ -1,3 +1,4 @@
+import { Type } from '../../types/types';
 import SymbolTable, { SymbolData } from './symtable';
 
 /* Environment:
@@ -14,6 +15,7 @@ export default class Environment {
   private readonly symTable: SymbolTable;
   private readonly parent: Environment | null;
   private child?: Environment;
+  private typedefs: Map<string, Type> = new Map();
 
   constructor(parent?: Environment) {
     this.symTable = new SymbolTable();
@@ -38,12 +40,24 @@ export default class Environment {
     return this.symTable.has(name);
   }
 
+  defineType(name: string, t:Type) {
+    this.typedefs.set(name, t);
+  }
+
   find(name: string): SymbolData | null {
     if (this.symTable.has(name)) {
       return <SymbolData>this.symTable.get(name);
     }
 
     if (this.parent) return this.parent.find(name);
+    return null;
+  }
+
+  findType(name: string): Type | null {
+    if (this.typedefs.has(name)) {
+      this.typedefs.get(name);
+    }
+    if (this.parent) return this.parent.findType(name);
     return null;
   }
 

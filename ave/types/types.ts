@@ -91,7 +91,7 @@ export const t_error = new Type('<%error%>');
 
 // used as a place holder for types that need
 // to be infererenced from the declaration
-export const t_infer = new Type('<%infer%>');
+export const t_infer = new Type('<%_infer_%>');
 
 // a bottom type (https://en.wikipedia.org/wiki/Bottom_type).
 export const t_bottom = new Type('bottom');

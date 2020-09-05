@@ -46,14 +46,14 @@ export class FuncDeclaration implements Declaration {
     for (let p of node.params) {
       params.push({
         name: p.name,
-        type: p.type,
+        type: p.typeInfo.type,
         required: !!p.required,
         rest: p.rest,
       });
     }
     return new FuncDeclaration(
       node.name,
-      new FunctionType('', params, node.returnType)
+      new FunctionType('', params, node.returnTypeInfo.type)
     );
   }
 

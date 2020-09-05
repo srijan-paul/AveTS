@@ -2,7 +2,7 @@ import { throws } from 'assert';
 import { isValidAssignment, Type, t_any } from './types';
 
 // Function Types
-// declared as (p1: t1, p2: t2) => rt
+// declared as (p1: t1, p2: t2) -> rt
 
 export interface ParameterTypeInfo {
   name: string;

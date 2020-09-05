@@ -1,2 +1,8 @@
 interface Array:
   length: num
+  pop: () -> num
+
+let a: () -> num
+
+a = func () 
+  return 5
