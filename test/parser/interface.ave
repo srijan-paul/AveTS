@@ -1,8 +1,9 @@
-interface Array:
+interface Array<T>:
   length: num
   pop: () -> num
+  lop: bool
 
-let a: () -> num
-
-a = func () 
-  return 5
+let a: Array= 
+  length: 1,
+  pop: func ()
+    return 2

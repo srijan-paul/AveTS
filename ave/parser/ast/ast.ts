@@ -457,10 +457,11 @@ export class InterfaceDecl extends Node {
   readonly properties: Map<Token, TypeInfo> = new Map();
   readonly kind = NodeKind.InterfaceDecl;
 
-  constructor(name: Token, isGeneric: boolean = false) {
+  constructor(name: Token, isGeneric: boolean = false, typeArgs: Type[]) {
     super(name);
     this.name = name.raw;
     this.isGeneric = isGeneric;
+    this.typeArgs = typeArgs;
   }
 
   toString() {

@@ -55,7 +55,7 @@ export default class Environment {
 
   findType(name: string): Type | null {
     if (this.typedefs.has(name)) {
-      this.typedefs.get(name);
+      return  <Type>this.typedefs.get(name);
     }
     if (this.parent) return this.parent.findType(name);
     return null;

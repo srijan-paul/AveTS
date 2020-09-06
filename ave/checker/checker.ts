@@ -1,5 +1,3 @@
-import { builtinModules } from 'module';
-import { type } from 'os';
 import {
   AveError,
   errorFromToken,
@@ -14,11 +12,9 @@ import { ParsedData } from '../parser/parser';
 import Environment from '../parser/symbol_table/environment';
 import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
 import { HoistedVarDeclaration } from '../types/declaration';
-import FunctionType, {
-  ParameterTypeInfo,
-  t_Function,
-} from '../types/function-type';
-import { t_Array } from '../types/generic-type';
+import FunctionType, { ParameterTypeInfo } from '../types/function-type';
+import GenericType, { t_Array } from '../types/generic-type';
+import ObjectType from '../types/object-type';
 import * as Typing from '../types/types';
 
 let t_notype = new Typing.Type('<%no type%>');
@@ -200,10 +196,15 @@ export default class Checker {
       return;
     }
 
-    // type inference
+    let isDeclared = false;
+
+    // if the variable has been
+    // declared with a value,
+    // then infer it's type from that
 
     if (node.value) {
       currentType = this.typeOf(node.value);
+      isDeclared = true;
       if (type == Typing.t_infer) type = currentType;
     } else if (type == Typing.t_infer) {
       this.error(
@@ -212,7 +213,8 @@ export default class Checker {
       );
     }
 
-    if (!Typing.isValidAssignment(type, currentType, TokenType.EQ)) {
+
+    if (isDeclared && !Typing.isValidAssignment(type, currentType)) {
       this.error(
         `cannot intialize '${node.name}' with type '${currentType.toString()}'`,
         node.token as Token
@@ -223,7 +225,8 @@ export default class Checker {
       name: node.name,
       declType: kind,
       dataType: type,
-      currentType: currentType,
+      currentType,
+      isDeclared,
     };
 
     this.env.define(node.name, declaration);
@@ -273,6 +276,8 @@ export default class Checker {
         return this.callExpr(<AST.CallExpr>expr);
       case NodeKind.FunctionExpr:
         return this.funcExpr(<AST.FunctionExpr>expr);
+      case NodeKind.ObjectExpr:
+        return this.objectExpr(<AST.ObjectExpr>expr);
     }
     return Typing.t_error;
   }
@@ -487,6 +492,16 @@ export default class Checker {
     }
   }
 
+  private objectExpr(obj: AST.ObjectExpr): ObjectType {
+    let t_object = new ObjectType('object');
+
+    obj.kvPairs.forEach((val: AST.Expression, key: Token) => {
+      t_object.defineProperty(key.raw, this.expression(val));
+    });
+
+    return t_object;
+  }
+
   private forStmt(forStmt: AST.ForStmt): Typing.Type {
     this.assertType(
       forStmt.start,
@@ -652,14 +667,24 @@ export default class Checker {
 
   private interfaceDecl(stmt: AST.InterfaceDecl) {
     // TODO
-    let typeDef = new Typing.Type(stmt.name);
-    let propArray = Array.from(stmt.properties);
+    let typeDef: Typing.Type;
 
-    for (const item of propArray) {
-      typeDef.addProperty(item[0].raw, this.type(item[1]));
-    }
+    if (stmt.isGeneric) typeDef = new GenericType(stmt.name, stmt.typeArgs);
+    else typeDef = new ObjectType(stmt.name);
+
+    stmt.properties.forEach((value: AST.TypeInfo, key: Token) => {
+      typeDef.defineProperty(key.raw, this.findTypeArg(typeDef, value));
+    });
 
     this.env.defineType(stmt.name, typeDef);
     return t_notype;
+  }
+
+  private findTypeArg(_interface: Typing.Type, t: AST.TypeInfo): Typing.Type {
+    if (_interface instanceof GenericType) {
+      return _interface.getTypeArg(t.type) || this.type(t);
+    }
+
+    return this.type(t);
   }
 }

@@ -24,6 +24,7 @@ export interface SymbolData {
   declType: DeclarationKind;
   dataType: Type;
   currentType: Type;
+  isDeclared: boolean;
 }
 
 export default class SymbolTable {

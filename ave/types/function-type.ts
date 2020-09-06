@@ -85,12 +85,14 @@ export default class FunctionType extends Type {
   }
 
   public substitute(t1: Type, t2: Type): Type {
-    for (let param of this.params) {
+    let fnType = this.clone();
+
+    for (let param of fnType.params) {
       param.type = param.type.substitute(t1, t2);
     }
 
-    this.returnType = this.returnType.substitute(t1, t2);
-    return this;
+    fnType.returnType = fnType.returnType.substitute(t1, t2);
+    return fnType;
   }
 }
 

@@ -13,6 +13,7 @@ import { ArrayParser } from './parselets/array';
 import { t_Array } from '../types/generic-type';
 import { ObjectParser, InfixObjectParser } from './parselets/object';
 import parseType from './parselets/type-parser';
+import { type } from 'os';
 
 export default class AveParser extends Parser {
   // current wrapping body. This is
@@ -469,14 +470,14 @@ export default class AveParser extends Parser {
   private interfaceDecl(): AST.InterfaceDecl {
     const name = this.next();
     let isGeneric = false;
-    let typeArgs = [];
+    let typeArgs: Typing.Type[] = [];
 
     if (this.match(TokenType.LESS)) {
       isGeneric = true;
       typeArgs = this.parseGenericParams();
     }
 
-    const _interface = new AST.InterfaceDecl(name, isGeneric);
+    const _interface = new AST.InterfaceDecl(name, isGeneric, typeArgs);
     this.consume(TokenType.COLON); // optional ':'
     this.expect(TokenType.INDENT, 'Expected Indented block.');
 

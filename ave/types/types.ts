@@ -52,7 +52,7 @@ export class Type {
   // should only be called after checking with
   // 'hasProperty'
   public getProperty(name: string): Type | null {
-    if (this.properties.has(name)) this.properties.get(name) as Type;
+    if (this.properties.has(name)) return this.properties.get(name) as Type;
     if (this.superType) return this.superType.getProperty(name);
     return null;
   }
@@ -73,7 +73,7 @@ export class Type {
     );
   }
 
-  public addProperty(name: string, type: Type) {
+  public defineProperty(name: string, type: Type) {
     this.properties.set(name, type);
   }
 
@@ -87,10 +87,10 @@ export class Type {
   }
 
   // if it's a compound type, replaces
-  // all occurances of a type 'T' with 
+  // all occurances of a type 'T' with
   // the provided type 't2'.
-  // when called on a primitive type, it 
-  // just returns t2 if the type is equal to 
+  // when called on a primitive type, it
+  // just returns t2 if the type is equal to
   // t1. else returns itself.
   public substitute(t1: Type, t2: Type): Type {
     // primtives are not compound types.
@@ -106,7 +106,6 @@ export const t_any = new Type(TypeName.any);
 // primitive types that are built
 // into Javascript.
 
-export const t_object = new Type(TypeName.object);
 export const t_string = new Type(TypeName.string);
 export const t_number = new Type(TypeName.number);
 export const t_bool = new Type(TypeName.bool);
@@ -164,8 +163,8 @@ export function fromString(str: string): Type {
       return t_number;
     case TypeName.bool:
       return t_bool;
-    case TypeName.object:
-      return t_object;
+    // case TypeName.object:
+    //   return t_object;
   }
 
   return unresolvedType(str);
@@ -179,8 +178,8 @@ export function fromToken(tok: Token): Type {
       return t_bool;
     case TokenType.NUMBER:
       return t_number;
-    case TokenType.OBJECT:
-      return t_object;
+    // case TokenType.OBJECT:
+    //   return t_object;
     case TokenType.ANY:
       return t_any;
   }

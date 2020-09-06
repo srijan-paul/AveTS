@@ -1,5 +1,4 @@
 import TokenType = require('../lexer/tokentype');
-import FunctionType from './function-type';
 import { isValidAssignment, Type, unresolvedType } from './types';
 
 export default class GenericType extends Type {
@@ -27,18 +26,26 @@ export default class GenericType extends Type {
       throw new Error('incorrect number of arguments to generic type.');
     let instance = new GenericTypeInstance(`${this.tag}`, this.id, ...t);
 
-    for (const [name, type] of Array.from(this.properties.entries())) {
-      let _type = type.clone();
+    this.properties.forEach((type: Type, name: string) => {
+      let _type = type.clone(); // TODO: remove the clone
       // replace all T, U, K etc with actual types
       // arguments.
       this.typeParams.forEach((e, i) =>
-        _type.substitute(e, this.typeParams[i])
+        _type = _type.substitute(e, this.typeParams[i])
       );
 
-      instance.addProperty(name, _type);
-    }
+      instance.defineProperty(name, _type);
+    })
 
     return instance;
+  }
+
+  public hasTypeArg(t: Type): boolean {
+    return this.typeParams.includes(t);
+  }
+
+  public getTypeArg(t: Type): Type | null {
+    return this.typeParams[this.typeParams.indexOf(t)] || null;
   }
 }
 
@@ -85,7 +92,17 @@ export class GenericTypeInstance extends Type {
     if (t instanceof GenericTypeInstance) {
       return GenericTypeInstance.canAssign(this, t);
     }
-    return false;
+
+    // if it has all the properties
+    // and methods defined in the interface
+    // then it can be assigned.
+    this.properties.forEach((type: Type, name: string) => {
+      if (!t.hasProperty(name)) return false;
+      let prop = <Type>t.getProperty(name);
+      if (!type.canAssign(prop)) return false;
+    });
+
+    return true;
   }
 
   toString() {
