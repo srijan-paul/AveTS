@@ -20,13 +20,13 @@ export class Type {
   superType: Type | null;
   readonly id: number;
   unresolved: boolean = false;
-  isPrimitive: boolean;
+  isPrimitive: boolean = false;
   properties: Map<string, Type> = new Map();
 
-  constructor(tag: string, tSuper?: Type, isPrimitive = false) {
+  constructor(tag: string, isPrimirive = false, tSuper?: Type) {
     this.id = Type.nextID++;
     this.tag = tag;
-    this.isPrimitive = isPrimitive;
+    this.isPrimitive = isPrimirive;
     this.superType = tSuper || null;
   }
 
@@ -106,22 +106,22 @@ export const t_any = new Type(TypeName.any);
 // primitive types that are built
 // into Javascript.
 
-export const t_string = new Type(TypeName.string);
-export const t_number = new Type(TypeName.number);
-export const t_bool = new Type(TypeName.bool);
-export const t_undef = new Type(TypeName.undef);
-export const t_nil = new Type(TypeName.nil);
+export const t_string = new Type(TypeName.string, true);
+export const t_number = new Type(TypeName.number, true);
+export const t_bool = new Type(TypeName.bool, true);
+export const t_undef = new Type(TypeName.undef, true);
+export const t_nil = new Type(TypeName.nil, true);
 
 // error type is returned in places where
 // an operator is used on unexpected operand types
-export const t_error = new Type('<%error%>');
+export const t_error = new Type('<%error%>', true);
 
 // used as a place holder for types that need
 // to be infererenced from the declaration
-export const t_infer = new Type('<%_infer_%>');
+export const t_infer = new Type('<%_infer_%>', true);
 
 // a bottom type (https://en.wikipedia.org/wiki/Bottom_type).
-export const t_bottom = new Type('bottom');
+export const t_bottom = new Type('bottom', true);
 
 // create a new unresolved type to
 // be used as a place holder type
@@ -133,7 +133,7 @@ export const t_bottom = new Type('bottom');
 // thrown.
 
 export function unresolvedType(tag: string): Type {
-  const t_unknown = new Type(tag);
+  const t_unknown = new Type(tag, true);
   t_unknown.unresolved = true;
   return t_unknown;
 }

@@ -1,9 +1,10 @@
-interface Array<T>:
+interface Array:
   length: num
   pop: () -> num
-  lop: bool
+  lop: str
 
 let a: Array= 
   length: 1,
   pop: func ()
     return 2
+  lop: "false"

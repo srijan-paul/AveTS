@@ -16,6 +16,7 @@ import FunctionType, { ParameterTypeInfo } from '../types/function-type';
 import GenericType, { t_Array } from '../types/generic-type';
 import ObjectType from '../types/object-type';
 import * as Typing from '../types/types';
+import resolveType from './type-resolver';
 
 let t_notype = new Typing.Type('<%no type%>');
 
@@ -27,7 +28,7 @@ export default class Checker {
   // at top level scope
   private rootEnv: Environment = new Environment();
   // current environment being checked, local scope.
-  private env: Environment;
+  public env: Environment;
 
   // this stack keeps track of whether or not we
   // are inside a function body. Every time we enter a
@@ -45,7 +46,7 @@ export default class Checker {
     this.env = this.rootEnv;
   }
 
-  private error(
+  public error(
     message: string,
     token: Token,
     errType: ErrorType = ErrorType.TypeError
@@ -68,15 +69,8 @@ export default class Checker {
     this.env = this.env.pop();
   }
 
-  // resolves a type from provided type-info
-  // if the type is unresolvedm it looks
-  // for the type in the environment chain.
   private type(t: AST.TypeInfo): Typing.Type {
-    if (!t.type.unresolved) return t.type;
-    let type = this.env.findType(t.type.tag);
-    if (!type) this.error(`Cannot find type ${t.type.tag}`, t.token);
-    // !
-    return type || Typing.t_undef;
+    return resolveType(t.type, t.token, this);
   }
 
   private mergeTypes(t1: Typing.Type, t2: Typing.Type): Typing.Type {
@@ -212,7 +206,6 @@ export default class Checker {
         node.token as Token
       );
     }
-
 
     if (isDeclared && !Typing.isValidAssignment(type, currentType)) {
       this.error(
@@ -669,22 +662,23 @@ export default class Checker {
     // TODO
     let typeDef: Typing.Type;
 
-    if (stmt.isGeneric) typeDef = new GenericType(stmt.name, stmt.typeArgs);
-    else typeDef = new ObjectType(stmt.name);
+    if (stmt.isGeneric) {
+      typeDef = new GenericType(stmt.name, stmt.typeArgs);
+      
+      for (let t of (<GenericType>typeDef).typeParams) {
+        this.env.defineType(t.tag, t);
+      }
+
+    } else {
+      typeDef = new ObjectType(stmt.name);
+    }
 
     stmt.properties.forEach((value: AST.TypeInfo, key: Token) => {
-      typeDef.defineProperty(key.raw, this.findTypeArg(typeDef, value));
+      typeDef.defineProperty(key.raw, this.type(value));
     });
 
     this.env.defineType(stmt.name, typeDef);
     return t_notype;
   }
 
-  private findTypeArg(_interface: Typing.Type, t: AST.TypeInfo): Typing.Type {
-    if (_interface instanceof GenericType) {
-      return _interface.getTypeArg(t.type) || this.type(t);
-    }
-
-    return this.type(t);
-  }
 }

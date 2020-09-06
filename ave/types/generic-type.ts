@@ -3,15 +3,20 @@ import { isValidAssignment, Type, unresolvedType } from './types';
 
 export default class GenericType extends Type {
   readonly isPrimitive = false;
-  private typeParams: Type[] = [];
+  public readonly typeParams: Type[] = [];
 
   static areEquivalent(t1: GenericType, t2: GenericType) {
     return t1.id == t2.id;
   }
 
-  constructor(tag: string, typeargs: Type[]) {
+  constructor(tag: string, typeParams: Type[]) {
     super(tag);
-    this.typeParams = typeargs;
+    this.typeParams = typeParams.map(t => {
+      // generic type parameters
+      // are assumed to be resolved.
+      t.unresolved = false;
+      return t;
+    });
   }
 
   public canAssign(t: Type): boolean {
@@ -30,21 +35,21 @@ export default class GenericType extends Type {
       let _type = type.clone(); // TODO: remove the clone
       // replace all T, U, K etc with actual types
       // arguments.
-      this.typeParams.forEach((e, i) =>
-        _type = _type.substitute(e, this.typeParams[i])
+      this.typeParams.forEach(
+        (e, i) => (_type = _type.substitute(e, this.typeParams[i]))
       );
 
       instance.defineProperty(name, _type);
-    })
+    });
 
     return instance;
   }
 
-  public hasTypeArg(t: Type): boolean {
+  public hasTypeParam(t: Type): boolean {
     return this.typeParams.includes(t);
   }
 
-  public getTypeArg(t: Type): Type | null {
+  public getTypeParam(t: Type): Type | null {
     return this.typeParams[this.typeParams.indexOf(t)] || null;
   }
 }
