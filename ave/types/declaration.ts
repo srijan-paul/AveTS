@@ -33,6 +33,7 @@ export class HoistedVarDeclaration implements Declaration {
       dataType: this.type,
       currentType: this.type,
       declType: DeclarationKind.BlockScope,
+      isDeclared: false
     });
   }
 }
@@ -68,6 +69,7 @@ export class FuncDeclaration implements Declaration {
       dataType: this.type,
       currentType: this.type,
       declType: DeclarationKind.BlockScope,
+      isDeclared: true
     });
   }
 }

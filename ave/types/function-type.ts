@@ -1,5 +1,4 @@
-import { throws } from 'assert';
-import { isValidAssignment, Type, t_any } from './types';
+import { Type, t_any } from './types';
 
 // Function Types
 // declared as (p1: t1, p2: t2) -> rt
@@ -49,8 +48,7 @@ export default class FunctionType extends Type {
 
     for (let i = 0; i < this.params.length; i++) {
       if (this.params[i].rest != t.params[i].rest) return false;
-      if (!isValidAssignment(t.params[i].type, this.params[i].type))
-        return false;
+      if (!t.params[i].type.canAssign(this.params[i].type)) return false;
     }
 
     return true;

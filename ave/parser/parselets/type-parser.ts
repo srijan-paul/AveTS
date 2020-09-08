@@ -1,6 +1,9 @@
 import TokenType = require('../../lexer/tokentype');
 import FunctionType, { ParameterTypeInfo } from '../../types/function-type';
-import { t_Array } from '../../types/generic-type';
+import GenericType, {
+  GenericTypeInstance,
+  t_Array,
+} from '../../types/generic-type';
 import * as Typing from '../../types/types';
 import Parser from '../parser';
 import { TypeInfo } from '../ast/ast';
@@ -8,12 +11,35 @@ import { TypeInfo } from '../ast/ast';
 export default function parseType(parser: Parser): TypeInfo {
   if (parser.isValidType(parser.peek())) {
     let typeToken = parser.next();
+
     if (parser.match(TokenType.L_SQ_BRACE)) {
-      parser.expect(TokenType.R_SQ_BRACE, "Expected '[' token.");
+      parser.expect(TokenType.R_SQ_BRACE, "Expected ']' token.");
       return new TypeInfo(
         typeToken,
         t_Array.create(Typing.fromToken(typeToken))
       );
+    } else if (parser.match(TokenType.LESS)) {
+      // parse a generic type.
+      let typeArgs: Typing.Type[] = [];
+      while (!parser.match(TokenType.GREATER)) {
+        let t = parser.next();
+
+        if (!parser.isValidType(t)) {
+          parser.error(`Unexpected token '${t.raw}'`, t);
+          parser.consumeUntil(TokenType.GREATER);
+          return new TypeInfo(t, Typing.t_error);
+        }
+
+        typeArgs.push(Typing.fromToken(t));
+
+        if (!parser.match(TokenType.COMMA)) {
+          parser.expect(TokenType.GREATER, "Expected ','");
+          break;
+        }
+      }
+
+      const genType = new GenericTypeInstance(typeToken.raw, typeArgs);
+      return new TypeInfo(typeToken, genType);
     }
 
     return new TypeInfo(typeToken, Typing.fromToken(typeToken));

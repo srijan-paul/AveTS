@@ -1,10 +1,23 @@
-interface Array:
-  length: num
-  pop: () -> num
-  lop: str
+interface CanFly:
+  fly: () -> str
+  wingsCount: num
 
-let a: Array= 
-  length: 1,
-  pop: func ()
-    return 2
-  lop: "false"
+let bird: CanFly = 
+  fly: func()
+    return "i am flyiiiing !"
+  wingsCount: 2
+
+interface Token:
+  type: num
+  raw: str
+
+
+func printToken(a: Token) -> str
+  return "aa"
+
+
+tok: Token =
+  type: 3,
+  raw: "aa"
+
+printToken(tok)

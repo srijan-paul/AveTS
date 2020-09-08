@@ -104,9 +104,7 @@ export class Body extends Node {
     indent();
     const str = `${indentstr()}${baseColor(
       'body'
-    )}:\n${indentstr()}${this.statements
-      .map(e => e.toString())
-      .join('\n' + indentstr())}`;
+    )}:\n${indentstr()}${this.statements.join('\n' + indentstr())}`;
     dedent();
     return str;
   }
@@ -212,9 +210,11 @@ export class VarDeclarator extends Node {
   readonly value: Node | null;
   readonly kind = NodeKind.VarDeclarator;
   readonly typeInfo: TypeInfo;
+  readonly token: Token;
 
   constructor(name: Token, value: Node | null, type: TypeInfo) {
-    super(name);
+    super();
+    this.token = name;
     this.name = name.raw;
     this.value = value;
     this.typeInfo = type;
@@ -237,9 +237,7 @@ export class CallExpr extends Expression {
   }
 
   toString() {
-    return `<callexpr> ${this.callee.toString()}(${this.args
-      .map(e => e.toString())
-      .join(', ')})`;
+    return `<callexpr> ${this.callee.toString()}(${this.args.join(', ')})`;
   }
 }
 
@@ -253,7 +251,7 @@ export class ArrayExpr extends Expression {
   }
 
   toString() {
-    return `[${this.elements.map(e => e.toString()).join(',')}]`;
+    return `[${this.elements.join(',')}]`;
   }
 }
 
@@ -500,7 +498,7 @@ export class TypeInfo extends Node {
     this.type = t;
   }
 
-  toString() {
+  public toString() {
     return this.type.toString();
   }
 }

@@ -1,3 +1,4 @@
+import Checker from '../checker/checker';
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
 import FunctionType from './function-type';
@@ -95,7 +96,7 @@ export class Type {
   public substitute(t1: Type, t2: Type): Type {
     // primtives are not compound types.
     if (t1 == this) return t2;
-    return t1;
+    return this;
   }
 }
 
@@ -138,20 +139,6 @@ export function unresolvedType(tag: string): Type {
   return t_unknown;
 }
 
-export function isValidAssignment(
-  ta: Type,
-  tb: Type,
-  type: TokenType = TokenType.EQ
-): boolean {
-  if (type == TokenType.EQ) return ta.canAssign(tb);
-
-  // compound assignment operators,
-
-  if (type == TokenType.PLUS_EQ)
-    return (ta == t_number && tb == t_number) || ta == t_string;
-
-  return ta == t_any || (ta == t_number && tb == t_number);
-}
 
 export function fromString(str: string): Type {
   switch (str) {

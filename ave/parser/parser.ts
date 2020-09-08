@@ -121,11 +121,20 @@ export default class Parser {
     throwError(err, this.lexedData.source);
   }
 
-  expect(type: TokenType, errorMessage: string) {
+  public expect(type: TokenType, errorMessage: string) {
     if (!this.match(type)) {
       this.error(errorMessage, this.next());
     }
     return this.prev();
+  }
+
+  // keeps moving forward in the token stream
+  // until one of the given types is found or 
+  // <EOF> is reached.
+  public consumeUntil(...t: TokenType[]) {
+    while (!this.eof() && !this.match(...t)) 
+      this.next();
+    
   }
 
   //--

@@ -40,8 +40,12 @@ export default class Environment {
     return this.symTable.has(name);
   }
 
-  defineType(name: string, t:Type) {
+  defineType(name: string, t: Type) {
     this.typedefs.set(name, t);
+  }
+
+  undefineType(name: string) {
+    this.typedefs.delete(name);
   }
 
   find(name: string): SymbolData | null {
@@ -55,7 +59,7 @@ export default class Environment {
 
   findType(name: string): Type | null {
     if (this.typedefs.has(name)) {
-      return  <Type>this.typedefs.get(name);
+      return <Type>this.typedefs.get(name);
     }
     if (this.parent) return this.parent.findType(name);
     return null;

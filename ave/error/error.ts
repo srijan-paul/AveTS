@@ -17,6 +17,11 @@ export interface AveError {
   fileName: string;
 }
 
+export interface AveInfo {
+  message: string;
+  fileName: string;
+}
+
 function getErrorTypeName(et: ErrorType) {
   return ['SyntaxError', 'TypeError', 'ReferenceError'][et];
 }
@@ -84,12 +89,23 @@ function makeErrorInfo(source: string, line: number, err: AveError) {
 
 export function throwError(err: AveError, source: string) {
   const errType: string = getErrorTypeName(err.type);
-  const message = `\n${chalk.yellow(
-    err.fileName
-  )}:${err.line}:${err.column} - [${chalk.red(errType)}] ${err.message}`;
+  const message = `\n${chalk.yellow(err.fileName)}:${err.line}:${
+    err.column
+  } - [${chalk.red(errType)}] ${err.message}`;
 
   console.error(message);
   console.log(makeErrorInfo(source, err.line, err));
+}
+
+export function makeInfo(message: string, fileName: string): AveInfo {
+  return {
+    message,
+    fileName,
+  };
+}
+
+export function throwInfo(info: AveInfo) {
+  console.error(chalk.red('|* ') + info.message);
 }
 
 export function errorFromToken(

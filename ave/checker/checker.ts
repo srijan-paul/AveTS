@@ -1,8 +1,12 @@
+import { resolve } from 'path';
 import {
   AveError,
+  AveInfo,
   errorFromToken,
   ErrorType,
+  makeInfo,
   throwError,
+  throwInfo,
 } from '../error/error';
 import Token from '../lexer/token';
 import TokenType = require('../lexer/tokentype');
@@ -14,7 +18,7 @@ import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
 import { HoistedVarDeclaration } from '../types/declaration';
 import FunctionType, { ParameterTypeInfo } from '../types/function-type';
 import GenericType, { t_Array } from '../types/generic-type';
-import ObjectType from '../types/object-type';
+import ObjectType, { checkObjectAssignment } from '../types/object-type';
 import * as Typing from '../types/types';
 import resolveType from './type-resolver';
 
@@ -23,6 +27,7 @@ let t_notype = new Typing.Type('<%no type%>');
 export default class Checker {
   private readonly ast: AST.Program;
   private readonly parseData: ParsedData;
+  private readonly warningStack: AveInfo[] = [];
 
   // the root (global) environment.
   // at top level scope
@@ -59,6 +64,14 @@ export default class Checker {
     );
     this.ast.hasError = true;
     throwError(err, this.parseData.sourceCode);
+
+    while (this.warningStack.length) {
+      throwInfo(this.warningStack.pop() as AveInfo);
+    }
+  }
+
+  public warn(msg: string) {
+    this.warningStack.push(makeInfo(msg, this.parseData.fileName));
   }
 
   private pushScope() {
@@ -69,8 +82,36 @@ export default class Checker {
     this.env = this.env.pop();
   }
 
-  private type(t: AST.TypeInfo): Typing.Type {
-    return resolveType(t.type, t.token, this);
+  private type(t: AST.TypeInfo | Typing.Type): Typing.Type {
+    if (t instanceof AST.TypeInfo) return resolveType(t.type, this, t.token);
+    return resolveType(t, this);
+  }
+
+  private isValidAssignment(
+    ta: Typing.Type,
+    tb: Typing.Type,
+    type: TokenType = TokenType.EQ
+  ): boolean {
+    if (type == TokenType.EQ) {
+      if (ta instanceof ObjectType) {
+        if (!(tb instanceof ObjectType)) return false;
+        return checkObjectAssignment(ta, tb, this);
+      }
+
+      return ta.canAssign(tb);
+    }
+
+    // compound assignment operators,
+
+    if (type == TokenType.PLUS_EQ)
+      return (
+        (ta == Typing.t_number && tb == Typing.t_number) ||
+        ta == Typing.t_string
+      );
+
+    return (
+      ta == Typing.t_any || (ta == Typing.t_number && tb == Typing.t_number)
+    );
   }
 
   private mergeTypes(t1: Typing.Type, t2: Typing.Type): Typing.Type {
@@ -207,9 +248,11 @@ export default class Checker {
       );
     }
 
-    if (isDeclared && !Typing.isValidAssignment(type, currentType)) {
+    if (isDeclared && !this.isValidAssignment(type, currentType)) {
       this.error(
-        `cannot intialize '${node.name}' with type '${currentType.toString()}'`,
+        `cannot intialize '${
+          node.name
+        }' of type ${type.toString()} with type '${currentType.toString()}'`,
         node.token as Token
       );
     }
@@ -245,7 +288,7 @@ export default class Checker {
   // in the process of resolving the type.
 
   private typeOf(node: AST.Node): Typing.Type {
-    return this.expression(<AST.Expression>node);
+    return this.statement(node);
   }
 
   private expression(expr: AST.Expression): Typing.Type {
@@ -344,7 +387,7 @@ export default class Checker {
     // and there is no need to report again.
     if (lType == Typing.t_error || rType == Typing.t_error) return rType;
 
-    if (!Typing.isValidAssignment(lType, rType, node.operator.type)) {
+    if (!this.isValidAssignment(lType, rType, node.operator.type)) {
       let message =
         node.operator.type == TokenType.EQ
           ? `Cannot assign type '${rType.toString()}' to type '${lType.toString()}'.`
@@ -459,13 +502,13 @@ export default class Checker {
         return;
       }
 
-      let aType = this.expression(<AST.Expression>args[i]);
+      let argumentType = this.expression(<AST.Expression>args[i]);
 
-      if (!Typing.isValidAssignment(params[i].type, aType, TokenType.EQ)) {
+      if (!this.isValidAssignment(this.type(params[i].type), argumentType)) {
         this.error(
-          `cannot assign argument of type '${aType.toString()}' to parameter of type ${params[
+          `cannot assign argument of type '${argumentType.toString()}' to parameter of type '${params[
             i
-          ].type.toString()}`,
+          ].type.toString()}'`,
           args[i].token as Token
         );
       }
@@ -537,7 +580,7 @@ export default class Checker {
 
     if (rtype == Typing.t_infer) return type;
 
-    if (!Typing.isValidAssignment(rtype, type, TokenType.EQ))
+    if (!this.isValidAssignment(rtype, type, TokenType.EQ))
       this.error(
         `Cannot assign type '${type.toString()}' to type '${rtype.toString()}'`,
         stmt.expr?.token as Token
@@ -570,7 +613,7 @@ export default class Checker {
       (<FunctionType>fntype?.dataType).returnType = returnType;
     }
 
-    if (!Typing.isValidAssignment(this.type(func.returnTypeInfo), returnType))
+    if (!this.isValidAssignment(this.type(func.returnTypeInfo), returnType))
       this.error(
         `Function doesn't always return a value of type '${func.returnTypeInfo.toString()}'.`,
         func.token as Token
@@ -610,7 +653,7 @@ export default class Checker {
 
     if (annotatedType == Typing.t_infer) func.returnTypeInfo.type = returnType;
 
-    if (!Typing.isValidAssignment(func.returnTypeInfo.type, returnType))
+    if (!this.isValidAssignment(func.returnTypeInfo.type, returnType))
       this.error(
         `Function doesn't always return a value of type '${annotatedType.toString()}'.`,
         func.token as Token
@@ -644,7 +687,7 @@ export default class Checker {
         let type = this.expression(<AST.Expression>params[i].defaultValue);
 
         let annotatedType = this.type(params[i].typeInfo);
-        if (!Typing.isValidAssignment(annotatedType, type, TokenType.EQ)) {
+        if (!this.isValidAssignment(annotatedType, type)) {
           this.error(
             `Cannot assign value of type '${type.toString()}' to paramter of type '${params[
               i
@@ -664,11 +707,10 @@ export default class Checker {
 
     if (stmt.isGeneric) {
       typeDef = new GenericType(stmt.name, stmt.typeArgs);
-      
+
       for (let t of (<GenericType>typeDef).typeParams) {
         this.env.defineType(t.tag, t);
       }
-
     } else {
       typeDef = new ObjectType(stmt.name);
     }
@@ -678,7 +720,15 @@ export default class Checker {
     });
 
     this.env.defineType(stmt.name, typeDef);
+
+    // undefine the generic type parameters, T, U, K, etc
+    // before exiting interface body.
+    if (stmt.isGeneric) {
+      for (let t of (<GenericType>typeDef).typeParams) {
+        this.env.undefineType(t.tag);
+      }
+    }
+
     return t_notype;
   }
-
 }
