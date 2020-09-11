@@ -7,7 +7,7 @@ import Precedence = require('../precedence');
 
 export const callParser: InfixParseFn = (
   parser: Parser,
-  left: AST.Node,
+  left: AST.Expression,
   op: Token
 ): AST.CallExpr => {
   const call = new AST.CallExpr(left, op);

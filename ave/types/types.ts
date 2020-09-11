@@ -12,6 +12,7 @@ export const enum TypeName {
   bool = 'bool',
   undef = 'undefined',
   nil = 'nil',
+  void = 'void'
 }
 
 export class Type {
@@ -112,6 +113,7 @@ export const t_number = new Type(TypeName.number, true);
 export const t_bool = new Type(TypeName.bool, true);
 export const t_undef = new Type(TypeName.undef, true);
 export const t_nil = new Type(TypeName.nil, true);
+export const t_void = new Type(TypeName.void, true);
 
 // error type is returned in places where
 // an operator is used on unexpected operand types

@@ -156,6 +156,21 @@ export class GroupExpr extends Expression {
   }
 }
 
+export class MemberAccessExpr extends Expression {
+  readonly object: Expression;
+  readonly property :Expression
+
+  constructor(dot: Token, obj: Expression, prop: Expression) {
+    super(dot);
+    this.object = obj;
+    this.property = prop;
+  }
+
+  toString() {
+    return this.object + '.' + this.property;
+  }
+}
+
 export class Literal extends Expression {
   readonly value: tokenvalue;
   readonly kind = NodeKind.Literal;

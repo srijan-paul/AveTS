@@ -21,10 +21,10 @@ export function getDeclarationKind(kw: string): DeclarationKind {
 
 export interface SymbolData {
   name: string;
-  declType: DeclarationKind;
+  declarationKind: DeclarationKind;
   dataType: Type;
   currentType: Type;
-  isDeclared: boolean;
+  isDefined: boolean;
 }
 
 export default class SymbolTable {

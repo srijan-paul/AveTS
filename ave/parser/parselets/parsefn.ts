@@ -4,7 +4,7 @@ import * as AST from '../ast/ast';
 
 export type InfixParseFn = (
   parser: Parser,
-  left: AST.Node,
+  left: AST.Expression,
   op: Token
 ) => AST.Expression;
 

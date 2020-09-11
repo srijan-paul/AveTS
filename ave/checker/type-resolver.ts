@@ -16,7 +16,6 @@ export default function resolveType(
   checker: Checker,
   token?: Token
 ): Type {
-  // return resolvePrimitiveType(type, checker, token);
 
   if (type.isPrimitive) {
     return resolvePrimitiveType(type, checker, token);

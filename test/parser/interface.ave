@@ -12,7 +12,7 @@ interface Token:
   raw: str
 
 
-func printToken(a: Token) -> str
+func printToken(a: Token): str
   return "aa"
 
 

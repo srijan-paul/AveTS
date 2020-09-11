@@ -10,10 +10,9 @@ import { DeclarationKind, getDeclarationKind } from './symbol_table/symtable';
 import { callParser } from './parselets/call';
 import { FuncDeclaration, HoistedVarDeclaration } from '../types/declaration';
 import { ArrayParser } from './parselets/array';
-import { t_Array } from '../types/generic-type';
 import { ObjectParser, InfixObjectParser } from './parselets/object';
 import parseType from './parselets/type-parser';
-import { type } from 'os';
+import MemberExprParser = require('./parselets/member-access');
 
 export default class AveParser extends Parser {
   // current wrapping body. This is
@@ -131,6 +130,9 @@ export default class AveParser extends Parser {
 
     this.infix(TokenType.AND, Precedence.LOGIC_AND);
     this.infix(TokenType.OR, Precedence.LOGIC_OR);
+
+    // member access "a.b"
+    this.infix(TokenType.DOT, Precedence.MEM_ACCESS, false, MemberExprParser);
 
     // (...) grouping expression
 
@@ -351,7 +353,7 @@ export default class AveParser extends Parser {
     );
     func.params = this.parseParams();
 
-    if (this.match(TokenType.ARROW)) {
+    if (this.match(TokenType.COLON)) {
       func.returnTypeInfo = parseType(this);
     }
 
@@ -368,7 +370,7 @@ export default class AveParser extends Parser {
 
     func.params = this.parseParams();
 
-    if (this.match(TokenType.ARROW)) {
+    if (this.match(TokenType.COLON)) {
       func.returnTypeInfo = parseType(this);
     }
 

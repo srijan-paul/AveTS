@@ -27,13 +27,6 @@ export interface ParsedData {
   by adding operators
 */
 
-let typeKeywords: Set<TokenType> = new Set([
-  TokenType.ANY,
-  TokenType.BOOL,
-  TokenType.NUMBER,
-  TokenType.STRING,
-  TokenType.OBJECT,
-]);
 
 export default class Parser {
   private readonly prefixParseMap: Map<TokenType, PrefixParseFn>;

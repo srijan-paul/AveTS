@@ -28,7 +28,7 @@ export default class Environment {
   }
 
   pop(): Environment {
-    if (!this.parent) throw new Error('attempt to pop initial environment.');
+    if (!this.parent) throw new Error('attempt to pop root environment.');
     return <Environment>this.parent;
   }
 

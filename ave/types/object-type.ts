@@ -5,7 +5,7 @@ export default class ObjectType extends Type {
   canAssign(t: Type) {
     if (t == this) return true;
     let propArray = Array.from(this.properties);
-    
+
     for (let [key, type] of propArray) {
       // TODO handle any type
       if (!t.hasProperty(key)) return false;
@@ -15,11 +15,27 @@ export default class ObjectType extends Type {
     return true;
   }
 
+  public clone(): Type {
+    let copy = new ObjectType(this.tag);
+    
+    this.properties.forEach((v: Type, k: string) => {
+      copy.defineProperty(k, v);
+    });
+
+    return copy;
+  }
+
+  public substitute(ta: Type, tb: Type): Type {
+    this.properties.forEach((v, k) => {
+      this.properties.set(k , v.substitute(ta, tb));
+    });
+    return this;
+  }
+
   toString() {
     if (this.tag) return this.tag;
-    let a = Array.from(this.properties);
-    let s = a.map(e => `${e[0]}: ${e[1].toString()}`).join(',');
-    return `{${s}}`;
+    const a = Array.from(this.properties);
+    return `{${a.map(e => `${e[0]}: ${e[1].toString()}`).join(', ')}}`;
   }
 }
 // ta: assignment target
@@ -35,20 +51,20 @@ export function checkObjectAssignment(
   const missingPropertyNames: string[] = [];
   let result = true;
 
-  for (let [key, type] of propArray) {
+  for (let [name, type] of propArray) {
     // TODO handle any type and optional properties.
 
-    if (!tb.hasProperty(key)) {
-      missingPropertyNames.push(key);
+    if (!tb.hasProperty(name)) {
+      missingPropertyNames.push(name);
       result = false;
       continue;
     }
 
-    const propertyType = tb.getProperty(key) as Type;
-
+    const propertyType = tb.getProperty(name) as Type;
+    // console.log(name, propertyType + '', type + ' .');
     if (!type.canAssign(propertyType)) {
       checker.warn(
-        `cannot assign value of type '${propertyType.toString()}' to property of type '${type.toString()}'`
+        `cannot assign value of type '${propertyType.toString()}' to property '${name}' of type '${type.toString()}'`
       );
       result = false;
     }
@@ -61,6 +77,6 @@ export function checkObjectAssignment(
       )}`
     );
   }
-
+``
   return result;
 }

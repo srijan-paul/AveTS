@@ -21,8 +21,6 @@ import ObjectType, { checkObjectAssignment } from '../types/object-type';
 import * as Typing from '../types/types';
 import resolveType from './type-resolver';
 
-let t_notype = new Typing.Type('<%no type%>');
-
 export default class Checker {
   private readonly ast: AST.Program;
   private readonly parseData: ParsedData;
@@ -124,21 +122,21 @@ export default class Checker {
         return new Typing.t__Maybe(this.mergeTypes(t1.type, t2.type));
       // if the previous statement was typeless.
       // (having t__notype)
-      if (t2 == t_notype) return t1;
+      if (t2 == Typing.t_void) return t1;
       if (t1.type == t2) return t2;
       return Typing.t_any;
     }
 
     if (t1 == t2) return t1;
-    if (t1 == t_notype) return t2;
-    if (t2 == t_notype) return t1;
+    if (t1 == Typing.t_void) return t2;
+    if (t2 == Typing.t_void) return t1;
     // TODO replace after union
     // types are introducted.
     return Typing.t_any;
   }
 
   private checkMaybeType(t: Typing.Type): Typing.Type {
-    if (t == t_notype) return t;
+    if (t == Typing.t_void) return t;
     return new Typing.t__Maybe(t);
   }
 
@@ -170,7 +168,7 @@ export default class Checker {
       decl.defineIn(this.env);
     }
 
-    let type = t_notype;
+    let type = Typing.t_void;
 
     for (let stmt of body.statements) {
       type = this.mergeTypes(type, this.statement(stmt));
@@ -185,7 +183,7 @@ export default class Checker {
     switch (stmt.kind) {
       case NodeKind.VarDeclaration:
         this.checkDeclaration(<AST.VarDeclaration>stmt);
-        return t_notype;
+        return Typing.t_void;
       case NodeKind.IfStmt:
         return this.ifStmt(<AST.IfStmt>stmt);
       case NodeKind.ForStmt:
@@ -201,7 +199,7 @@ export default class Checker {
         // statements have no types
         //(except return statements), so we won't
         // return the type of the expression.
-        return t_notype;
+        return Typing.t_void;
       case NodeKind.FunctionDecl:
         return this.functionDeclaration(<AST.FunctionDeclaration>stmt);
       default:
@@ -230,7 +228,7 @@ export default class Checker {
       return;
     }
 
-    let isDeclared = false;
+    let isDefined = false;
 
     // if the variable has been
     // declared with a value,
@@ -238,7 +236,7 @@ export default class Checker {
 
     if (node.value) {
       currentType = this.typeOf(node.value);
-      isDeclared = true;
+      isDefined = true;
       if (type == Typing.t_infer) type = currentType;
     } else if (type == Typing.t_infer) {
       this.error(
@@ -247,7 +245,7 @@ export default class Checker {
       );
     }
 
-    if (isDeclared && !this.isValidAssignment(type, currentType)) {
+    if (isDefined && !this.isValidAssignment(type, currentType)) {
       this.error(
         `cannot intialize '${
           node.name
@@ -258,10 +256,10 @@ export default class Checker {
 
     const declaration: SymbolData = {
       name: node.name,
-      declType: kind,
+      declarationKind: kind,
       dataType: type,
       currentType,
-      isDeclared,
+      isDefined,
     };
 
     this.env.define(node.name, declaration);
@@ -276,8 +274,8 @@ export default class Checker {
     let condType = this.expression(stmt.condition);
 
     if (stmt.elseBody) {
-      let et = this.body(stmt.elseBody);
-      type = this.mergeTypes(type, et);
+      let elseType = this.body(stmt.elseBody);
+      type = this.mergeTypes(type, elseType);
     }
 
     return type;
@@ -417,7 +415,7 @@ export default class Checker {
         }
 
         // check for assignment to constant
-        if (symbolData.declType == DeclarationKind.Constant) {
+        if (symbolData.declarationKind == DeclarationKind.Constant) {
           this.error(
             `Invalid assignment to constant '${name}'`,
             node.token as Token
@@ -528,7 +526,7 @@ export default class Checker {
   }
 
   private objectExpr(obj: AST.ObjectExpr): ObjectType {
-    let t_object = new ObjectType('object');
+    let t_object = new ObjectType('');
 
     obj.kvPairs.forEach((val: AST.Expression, key: Token) => {
       t_object.defineProperty(key.raw, this.expression(val));
@@ -604,7 +602,7 @@ export default class Checker {
     // anywhere inside the function's body,
     // it has a return type of undefined.
 
-    if (returnType == t_notype) returnType = Typing.t_undef;
+    if (returnType == Typing.t_void) returnType = Typing.t_undef;
 
     if (this.type(func.returnTypeInfo) == Typing.t_infer) {
       func.returnTypeInfo.type = returnType;
@@ -646,7 +644,7 @@ export default class Checker {
     // anywhere inside the function's body,
     // it has a return type of undefined.
 
-    if (returnType == t_notype) returnType = Typing.t_undef;
+    if (returnType == Typing.t_void) returnType = Typing.t_undef;
 
     let annotatedType = this.type(func.returnTypeInfo);
 
@@ -703,6 +701,7 @@ export default class Checker {
   private interfaceDecl(stmt: AST.InterfaceDecl) {
     // TODO
     let typeDef: Typing.Type;
+    this.pushScope();
 
     if (stmt.isGeneric) {
       typeDef = new GenericType(stmt.name, stmt.typeArgs);
@@ -718,16 +717,19 @@ export default class Checker {
       typeDef.defineProperty(key.raw, this.type(value));
     });
 
-    this.env.defineType(stmt.name, typeDef);
-
     // undefine the generic type parameters, T, U, K, etc
     // before exiting interface body.
+    
     if (stmt.isGeneric) {
       for (let t of (<GenericType>typeDef).typeParams) {
         this.env.undefineType(t.tag);
       }
     }
 
-    return t_notype;
+    this.popScope();
+
+    this.env.defineType(stmt.name, typeDef);
+
+    return Typing.t_void;
   }
 }

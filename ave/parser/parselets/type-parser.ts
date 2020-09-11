@@ -7,6 +7,7 @@ import GenericType, {
 import * as Typing from '../../types/types';
 import Parser from '../parser';
 import { TypeInfo } from '../ast/ast';
+import Token from '../../lexer/token';
 
 export default function parseType(parser: Parser): TypeInfo {
   if (parser.isValidType(parser.peek())) {
@@ -20,26 +21,7 @@ export default function parseType(parser: Parser): TypeInfo {
       );
     } else if (parser.match(TokenType.LESS)) {
       // parse a generic type.
-      let typeArgs: Typing.Type[] = [];
-      while (!parser.match(TokenType.GREATER)) {
-        let t = parser.next();
-
-        if (!parser.isValidType(t)) {
-          parser.error(`Unexpected token '${t.raw}'`, t);
-          parser.consumeUntil(TokenType.GREATER);
-          return new TypeInfo(t, Typing.t_error);
-        }
-
-        typeArgs.push(Typing.fromToken(t));
-
-        if (!parser.match(TokenType.COMMA)) {
-          parser.expect(TokenType.GREATER, "Expected ','");
-          break;
-        }
-      }
-
-      const genType = new GenericTypeInstance(typeToken.raw, typeArgs);
-      return new TypeInfo(typeToken, genType);
+      return parseGenericInstance(parser, typeToken);
     }
 
     return new TypeInfo(typeToken, Typing.fromToken(typeToken));
@@ -83,4 +65,27 @@ function parseParam(parser: Parser): ParameterTypeInfo {
     type,
     required: true,
   };
+}
+
+function parseGenericInstance(parser: Parser, name: Token) {
+  let typeArgs: Typing.Type[] = [];
+  while (!parser.match(TokenType.GREATER)) {
+    let t = parser.next();
+
+    if (!parser.isValidType(t)) {
+      parser.error(`Unexpected token '${t.raw}'`, t);
+      parser.consumeUntil(TokenType.GREATER);
+      return new TypeInfo(t, Typing.t_error);
+    }
+
+    typeArgs.push(Typing.fromToken(t));
+
+    if (!parser.match(TokenType.COMMA)) {
+      parser.expect(TokenType.GREATER, "Expected ','");
+      break;
+    }
+  }
+
+  const genType = new GenericTypeInstance(name.raw, typeArgs);
+  return new TypeInfo(name, genType);
 }

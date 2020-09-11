@@ -50,6 +50,10 @@ export default class GenericType extends Type {
   public getTypeParam(t: Type): Type | null {
     return this.typeParams[this.typeParams.indexOf(t)] || null;
   }
+
+  public toString() {
+    return `${this.tag}<${this.typeParams.join(', ')}>`;
+  }
 }
 
 // This represents the "instance" of a generic type.
@@ -64,7 +68,21 @@ export class GenericTypeInstance extends Type {
     this.typeArgs = args;
   }
 
-  toString() {
+  public clone() {
+    let args = this.typeArgs.map(t => t.clone());
+    return new GenericTypeInstance(this.tag, args);
+  }
+
+  public susbtitute(ta: Type, tb: Type) {
+    let copy = this.clone();
+    
+    for (let i = 0; i < copy.typeArgs.length; i++) {
+      copy.typeArgs[i] = copy.typeArgs[i].substitute(ta, tb);
+    }
+    return copy;
+  }
+
+  public toString() {
     return `${this.tag}<${this.typeArgs.join(', ')}>`;
   }
 }

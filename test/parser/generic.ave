@@ -1,0 +1,9 @@
+interface Foo<T>
+  bar: T
+
+interface Baz<T>
+  biz: Foo<T>
+
+let a: Baz<num> =
+  biz:
+    bar: 1 + 2

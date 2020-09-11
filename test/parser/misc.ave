@@ -1,2 +1,2 @@
-let a = func (a: str) -> str
+let a = func (a: str): str
   return a + 1

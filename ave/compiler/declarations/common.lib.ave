@@ -1,0 +1,14 @@
+interface Array<T>
+  length: num
+  push: (T) -> num
+  pop: () -> T | undefined
+  forEach: (callbackfn: (el: T, index: num) -> void) -> void
+  join: (separator: str) -> str
+  map: <U>(mapfn: (value: T, index: num) -> U) -> Array<U>
+  sort: (compareFn?: (a: num, b: num) -> num) -> this
+
+  
+interface Map<K, V>
+  set: (K, V) => this
+  get: (K) => V | undefined
+  forEach: (callbackfn: (value: V, key: K) -> void) -> void
