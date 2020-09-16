@@ -359,7 +359,7 @@ export default class Lexer {
         this.addToken(TokenType.L_BRACE);
         break;
       case '}':
-        this.addToken(TokenType.L_BRACE);
+        this.addToken(TokenType.R_BRACE);
         break;
       case '+':
         if (this.match('=')) this.addToken(TokenType.PLUS_EQ);
