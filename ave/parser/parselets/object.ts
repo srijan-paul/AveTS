@@ -9,9 +9,17 @@ import NodeKind = require('../ast/nodekind');
 // TODO allow string and array key names.
 // add function keys.
 
-export const ObjectParser: PrefixParseFn = (parser: Parser, indentOrBrace: Token) => {
+export const ObjectParser: PrefixParseFn = (
+  parser: Parser,
+  indentOrBrace: Token
+) => {
   const obj = new AST.ObjectExpr(indentOrBrace);
 
+ // objects can start with either '{' or a dedent token
+ // or objects that don't have either and appear in the middle 
+ // of an expression, the Infix object parser is used,
+ // treating ':' as a pseudo-operator.
+ 
   const endToken =
     indentOrBrace.type == TokenType.INDENT
       ? TokenType.DEDENT
@@ -60,4 +68,3 @@ export const InfixObjectParser: InfixParseFn = (
 function isValidKey(k: AST.Node) {
   return k.kind == NodeKind.Identifier;
 }
-

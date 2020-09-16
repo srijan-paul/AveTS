@@ -75,10 +75,56 @@ export default class AveParser extends Parser {
       }
     );
 
-    // object.
+    // object expressions starting on a new line with an indent token
     this.prefix(TokenType.INDENT, Precedence.NONE, ObjectParser);
 
+    // an infix object parser starts parsing when it sees the ':' token.
+    // objects can appear in places like this: (1 + name: 'Bobo').
+    // even though adding an object literal and a number is a TypeError,
+    // the parser should still be able to build it into a Binary expression AST
+    // node which would be something like this:
+    //                    +
+    //                   / \
+    //                  /   \
+    //                 1    obj
+    //                      |
+    //                      name: 'Bobo'
+    //
     this.infix(TokenType.COLON, Precedence.NONE, false, InfixObjectParser);
+
+    // objects may also start with '{'
+    // optionally followed by an INDENT.
+    this.prefix(
+      TokenType.L_BRACE,
+      Precedence.NONE,
+      (_: Parser, brace: Token) => {
+        let object;
+        // whether or not to eat the closing '}'
+        let eatClosingBrace = false;
+
+        if (this.check(TokenType.INDENT)) {
+          object = ObjectParser(this, this.next());
+          // the object parser eats until <DEDENT>
+          // so we manually eat the '}'
+          eatClosingBrace = true;
+        } else {
+          // object parselet eats all the way till '}'
+          // so we no longer have to consume the closing
+          // brace.
+          object = ObjectParser(this, brace);
+        }
+
+        if (eatClosingBrace) {
+          this.expect(
+            TokenType.R_BRACE,
+            `Expected '}'.`
+          );
+          
+        }
+
+        return object;
+      }
+    );
 
     // arrays [a, b, c]
     this.prefix(TokenType.L_SQ_BRACE, Precedence.NONE, ArrayParser);
