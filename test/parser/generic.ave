@@ -3,7 +3,9 @@ interface Foo<T>
 
 interface Baz<T>
   biz: Foo<T>
+  cuz: num
 
-let a: Baz<num> =
+const a: Baz<num> =
   biz:
     bar: 1 + 2
+  cuz: 1234

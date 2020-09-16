@@ -1,6 +1,6 @@
 interface Array<T>
   length: num
-  push: (T) -> num
+  push: (el: T) -> num
   pop: () -> T | undefined
   forEach: (callbackfn: (el: T, index: num) -> void) -> void
   join: (separator: str) -> str

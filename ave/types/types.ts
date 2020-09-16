@@ -71,7 +71,7 @@ export class Type {
     if (this == t_any) return true;
     return (
       this.properties.has(key) &&
-      this.properties.get(name) instanceof FunctionType
+      this.properties.get(key) instanceof FunctionType
     );
   }
 

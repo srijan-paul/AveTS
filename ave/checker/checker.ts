@@ -719,7 +719,7 @@ export default class Checker {
 
     // undefine the generic type parameters, T, U, K, etc
     // before exiting interface body.
-    
+
     if (stmt.isGeneric) {
       for (let t of (<GenericType>typeDef).typeParams) {
         this.env.undefineType(t.tag);
