@@ -1,5 +1,5 @@
 # AveTS
-A scripting language that compiles to Javascript
+A scripting language that compiles to Javascript.
 For information on language syntax and type system, check the doc folder in this repository.
 
 # Roadmap
@@ -38,7 +38,8 @@ A TODO list of boxes to check towards releasing Ave 1.0
     * bigint data type
     * regex data type
     
-* classes
+* classes, inheritance
+* type casts using `as`
 * inteface index signatures.
 * object indexes that are array literals or strings.
 * ES5 lib declarations.
