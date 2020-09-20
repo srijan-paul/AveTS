@@ -27,6 +27,7 @@ enum Precedence {
   COMP_MEM_ACCESS, // computed member access a[0], obj['property'],
   MEM_ACCESS, // a.b b.c
   GROUPING, // (...)
+  MAX
 }
 
 export = Precedence;

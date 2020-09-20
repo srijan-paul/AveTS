@@ -26,6 +26,7 @@ export const ObjectParser: PrefixParseFn = (
       : TokenType.R_BRACE;
 
   while (!parser.eof() && !parser.match(endToken)) {
+    // TODO: allow expressions as key types.
     const key = parser.expect(TokenType.NAME, 'Expected object key name.');
     parser.expect(TokenType.COLON, "Expected ':' after object key.");
     const value = parser.parseExpression(Precedence.NONE);

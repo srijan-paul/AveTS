@@ -1,0 +1,12 @@
+interface Person
+  name: str
+  age: num
+
+srijan := 
+  name: "Srijan Paul",
+  age: 15
+
+func getAge(p: Person)
+  return p.age
+
+getAge(srijan)

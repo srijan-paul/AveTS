@@ -79,7 +79,7 @@ export default class AveParser extends Parser {
     this.prefix(TokenType.INDENT, Precedence.NONE, ObjectParser);
 
     // an infix object parser starts parsing when it sees the ':' token.
-    // objects can appear in places like this: (1 + name: 'Bobo').
+    // objects can appear in places like this: "1 + name: 'Bobo'".
     // even though adding an object literal and a number is a TypeError,
     // the parser should still be able to build it into a Binary expression AST
     // node which would be something like this:
@@ -87,10 +87,10 @@ export default class AveParser extends Parser {
     //                   / \
     //                  /   \
     //                 1    obj
-    //                      |
+    //                       |
     //                      name: 'Bobo'
     //
-    this.infix(TokenType.COLON, Precedence.NONE, false, InfixObjectParser);
+    this.infix(TokenType.COLON, Precedence.MAX, false, InfixObjectParser);
 
     // objects may also start with '{'
     // optionally followed by an INDENT.
