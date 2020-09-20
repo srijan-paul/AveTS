@@ -35,6 +35,8 @@ const keywords: Map<string, TokenType> = new Map([
   ['set'      , TokenType.SET],
   ['get'      , TokenType.GET],
   ['new'      , TokenType.NEW],
+  ['export'   , TokenType.EXPORT],
+  ['import'   , TokenType.IMPORT],
   ['interface'          , TokenType.INTERFACE],
   [TypeName.string      , TokenType.STRING],
   [TypeName.number      , TokenType.NUMBER],

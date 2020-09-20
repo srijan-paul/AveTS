@@ -205,10 +205,12 @@ export class VarDeclaration extends Node {
   readonly declarationType: DeclarationKind;
   readonly declarators: VarDeclarator[];
   readonly kind = NodeKind.VarDeclaration;
+  readonly token: Token;
 
   // kw: var / let / const
   constructor(kw: Token, type: DeclarationKind) {
     super(kw);
+    this.token = kw;
     this.declarators = [];
     this.declarationType = type;
   }
@@ -222,12 +224,12 @@ export class VarDeclaration extends Node {
 
 export class VarDeclarator extends Node {
   readonly name: string;
-  readonly value: Node | null;
+  readonly value: Expression | null;
   readonly kind = NodeKind.VarDeclarator;
   readonly typeInfo: TypeInfo;
   readonly token: Token;
 
-  constructor(name: Token, value: Node | null, type: TypeInfo) {
+  constructor(name: Token, value: Expression | null, type: TypeInfo) {
     super();
     this.token = name;
     this.name = name.raw;
