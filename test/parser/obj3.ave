@@ -10,3 +10,6 @@ func getAge(p: Person)
   return p.age
 
 getAge(srijan)
+
+func double(param)
+  return param * 2

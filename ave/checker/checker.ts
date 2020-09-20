@@ -84,6 +84,7 @@ export default class Checker {
     return resolveType(t, this);
   }
 
+
   private isValidAssignment(
     ta: Typing.Type,
     tb: Typing.Type,
@@ -590,9 +591,10 @@ export default class Checker {
     this.verifyFunctionParams(func.params);
 
     this.functionReturnStack.push(this.type(func.returnTypeInfo));
+    
     func.params.forEach(e => {
       func.body.declarations.push(
-        new HoistedVarDeclaration(e.name, this.type(e.typeInfo))
+        new HoistedVarDeclaration(e.name, this.type(e.typeInfo), true)
       );
     });
 

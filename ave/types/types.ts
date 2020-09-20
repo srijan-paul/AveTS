@@ -103,7 +103,7 @@ export class Type {
 
 // top type (https://en.wikipedia.org/wiki/Top_type)
 
-export const t_any = new Type(TypeName.any);
+export const t_any = new Type(TypeName.any, true);
 
 // primitive types that are built
 // into Javascript.
@@ -204,6 +204,7 @@ addTable[strID][numID] = t_string;
 addTable[numID][strID] = t_string;
 addTable[strID][strID] = t_string;
 
+// TODO: account for 'any' type here.
 mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {
   if (addTable[lt.id] && addTable[lt.id][rt.id]) return addTable[lt.id][rt.id];
   return t_error;
@@ -264,6 +265,7 @@ makeBinaryRule(TokenType.PIPE); // a | b
 makeBinaryRule(TokenType.XOR); // a ^ b
 
 // conditional operators (or, and)
+// TODO, modify 'or' and 'and' to return a union type 
 
 const checkConditionalType: BinaryRule = (l: Type, r: Type): Type => {
   if (l == t_error || r == t_error) return t_error;

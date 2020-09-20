@@ -55,6 +55,7 @@ function resolvePrimitiveType(
   checker: Checker,
   token?: Token
 ): Type {
+
   if (!type.unresolved) return type;
   let resolved = checker.env.findType(type.tag);
   if (!resolved)

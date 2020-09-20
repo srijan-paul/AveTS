@@ -21,10 +21,12 @@ interface Declaration {
 export class HoistedVarDeclaration implements Declaration {
   readonly name: string;
   readonly type: Type;
+  defined: boolean;
 
-  constructor(name: string, type: Type) {
+  constructor(name: string, type: Type, defined: boolean = false) {
     this.name = name;
     this.type = type;
+    this.defined = defined;
   }
 
   defineIn(env: Environment) {
@@ -33,7 +35,7 @@ export class HoistedVarDeclaration implements Declaration {
       dataType: this.type,
       currentType: this.type,
       declarationKind: DeclarationKind.BlockScope,
-      isDefined: false
+      isDefined: this.defined
     });
   }
 }
