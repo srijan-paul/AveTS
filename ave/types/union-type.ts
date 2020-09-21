@@ -7,10 +7,11 @@ export default class UnionType extends Type {
   readonly types: Type[];
   isPrimitive = false;
 
-  static areEquivalent(t1: UnionType, t2: UnionType): boolean {
-    return true;
-  }
-
+  /** A Union type is a collection of smaller sub-types.
+   * a type T can be assigned to a Union type, if it can be 
+   * assigned to at least one type T' of it's sub-types.
+   * @param ...t list of subtypes that this union type contains.
+   */
   constructor(...t: Type[]) {
     super('<%union%>');
     this.types = t.sort((a: Type, b: Type) => a.id - b.id);

@@ -1,4 +1,4 @@
-interface Person
+record Person
   name: str
   age: num
 

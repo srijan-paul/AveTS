@@ -1,4 +1,4 @@
-interface CanFly:
+record CanFly:
   fly: () -> str
   wingsCount: num
 
@@ -7,7 +7,7 @@ let bird: CanFly =
     return "i am flyiiiing !"
   wingsCount: 2
 
-interface Token:
+record Token:
   type: num
   raw: str
 

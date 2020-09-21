@@ -246,7 +246,7 @@ export default class AveParser extends Parser {
       return this.sugarDeclaration();
     } else if (this.match(TokenType.FUNC)) {
       return this.funcDecl();
-    } else if (this.match(TokenType.INTERFACE)) {
+    } else if (this.match(TokenType.RECORD)) {
       return this.interfaceDecl();
     } else {
       // expression statement

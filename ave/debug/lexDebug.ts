@@ -151,7 +151,7 @@ export function tokenName(t: TokenType): string {
     case TokenType.NIL:            return 'NIL';
     case TokenType.NAME:           return 'NAME';
     case TokenType.ANY:            return 'ANY';
-    case TokenType.INTERFACE:      return 'INTERFACE';
+    case TokenType.RECORD:      return 'INTERFACE';
 
     default:
       return 'UNKNOWN';

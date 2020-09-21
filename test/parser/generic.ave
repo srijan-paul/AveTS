@@ -1,7 +1,7 @@
-interface Foo<T>
+record Foo<T>
   bar: T
 
-interface Baz<T>
+record Baz<T>
   biz: Foo<T>
   cuz: num
 
