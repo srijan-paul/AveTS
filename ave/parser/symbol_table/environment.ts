@@ -32,6 +32,12 @@ export default class Environment {
     return <Environment>this.parent;
   }
 
+  /**
+   * 
+   * @param name {string}     Name of the symbol.
+   * @param data {SymbolData} The data assosciated with the symbol.
+   */
+
   define(name: string, data: SymbolData): boolean {
     return this.symTable.define(name, data);
   }

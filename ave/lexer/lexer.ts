@@ -4,6 +4,13 @@ import keywords from './keywords';
 import * as util from './helpers';
 import { ErrorType, throwError, AveError } from '../error/error';
 
+/**
+ * The Output from the lexer.
+ * @field tokens   An array of tokens
+ * @field source   The source code
+ * @field hasError whether the lexer had an error
+ * @field fileName Name of the file that was scanned.
+ */
 export interface ScannedData {
   tokens: Token[];
   source: string;

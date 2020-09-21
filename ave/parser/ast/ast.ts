@@ -472,14 +472,14 @@ export class ExprStmt extends Node {
   }
 }
 
-export class InterfaceDecl extends Node {
+export class RecordDecl extends Node {
   readonly name: string;
   readonly isGeneric: boolean;
   // only read from or written to in case
   // the interface is a Generic.
   readonly typeArgs: Type[] = [];
   readonly properties: Map<Token, TypeInfo> = new Map();
-  readonly kind = NodeKind.InterfaceDecl;
+  readonly kind = NodeKind.RecordDeclaration;
 
   constructor(name: Token, isGeneric: boolean = false, typeArgs: Type[]) {
     super(name);

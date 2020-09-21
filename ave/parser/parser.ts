@@ -9,6 +9,14 @@ import PostfixUnaryParselet from './parselets/postunary';
 import { AveError, errorFromToken, throwError } from '../error/error';
 import { ScannedData } from '../lexer/lexer';
 
+/**
+ * A wrapper around a syntax tree.
+ * @field sourceCode {string}      the source text that was parsed into an AST.
+ * @field fileName   {string}      the name of the source file.
+ * @field ast        {AST.Program} the program that was parsed.
+ * @field hasError   {bool}        whether the parser encountered an error.
+ */
+
 export interface ParsedData {
   hasError: boolean;
   ast: AST.Program;
@@ -26,7 +34,6 @@ export interface ParsedData {
   the ave parser class extends this in exactly the same way
   by adding operators
 */
-
 
 export default class Parser {
   private readonly prefixParseMap: Map<TokenType, PrefixParseFn>;
@@ -122,12 +129,10 @@ export default class Parser {
   }
 
   // keeps moving forward in the token stream
-  // until one of the given types is found or 
+  // until one of the given types is found or
   // <EOF> is reached.
   public consumeUntil(...t: TokenType[]) {
-    while (!this.eof() && !this.match(...t)) 
-      this.next();
-    
+    while (!this.eof() && !this.match(...t)) this.next();
   }
 
   //--

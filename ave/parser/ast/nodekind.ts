@@ -19,7 +19,7 @@ const enum NodeKind {
   ReturnStmt,
   FunctionDecl,
   ObjectExpr,
-  InterfaceDecl,
+  RecordDeclaration,
   FunctionExpr,
   MemberAcessExpr
 }

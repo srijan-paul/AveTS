@@ -250,7 +250,7 @@ export default class AveParser extends Parser {
     } else if (this.match(TokenType.FUNC)) {
       return this.funcDecl();
     } else if (this.match(TokenType.RECORD)) {
-      return this.interfaceDecl();
+      return this.recordDecl();
     } else {
       // expression statement
       const expr = this.parseExpression(Precedence.NONE);
@@ -351,7 +351,7 @@ export default class AveParser extends Parser {
   private forStmt(): AST.ForStmt {
     const kw = this.next();
     const i = new AST.Identifier(
-      this.expect(TokenType.NAME, 'Expected name as for initilializer.')
+      this.expect(TokenType.NAME, 'Expected name as loop initilializer.')
     );
 
     this.expect(TokenType.EQ, "Expected '='.");
@@ -518,7 +518,7 @@ export default class AveParser extends Parser {
     return new AST.ReturnStmt(kw, expr);
   }
 
-  private interfaceDecl(): AST.InterfaceDecl {
+  private recordDecl(): AST.RecordDecl {
     const name = this.next();
     let isGeneric = false;
     let typeArgs: Typing.Type[] = [];
@@ -528,7 +528,7 @@ export default class AveParser extends Parser {
       typeArgs = this.parseGenericParams();
     }
 
-    const _interface = new AST.InterfaceDecl(name, isGeneric, typeArgs);
+    const record = new AST.RecordDecl(name, isGeneric, typeArgs);
     this.consume(TokenType.COLON); // optional ':'
     this.expect(TokenType.INDENT, 'Expected Indented block.');
 
@@ -536,12 +536,17 @@ export default class AveParser extends Parser {
       const name = this.expect(TokenType.NAME, 'Expected property name.');
       this.expect(TokenType.COLON, "Expected ':'.");
       const type = parseType(this);
-      _interface.properties.set(name, type);
+      record.properties.set(name, type);
     }
 
-    return _interface;
+    return record;
   }
 
+  /**
+   * Parses generic type paramters like <T, U, K>.
+   * Assumes the '<' token has been eaten upon call.
+   * @returns an array of types.
+   */
   private parseGenericParams(): Typing.Type[] {
     const types: Typing.Type[] = [];
 

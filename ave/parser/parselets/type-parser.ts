@@ -10,6 +10,13 @@ import { TypeInfo } from '../ast/ast';
 import Token from '../../lexer/token';
 import UnionType from '../../types/union-type';
 
+/**
+ * Parses a valid Ave Data type, and returns the TypeInfo AST Node
+ * wrapping that type.
+ * @param parser The Parser to draw tokens from.
+ * @return TypeInfo {token: Token, type: Type}
+ */
+
 export default function parseType(parser: Parser) {
   let t = parseNonUnionType(parser);
 
@@ -26,6 +33,12 @@ export default function parseType(parser: Parser) {
 
   return t;
 }
+
+/**
+ * Parses a data type but stops on seeing a '|' token. Doesn't parse 
+ * union types.
+ * @param parser The parser to draw tokens from.
+ */
 
 function parseNonUnionType(parser: Parser): TypeInfo {
   if (parser.isValidType(parser.peek())) {

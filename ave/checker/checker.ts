@@ -191,8 +191,8 @@ export default class Checker {
         return this.forStmt(<AST.ForStmt>stmt);
       case NodeKind.ReturnStmt:
         return this.returnStmt(<AST.ReturnStmt>stmt);
-      case NodeKind.InterfaceDecl:
-        return this.interfaceDecl(<AST.InterfaceDecl>stmt);
+      case NodeKind.RecordDeclaration:
+        return this.recordDeclaration(<AST.RecordDecl>stmt);
       case NodeKind.ExprStmt:
         // just run it through the expression
         // to detect type errors.
@@ -700,7 +700,7 @@ export default class Checker {
     return true;
   }
 
-  private interfaceDecl(stmt: AST.InterfaceDecl) {
+  private recordDeclaration(stmt: AST.RecordDecl) {
     // TODO
     let typeDef: Typing.Type;
     this.pushScope();
@@ -720,7 +720,7 @@ export default class Checker {
     });
 
     // undefine the generic type parameters, T, U, K, etc
-    // before exiting interface body.
+    // before exiting record body.
 
     if (stmt.isGeneric) {
       for (let t of (<GenericType>typeDef).typeParams) {
