@@ -25,7 +25,7 @@ export class JSGenerator {
     return ' '.repeat(this.indentLevel * 4 /* TODO: remove magic number 4*/);
   }
 
-  private write(str: string): string {
+  private writeln(str: string): string {
     return this.writeIndent() + str;
   }
 
@@ -40,7 +40,7 @@ export class JSGenerator {
   private statement(node: AST.Node): string {
     switch (node.kind) {
       case NodeKind.VarDeclaration:
-        return this.write(this.varDeclaration(<AST.VarDeclaration>node));
+        return this.writeln(this.varDeclaration(<AST.VarDeclaration>node));
     }
 
     throw new Error('unhandled statement case in codegen.');
@@ -64,12 +64,16 @@ export class JSGenerator {
   }
 
   private body(node: AST.Body): string {
-    let out = '';
+    let out = this.writeln('{\n');
+
+    this.indent();
 
     for (let stmt of node.statements) {
       out += this.statement(stmt);
     }
-    return out;
+    
+    this.dedent();
+    return out + '\n}';
   }
 
   private varDeclaration(node: AST.VarDeclaration) {

@@ -12,7 +12,7 @@ export const enum TypeName {
   bool = 'bool',
   undef = 'undefined',
   nil = 'nil',
-  void = 'void'
+  void = 'void',
 }
 
 export class Type {
@@ -32,8 +32,12 @@ export class Type {
     this.superType = tSuper || null;
   }
 
-  public canAssign(tb: Type) {
-    return this.id == t_any.id || tb.id == this.id || tb.id == t_bottom.id;
+  /**
+   *
+   * @param t2 Type to test for assignment to this.
+   */
+  public canAssign(t2: Type) {
+    return this.id == t_any.id || t2.id == this.id || t2.id == t_bottom.id;
   }
 
   public toString() {
@@ -51,8 +55,12 @@ export class Type {
     return this.properties.has(key);
   }
 
-  // should only be called after checking with
-  // 'hasProperty'
+  /** searches for the property associated with the 'name' on this type.
+   * If not found then looks up the superType.
+   * 
+   * @param name: the Name of the property to look for
+   * @return Type that 'name' is bound to on this type, or null if it doesn't exist.
+  */
   public getProperty(name: string): Type | null {
     if (this.properties.has(name)) return this.properties.get(name) as Type;
     if (this.superType) return this.superType.getProperty(name);
@@ -140,7 +148,6 @@ export function unresolvedType(tag: string): Type {
   t_unknown.unresolved = true;
   return t_unknown;
 }
-
 
 export function fromString(str: string): Type {
   switch (str) {
@@ -265,7 +272,7 @@ makeBinaryRule(TokenType.PIPE); // a | b
 makeBinaryRule(TokenType.XOR); // a ^ b
 
 // conditional operators (or, and)
-// TODO, modify 'or' and 'and' to return a union type 
+// TODO, modify 'or' and 'and' to return a union type
 
 const checkConditionalType: BinaryRule = (l: Type, r: Type): Type => {
   if (l == t_error || r == t_error) return t_error;
