@@ -8,8 +8,26 @@ import * as Typing from '../../types/types';
 import Parser from '../parser';
 import { TypeInfo } from '../ast/ast';
 import Token from '../../lexer/token';
+import UnionType from '../../types/union-type';
 
-export default function parseType(parser: Parser): TypeInfo {
+export default function parseType(parser: Parser) {
+  let t = parseNonUnionType(parser);
+
+  // if '|' is seen, parse a union type.
+  if (parser.check(TokenType.PIPE)) {
+    const subtypes = [t.type];
+
+    while (parser.match(TokenType.PIPE)) {
+      subtypes.push(parseNonUnionType(parser).type);
+    }
+
+    return new TypeInfo(t.token, new UnionType(...subtypes));
+  }
+
+  return t;
+}
+
+function parseNonUnionType(parser: Parser): TypeInfo {
   if (parser.isValidType(parser.peek())) {
     let typeToken = parser.next();
 
@@ -20,7 +38,7 @@ export default function parseType(parser: Parser): TypeInfo {
         t_Array.create(Typing.fromToken(typeToken))
       );
     } else if (parser.match(TokenType.LESS)) {
-      // parse a generic type.
+      // parse a generic type instance.
       return parseGenericInstance(parser, typeToken);
     }
 
