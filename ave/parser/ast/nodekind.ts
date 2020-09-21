@@ -20,7 +20,8 @@ const enum NodeKind {
   FunctionDecl,
   ObjectExpr,
   InterfaceDecl,
-  FunctionExpr
+  FunctionExpr,
+  MemberAcessExpr
 }
 
 export = NodeKind

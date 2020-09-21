@@ -8,7 +8,7 @@ import NodeKind = require('../ast/nodekind');
 // TODO valid L value check
 
 function isValidAssignTarget(lval: AST.Node): boolean {
-  return lval.kind == NodeKind.Identifier;
+  return lval.kind == NodeKind.Identifier || lval.kind == NodeKind.MemberAcessExpr;
 }
 
 export const AssignmentParser: InfixParseFn = (

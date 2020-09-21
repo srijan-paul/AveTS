@@ -158,12 +158,21 @@ export class GroupExpr extends Expression {
 
 export class MemberAccessExpr extends Expression {
   readonly object: Expression;
-  readonly property :Expression
+  readonly property: Expression;
+  readonly kind = NodeKind.MemberAcessExpr;
+  // whether it is computed (accessed using "[]") or not.
+  readonly isIndex: boolean;
 
-  constructor(dot: Token, obj: Expression, prop: Expression) {
+  constructor(
+    dot: Token,
+    obj: Expression,
+    prop: Expression,
+    isIndex: boolean = false
+  ) {
     super(dot);
     this.object = obj;
     this.property = prop;
+    this.isIndex = isIndex;
   }
 
   toString() {

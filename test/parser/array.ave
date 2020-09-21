@@ -2,3 +2,14 @@ arr1: str[] = ["aa", "abv", "adad"];
 arr2: num[] = [123, 345, 13];
 arr3: bool[] = [true, true, false]
 arr4: str[] = [1, 2, 3] #expect typeerror
+
+const people = [
+    {
+        name: "helo",
+        age: 12
+    },
+    {
+        name: "bobo",
+        age: 15
+    }
+]

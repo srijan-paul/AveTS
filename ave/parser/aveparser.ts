@@ -115,11 +115,7 @@ export default class AveParser extends Parser {
         }
 
         if (eatClosingBrace) {
-          this.expect(
-            TokenType.R_BRACE,
-            `Expected '}'.`
-          );
-          
+          this.expect(TokenType.R_BRACE, `Expected '}'.`);
         }
 
         return object;
@@ -179,6 +175,13 @@ export default class AveParser extends Parser {
 
     // member access "a.b"
     this.infix(TokenType.DOT, Precedence.MEM_ACCESS, false, MemberExprParser);
+    // computed member acces "a[b]"
+    this.infix(
+      TokenType.L_BRACE,
+      Precedence.COMP_MEM_ACCESS,
+      false,
+      MemberExprParser
+    );
 
     // (...) grouping expression
 
