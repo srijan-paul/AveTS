@@ -84,7 +84,15 @@ export default class Checker {
     return resolveType(t, this);
   }
 
-
+  /**
+   * Checks if the assignment of a type `Tb` to another type `Ta` is valid.
+   * @param ta   {Type}      Data type of the assignment target
+   * @param tb   {Type}      Data type of the 
+   * @param type {TokenType} assignment operator to use (=, /= , -=, *= etc). 
+   *                         In places like function calls, parameters
+   *                         are checked using '='.
+   * @returns    {boolean}   `true` if the assignment is valid.
+   */
   private isValidAssignment(
     ta: Typing.Type,
     tb: Typing.Type,
@@ -99,7 +107,7 @@ export default class Checker {
       return ta.canAssign(tb);
     }
 
-    // compound assignment operators,
+    // compound assignment operators (*=, += etc)
 
     if (type == TokenType.PLUS_EQ)
       return (
@@ -250,7 +258,7 @@ export default class Checker {
       this.error(
         `cannot intialize '${
           node.name
-        }' of type ${type.toString()} with type '${currentType.toString()}'`,
+        }' of type '${type.toString()}' with type '${currentType.toString()}'`,
         node.token as Token
       );
     }

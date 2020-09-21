@@ -60,8 +60,8 @@ export default class GenericType extends Type {
 // For example, A possible instance of Array<T> is Array<str>
 
 export class GenericTypeInstance extends Type {
-  isPrimitive = false;
-  readonly typeArgs: Type[];
+  public isPrimitive = false;
+  public readonly typeArgs: Type[];
 
   constructor(tag: string, args: Type[]) {
     super(tag);

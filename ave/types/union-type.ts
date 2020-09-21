@@ -1,11 +1,8 @@
 import { Type } from './types';
 
-// ! This type is untested and the implementation is
-// ! incomplete
-
 export default class UnionType extends Type {
-  readonly types: Type[];
-  isPrimitive = false;
+  public types: Type[];
+  public isPrimitive = false;
 
   /** A Union type is a collection of smaller sub-types.
    * a type T can be assigned to a Union type, if it can be 

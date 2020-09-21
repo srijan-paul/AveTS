@@ -3,20 +3,24 @@ import FunctionType from '../types/function-type';
 import GenericType, { GenericTypeInstance } from '../types/generic-type';
 import ObjectType from '../types/object-type';
 import { Type, t_error, t_undef } from '../types/types';
+import UnionType from '../types/union-type';
 import Checker from './checker';
 
-// resolves a type
-// if the type is unresolved it looks
-// for the type in the environment chain.
-// if the type cannot be resolved,
-// then the error is throw pointing to the provided token
+/**
+ * Resolves a type. If the type is marked as 'unresolved' it
+ * looks for the type in the checker's environment chain.
+ * If the type cannot be resolved then an error is thrown pointing to the
+ * provided token (if any).
+ * @param type    {Type}    The type to resolve.
+ * @param checker {Checker} The type checker to use.
+ * @param token?  {Token}   The token at which the error to thrown when found.
+ */
 
 export default function resolveType(
   type: Type,
   checker: Checker,
   token?: Token
 ): Type {
-
   if (type.isPrimitive) {
     return resolvePrimitiveType(type, checker, token);
   }
@@ -31,6 +35,10 @@ export default function resolveType(
 
   if (type instanceof GenericTypeInstance) {
     return resolveGenericTypeInstance(type, checker, token);
+  }
+
+  if (type instanceof UnionType) {
+    return resolveUnionType(type, checker, token);
   }
 
   return t_undef;
@@ -55,7 +63,6 @@ function resolvePrimitiveType(
   checker: Checker,
   token?: Token
 ): Type {
-
   if (!type.unresolved) return type;
   let resolved = checker.env.findType(type.tag);
   if (!resolved)
@@ -98,8 +105,21 @@ function resolveGenericTypeInstance(
   return resolved.create(...args);
 }
 
-// throws an error if a token is available for reporting
-// else throws a warning.
+function resolveUnionType(type: UnionType, checker: Checker, token?: Token) {
+  for (let i = 0; i < type.types.length; i++) {
+    type.types[i] = resolveType(type.types[i], checker, token);
+  }
+
+  return type;
+}
+
+/**
+ * If a 3rd argument is provided, makes the checker throw an error
+ * at that Token, else throws a warning.
+ * @param message The error message to be displayed.
+ * @param checker The checker through the which the error is thrown.
+ * @param token?  The token in the source code where the error is thrown.
+ */
 function errorOrWarn(message: string, checker: Checker, token?: Token) {
   if (token) checker.error(message, token);
   else checker.warn(message);
