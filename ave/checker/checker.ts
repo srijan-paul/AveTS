@@ -87,8 +87,8 @@ export default class Checker {
   /**
    * Checks if the assignment of a type `Tb` to another type `Ta` is valid.
    * @param ta   {Type}      Data type of the assignment target
-   * @param tb   {Type}      Data type of the 
-   * @param type {TokenType} assignment operator to use (=, /= , -=, *= etc). 
+   * @param tb   {Type}      Data type of the
+   * @param type {TokenType} assignment operator to use (=, /= , -=, *= etc).
    *                         In places like function calls, parameters
    *                         are checked using '='.
    * @returns    {boolean}   `true` if the assignment is valid.
@@ -371,7 +371,7 @@ export default class Checker {
 
     if (type == Typing.t_error) {
       this.error(
-        `Cannot use operator '${expr.operator.raw}' on operands of type '${lType.tag}' and '${rType.tag}'`,
+        `Cannot use operator '${expr.operator.raw}' on operands of type '${lType}' and '${rType}'`,
         expr.operator
       );
     }
@@ -599,7 +599,7 @@ export default class Checker {
     this.verifyFunctionParams(func.params);
 
     this.functionReturnStack.push(this.type(func.returnTypeInfo));
-    
+
     func.params.forEach(e => {
       func.body.declarations.push(
         new HoistedVarDeclaration(e.name, this.type(e.typeInfo), true)

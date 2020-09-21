@@ -1,1 +1,22 @@
-let a: num | str = false; #expect type errors.
+let a: num | str = "aa"; #expect type error.
+
+record TypeA
+  tag: str
+  foo: num
+
+record TypeB
+  tag: str
+  foo: num
+
+let obj: TypeA = {
+  tag: "hello",
+  foo:  55
+}
+
+func typeID(a: TypeA)
+  return a
+
+typeID({
+  tag: "aa",
+  foo: 44
+})
