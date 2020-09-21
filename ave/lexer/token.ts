@@ -4,10 +4,10 @@ export default interface Token {
   raw: string;
   type: TokenType;
   value: tokenvalue | null;
-  pos: TokenPosition;
+  pos: LocationData;
 }
 
-export interface TokenPosition {
+export interface LocationData {
   line: number;
   column: number;
   start: number;

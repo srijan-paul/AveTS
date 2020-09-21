@@ -1,15 +1,23 @@
-record Person
+record Position
+  line:   num
+  column: num
+  start:  num
+  end:    num
+
+record Token
   name: str
-  age: num
+  pos: Position
+  value: num
 
-srijan := 
-  name: "Srijan Paul",
-  age: 15
+const number =
+  name: "NUMBER"
+  pos: 
+    line: 2
+    column: 3
+    start: 5
+    end: -1
+  value: 123
 
-func getAge(p: Person)
-  return p.age
+let a: Token = number
 
-getAge(srijan)
-
-func double(param)
-  return param * 2
+a.name = 1

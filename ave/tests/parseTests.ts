@@ -22,7 +22,7 @@ function testFile(path: string) {
   const lexData = new Lexer(path, fs.readFileSync(path, 'utf-8')).lex();
   const parseTree = new AveParser(lexData).parse();
   new Checker(parseTree).check();
-  // console.log(parseTree.ast.toString());
+  console.log(parseTree.ast.toString());
 }
 
 runTests();

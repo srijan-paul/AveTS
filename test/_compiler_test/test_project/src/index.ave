@@ -1,0 +1,8 @@
+import {add} from './add'
+
+a := 55
+b := 66
+
+sum := add(a, b)
+
+console.log(sum)

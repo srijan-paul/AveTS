@@ -1,0 +1,4 @@
+func add(a: num, b: num)
+  return a + b
+
+export add

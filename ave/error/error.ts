@@ -1,4 +1,4 @@
-import Token, { TokenPosition } from '../lexer/token';
+import Token, { LocationData } from '../lexer/token';
 import chalk = require('chalk');
 
 export enum ErrorType {
