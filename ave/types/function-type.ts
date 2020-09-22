@@ -15,23 +15,14 @@ export default class FunctionType extends Type {
   readonly params: ParameterTypeInfo[];
   returnType: Type;
 
-  public constructor(
-    name?: string,
-    params?: ParameterTypeInfo[],
-    retType?: Type
-  ) {
+  public constructor(name?: string, params?: ParameterTypeInfo[], retType?: Type) {
     super(name || '');
     this.superType = null;
     this.params = params || [];
     this.returnType = retType || t_any;
   }
 
-  public addParam(
-    name: string,
-    type: Type,
-    required: boolean,
-    hasDefault?: boolean
-  ) {
+  public addParam(name: string, type: Type, required: boolean, hasDefault?: boolean) {
     this.params.push({
       name,
       type,
@@ -76,10 +67,10 @@ export default class FunctionType extends Type {
       .map(e => {
         let s = e.required ? '' : '?';
         s += e.rest ? '...' : '';
-        s += `${e.name}: ${e.type.toString()} `;
+        s += `${e.name}: ${e.type} `;
         return s;
       })
-      .join(', ')}) -> ${this.returnType.toString()}`;
+      .join(', ')}) -> ${this.returnType}`;
   }
 
   public substitute(t1: Type, t2: Type): Type {

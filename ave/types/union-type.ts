@@ -5,7 +5,7 @@ export default class UnionType extends Type {
   public isPrimitive = false;
 
   /** A Union type is a collection of smaller sub-types.
-   * a type T can be assigned to a Union type, if it can be 
+   * a type T can be assigned to a Union type, if it can be
    * assigned to at least one type T' of it's sub-types.
    * @param ...t list of subtypes that this union type contains.
    */
@@ -14,10 +14,9 @@ export default class UnionType extends Type {
     this.types = t.sort((a: Type, b: Type) => a.id - b.id);
   }
 
-
   public canAssign(t2: Type): boolean {
     // if T2 is a Union type as well
-    // then for each type T in T2 
+    // then for each type T in T2
     // there exists a type T' in T1 (this)
     // such that T can be assigned to T1.
 
@@ -38,6 +37,19 @@ export default class UnionType extends Type {
     }
 
     return false;
+  }
+
+  public clone(): UnionType {
+    let subTypes = this.types.map(e => e.clone());
+    return new UnionType(...subTypes);
+  }
+
+  public substitute(t1: Type, t2: Type) {
+    let copy = this.clone();
+    for (let i = 0; i < copy.types.length; i++) {
+      copy.types[i] = copy.types[i].substitute(t1, t2);
+    }
+    return copy;
   }
 
   public toString() {

@@ -20,12 +20,3 @@ typeID({
   tag: "aa",
   foo: 44
 });
-
-record List<T>
-  length: num
-  push:   (e: T) -> num
-  pop:    ()-> T | undefined
-
-let l: List<num>
-
-let b = l.length

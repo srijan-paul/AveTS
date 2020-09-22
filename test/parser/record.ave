@@ -1,0 +1,7 @@
+record List<T>
+  length: num
+  pop: () -> T | undefined
+  push: (e: T) -> num
+
+let a: List<num>;
+let b: num | undefined = a.pop();

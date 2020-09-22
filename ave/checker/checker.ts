@@ -126,7 +126,7 @@ export default class Checker {
     if (t1 == t2) return t1;
     if (t1 == Typing.t_void) return t2;
     if (t2 == Typing.t_void) return t1;
-    
+
     return new UnionType(t1, t2);
   }
 
@@ -141,7 +141,7 @@ export default class Checker {
 
   /**
    * Return false if the type of `node` is not equal to `t`. If a third argument
-   * is provided, throws an error. 
+   * is provided, throws an error.
    * @param node {AST.Node}    The AST Node whose type is to be matched.
    * @param type {Typing.Type} The Type to check against.
    * @param msg  {string}      Error message thrown if the type is mismatched.
@@ -448,7 +448,7 @@ export default class Checker {
 
   private callExpr(expr: AST.CallExpr): Typing.Type {
     let callee = expr.callee;
-    let type = this.typeOf(expr.callee);
+    let type = this.type(this.expression(expr.callee));
     let args = expr.args;
 
     if (!(type instanceof FunctionType)) {
@@ -459,14 +459,13 @@ export default class Checker {
     if (type == Typing.t_infer) {
       this.error(
         'A function that is called before it has been defined must have an explicit return type, or declared prior to call.',
-        callee.token as Token
+        callee.operator
       );
       return Typing.t_error;
     }
 
     this.verifyArguments(args, (<FunctionType>type).params);
-
-    return <FunctionType>type.returnType;
+    return type.returnType;
   }
 
   private verifyArguments(args: AST.Expression[], params: ParameterTypeInfo[]) {
@@ -559,10 +558,7 @@ export default class Checker {
     if (rtype == Typing.t_infer) return type;
 
     if (!this.isValidAssignment(rtype, type, TokenType.EQ))
-      this.error(
-        `Cannot assign type '${type.toString()}' to type '${rtype.toString()}'`,
-        stmt.expr?.token as Token
-      );
+      this.error(`Cannot assign type '${type}' to type '${rtype}'`, stmt.expr?.token as Token);
 
     return type;
   }

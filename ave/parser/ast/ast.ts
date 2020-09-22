@@ -70,9 +70,7 @@ export class BinaryExpr extends Expression {
   }
 
   toString(): string {
-    return `(${this.left.toString()} ${
-      this.operator.raw
-    } ${this.right.toString()})`;
+    return `(${this.left.toString()} ${this.operator.raw} ${this.right.toString()})`;
   }
 }
 
@@ -102,9 +100,9 @@ export class Body extends Node {
 
   toString() {
     indent();
-    const str = `${indentstr()}${baseColor(
-      'body'
-    )}:\n${indentstr()}${this.statements.join('\n' + indentstr())}`;
+    const str = `${indentstr()}${baseColor('body')}:\n${indentstr()}${this.statements.join(
+      '\n' + indentstr()
+    )}`;
     dedent();
     return str;
   }
@@ -163,12 +161,7 @@ export class MemberAccessExpr extends Expression {
   // whether it is computed (accessed using "[]") or not.
   readonly isIndex: boolean;
 
-  constructor(
-    dot: Token,
-    obj: Expression,
-    prop: Expression,
-    isIndex: boolean = false
-  ) {
+  constructor(dot: Token, obj: Expression, prop: Expression, isIndex: boolean = false) {
     super(dot);
     this.object = obj;
     this.property = prop;
@@ -225,9 +218,7 @@ export class VarDeclaration extends Node {
   }
 
   toString() {
-    return `${baseColor('vardecl')} (${this.declarators
-      .map(e => e.toString())
-      .join(', ')})`;
+    return `${baseColor('vardecl')} (${this.declarators.map(e => e.toString()).join(', ')})`;
   }
 }
 
@@ -247,17 +238,15 @@ export class VarDeclarator extends Node {
   }
 
   toString() {
-    return `${this.name}: ${this.typeInfo.toString()} = ${
-      this.value ? this.value.toString() : ''
-    }`;
+    return `${this.name}: ${this.typeInfo.toString()} = ${this.value ? this.value.toString() : ''}`;
   }
 }
 
 export class CallExpr extends Expression {
   readonly args: Expression[] = [];
-  readonly callee: Node;
+  readonly callee: Expression;
   readonly kind = NodeKind.CallExpr;
-  constructor(callee: Node, lparen: Token) {
+  constructor(callee: Expression, lparen: Token) {
     super(lparen);
     this.callee = callee;
   }
@@ -321,9 +310,7 @@ export class FunctionExpr extends Expression {
 
     str +=
       this.params
-        .map(
-          p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.typeInfo.toString()}`
-        )
+        .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.typeInfo.toString()}`)
         .join(', ') + `) -> ${this.returnTypeInfo.toString()}\n`;
 
     indent();
@@ -370,13 +357,7 @@ export class ForStmt extends Node {
   readonly body: Body;
   readonly kind = NodeKind.ForStmt;
 
-  constructor(
-    kw: Token,
-    i: Identifier,
-    start: Expression,
-    stop: Expression,
-    step?: Expression
-  ) {
+  constructor(kw: Token, i: Identifier, start: Expression, stop: Expression, step?: Expression) {
     super(kw);
     this.iterator = i;
     this.start = start;
@@ -432,9 +413,7 @@ export class FunctionDeclaration extends Node {
 
     str +=
       this.params
-        .map(
-          p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.typeInfo.toString()}`
-        )
+        .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.typeInfo.toString()}`)
         .join(', ') + `) -> ${this.returnTypeInfo.toString()}\n`;
 
     indent();

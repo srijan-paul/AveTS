@@ -1,9 +1,6 @@
 import TokenType = require('../../lexer/tokentype');
 import FunctionType, { ParameterTypeInfo } from '../../types/function-type';
-import GenericType, {
-  GenericTypeInstance,
-  t_Array,
-} from '../../types/generic-type';
+import GenericType, { GenericTypeInstance, t_Array } from '../../types/generic-type';
 import * as Typing from '../../types/types';
 import Parser from '../parser';
 import { TypeInfo } from '../ast/ast';
@@ -35,7 +32,7 @@ export default function parseType(parser: Parser) {
 }
 
 /**
- * Parses a data type but stops on seeing a '|' token. Doesn't parse 
+ * Parses a data type but stops on seeing a '|' token. Doesn't parse
  * union types.
  * @param parser The parser to draw tokens from.
  */
@@ -46,10 +43,7 @@ function parseNonUnionType(parser: Parser): TypeInfo {
 
     if (parser.match(TokenType.L_SQ_BRACE)) {
       parser.expect(TokenType.R_SQ_BRACE, "Expected ']' token.");
-      return new TypeInfo(
-        typeToken,
-        t_Array.create(Typing.fromToken(typeToken))
-      );
+      return new TypeInfo(typeToken, t_Array.create(Typing.fromToken(typeToken)));
     } else if (parser.match(TokenType.LESS)) {
       // parse a generic type instance.
       return parseGenericInstance(parser, typeToken);
