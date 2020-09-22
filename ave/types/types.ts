@@ -33,10 +33,11 @@ export class Type {
   }
 
   /**
-   *
-   * @param t2 Type to test for assignment to this.
+   * Returns `true` if a value of type `t2` can be assigned to
+   * this type.
+   * @param t2 {Type} The data type to test for assignment to this.
    */
-  public canAssign(t2: Type) {
+  public canAssign(t2: Type): boolean {
     return this.id == t_any.id || t2.id == this.id || t2.id == t_bottom.id;
   }
 
@@ -58,8 +59,8 @@ export class Type {
   /** searches for the property associated with the 'name' on this type.
    * If not found then looks up the superType.
    * 
-   * @param name: the Name of the property to look for
-   * @return Type that 'name' is bound to on this type, or null if it doesn't exist.
+   * @param  name {string} the name of the property to look for
+   * @return type {Type}   that 'name' is bound to on this type, or null if it doesn't exist.
   */
   public getProperty(name: string): Type | null {
     if (this.properties.has(name)) return this.properties.get(name) as Type;
@@ -118,10 +119,10 @@ export const t_any = new Type(TypeName.any, true);
 
 export const t_string = new Type(TypeName.string, true);
 export const t_number = new Type(TypeName.number, true);
-export const t_bool = new Type(TypeName.bool, true);
-export const t_undef = new Type(TypeName.undef, true);
-export const t_nil = new Type(TypeName.nil, true);
-export const t_void = new Type(TypeName.void, true);
+export const t_bool   = new Type(TypeName.bool  , true);
+export const t_undef  = new Type(TypeName.undef , true);
+export const t_nil    = new Type(TypeName.nil   , true);
+export const t_void   = new Type(TypeName.void  , true);
 
 // error type is returned in places where
 // an operator is used on unexpected operand types
@@ -159,6 +160,8 @@ export function fromString(str: string): Type {
       return t_number;
     case TypeName.bool:
       return t_bool;
+    case TypeName.undef:
+      return t_undef;
     // case TypeName.object:
     //   return t_object;
   }
@@ -166,21 +169,16 @@ export function fromString(str: string): Type {
   return unresolvedType(str);
 }
 
+/**
+ * If there is a built-in type that the token's raw string
+ * refers to, then returns that type, else creates a new 
+ * unresolved type having the `tag` set to the token's raw
+ * and returns it.
+ * @param   tok {Token} The token to build the type from.
+ * @returns     {Type}  A resolved builtin data type or a new unresolved one. 
+ */
 export function fromToken(tok: Token): Type {
-  switch (tok.type) {
-    case TokenType.STRING:
-      return t_string;
-    case TokenType.BOOL:
-      return t_bool;
-    case TokenType.NUMBER:
-      return t_number;
-    // case TokenType.OBJECT:
-    //   return t_object;
-    case TokenType.ANY:
-      return t_any;
-  }
-
-  return unresolvedType(tok.raw);
+  return fromString(tok.raw);
 }
 
 // a rule specifies the data type of the result
@@ -211,7 +209,10 @@ addTable[strID][numID] = t_string;
 addTable[numID][strID] = t_string;
 addTable[strID][strID] = t_string;
 
-// TODO: account for 'any' type here.
+// TODO: Account for 'any' type here.
+// TODO: If the lType and rType are union types,
+//       return true if the '+' operator can be applied to 
+//       all possible combinations of the types, else return false.
 mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {
   if (addTable[lt.id] && addTable[lt.id][rt.id]) return addTable[lt.id][rt.id];
   return t_error;
@@ -371,7 +372,7 @@ type becomes number | string
 export class t__Maybe extends Type {
   readonly type: Type;
 
-  // _unwraps_ a type
+  // "unwraps" a type
   // this is used to avoid nesting in
   // maybe types. since Maybe<Maybe<T>> is
   // just Maybe<T>, this function just

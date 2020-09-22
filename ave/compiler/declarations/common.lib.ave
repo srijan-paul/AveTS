@@ -1,4 +1,4 @@
-interface Array<T>
+record Array<T>
   length: num
   push: (el: T) -> num
   pop: () -> T | undefined
@@ -8,7 +8,7 @@ interface Array<T>
   sort: (compareFn?: (a: num, b: num) -> num) -> this
 
   
-interface Map<K, V>
+record Map<K, V>
   set: (K, V) => this
   get: (K) => V | undefined
   forEach: (callbackfn: (value: V, key: K) -> void) -> void

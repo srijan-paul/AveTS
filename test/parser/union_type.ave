@@ -8,10 +8,10 @@ record TypeB
   tag: str
   foo: num
 
-let obj: TypeA = {
+let obj = 
   tag: "hello",
   foo:  55
-}
+
 
 func typeID(a: TypeA)
   return a
@@ -19,4 +19,13 @@ func typeID(a: TypeA)
 typeID({
   tag: "aa",
   foo: 44
-})
+});
+
+record List<T>
+  length: num
+  push:   (e: T) -> num
+  pop:    ()-> T | undefined
+
+let l: List<num>
+
+let b = l.length
