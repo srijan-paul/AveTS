@@ -28,10 +28,7 @@ export default function runLexerTests() {
     }
   }
 
-  console.log(
-    chalk.black.bgGreenBright('LEXER TESTS COMPLETE'),
-    `: ${count} files lexed.`
-  );
+  console.log(chalk.black.bgGreenBright('LEXER TESTS COMPLETE'), `: ${count} files lexed.`);
 }
 
 runLexerTests();

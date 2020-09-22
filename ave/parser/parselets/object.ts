@@ -9,21 +9,15 @@ import NodeKind = require('../ast/nodekind');
 // TODO allow string and array key names.
 // add function keys.
 
-export const ObjectParser: PrefixParseFn = (
-  parser: Parser,
-  indentOrBrace: Token
-) => {
+export const ObjectParser: PrefixParseFn = (parser, indentOrBrace: Token) => {
   const obj = new AST.ObjectExpr(indentOrBrace);
 
- // objects can start with either '{' or a dedent token
- // or objects that don't have either and appear in the middle 
- // of an expression, the Infix object parser is used,
- // treating ':' as a pseudo-operator.
- 
-  const endToken =
-    indentOrBrace.type == TokenType.INDENT
-      ? TokenType.DEDENT
-      : TokenType.R_BRACE;
+  // objects can start with either '{' or a dedent token
+  // or objects that don't have either and appear in the middle
+  // of an expression, the Infix object parser is used,
+  // treating ':' as a pseudo-operator.
+
+  const endToken = indentOrBrace.type == TokenType.INDENT ? TokenType.DEDENT : TokenType.R_BRACE;
 
   while (!parser.eof() && !parser.match(endToken)) {
     // TODO: allow expressions as key types.
@@ -37,26 +31,18 @@ export const ObjectParser: PrefixParseFn = (
   return obj;
 };
 
-export const InfixObjectParser: InfixParseFn = (
-  parser: Parser,
-  left: AST.Node,
-  colon: Token
-) => {
-  const obj = new AST.ObjectExpr(colon);
+export const InfixObjectParser: InfixParseFn = (parser, left, colonToken) => {
+  const obj = new AST.ObjectExpr(colonToken);
 
   if (!isValidKey(left)) {
-    parser.error("Unexpected ':'.", colon);
+    parser.error("Unexpected ':'.", colonToken);
     return obj;
   }
 
   const value = parser.parseExpression(Precedence.NONE);
   obj.kvPairs.set((<AST.Literal>left).token as Token, value);
 
-  while (
-    !parser.eof() &&
-    parser.check(TokenType.NAME) &&
-    parser.checkNext(TokenType.COLON)
-  ) {
+  while (!parser.eof() && parser.check(TokenType.NAME) && parser.checkNext(TokenType.COLON)) {
     const key = parser.next();
     parser.next(); // eat ':'
     const value = parser.parseExpression(Precedence.NONE);

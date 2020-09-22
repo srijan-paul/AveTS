@@ -35,7 +35,7 @@ export class HoistedVarDeclaration implements Declaration {
       dataType: this.type,
       currentType: this.type,
       declarationKind: DeclarationKind.BlockScope,
-      isDefined: this.defined
+      isDefined: this.defined,
     });
   }
 }
@@ -54,14 +54,12 @@ export class FuncDeclaration implements Declaration {
         rest: p.rest,
       });
     }
-    return new FuncDeclaration(
-      node.name,
-      new FunctionType('', params, node.returnTypeInfo.type)
-    );
+    const func = new FunctionType('', params, node.returnTypeInfo.type);
+    return new FuncDeclaration(node.name, func);
   }
 
   constructor(name: string, type: FunctionType) {
-    this.name = name;
+    this.name = name || '<function>';
     this.type = type;
   }
 
@@ -71,7 +69,7 @@ export class FuncDeclaration implements Declaration {
       dataType: this.type,
       currentType: this.type,
       declarationKind: DeclarationKind.BlockScope,
-      isDefined: true
+      isDefined: true,
     });
   }
 }

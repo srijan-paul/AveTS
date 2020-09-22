@@ -17,9 +17,8 @@ const MemberExprParser: InfixParseFn = (
     property = parser.parseExpression(Precedence.MEM_ACCESS + 1);
     parser.expect(TokenType.R_BRACE, "Expected ']'.");
   } else {
-    property = new AST.Identifier(
-      parser.expect(TokenType.NAME, 'Expected property name.')
-    );
+    const nameToken = parser.expect(TokenType.NAME, 'Expected property name.');
+    property = new AST.Identifier(nameToken);
   }
 
   const expr = new AST.MemberAccessExpr(dotOrBrace, left, property);

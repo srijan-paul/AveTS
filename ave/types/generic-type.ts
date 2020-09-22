@@ -75,7 +75,7 @@ export class GenericTypeInstance extends Type {
 
   public susbtitute(ta: Type, tb: Type) {
     let copy = this.clone();
-    
+
     for (let i = 0; i < copy.typeArgs.length; i++) {
       copy.typeArgs[i] = copy.typeArgs[i].substitute(ta, tb);
     }

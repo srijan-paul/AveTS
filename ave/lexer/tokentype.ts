@@ -112,4 +112,4 @@ enum TokenType {
   NAME,
 }
 
-export = TokenType
+export = TokenType;

@@ -62,12 +62,10 @@ function makeLine(source: string, line: number) {
 }
 
 function makeUnderLine(source: string, line: number, err: AveError): string {
-  const lineLength =
-    nthIndex(source, '\n', line) - nthIndex(source, '\n', line - 1) + 1;
+  const lineLength = nthIndex(source, '\n', line) - nthIndex(source, '\n', line - 1) + 1;
 
   const text =
-    ' '.repeat(err.column + `${err.line}| `.length) +
-    '^'.repeat((err.endPos || 1) - err.startPos);
+    ' '.repeat(err.column + `${err.line}| `.length) + '^'.repeat((err.endPos || 1) - err.startPos);
 
   return chalk.rgb(229, 80, 57)(text);
 }
@@ -89,9 +87,9 @@ function makeErrorInfo(source: string, line: number, err: AveError) {
 
 export function throwError(err: AveError, source: string) {
   const errType: string = getErrorTypeName(err.type);
-  const message = `\n${chalk.yellow(err.fileName)}:${err.line}:${
-    err.column
-  } - [${chalk.red(errType)}] ${err.message}`;
+  const message = `\n${chalk.yellow(err.fileName)}:${err.line}:${err.column} - [${chalk.red(
+    errType
+  )}] ${err.message}`;
 
   console.error(message);
   console.log(makeErrorInfo(source, err.line, err));

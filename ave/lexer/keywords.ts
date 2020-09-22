@@ -37,7 +37,7 @@ const keywords: Map<string, TokenType> = new Map([
   ['new'      , TokenType.NEW],
   ['export'   , TokenType.EXPORT],
   ['import'   , TokenType.IMPORT],
-  ['record'          , TokenType.RECORD],
+  ['record'             , TokenType.RECORD],
   [TypeName.string      , TokenType.STRING],
   [TypeName.number      , TokenType.NUMBER],
   [TypeName.bool        , TokenType.BOOL],

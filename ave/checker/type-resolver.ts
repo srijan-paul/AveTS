@@ -16,11 +16,7 @@ import Checker from './checker';
  * @param token?  {Token}   The token at which the error to thrown when found.
  */
 
-export default function resolveType(
-  type: Type,
-  checker: Checker,
-  token?: Token
-): Type {
+export default function resolveType(type: Type, checker: Checker, token?: Token): Type {
   if (type.isPrimitive) {
     return resolvePrimitiveType(type, checker, token);
   }
@@ -44,11 +40,7 @@ export default function resolveType(
   return t_undef;
 }
 
-function resolveFunctionType(
-  t: FunctionType,
-  checker: Checker,
-  token?: Token
-): FunctionType {
+function resolveFunctionType(t: FunctionType, checker: Checker, token?: Token): FunctionType {
   for (let p of t.params) {
     p.type = resolveType(p.type, checker, token);
   }
@@ -58,15 +50,10 @@ function resolveFunctionType(
   return t;
 }
 
-function resolvePrimitiveType(
-  type: Type,
-  checker: Checker,
-  token?: Token
-): Type {
+function resolvePrimitiveType(type: Type, checker: Checker, token?: Token): Type {
   if (!type.unresolved) return type;
   let resolved = checker.env.findType(type.tag);
-  if (!resolved)
-    errorOrWarn(`Cannot find type '${type.toString()}'`, checker, token);
+  if (!resolved) errorOrWarn(`Cannot find type '${type.toString()}'`, checker, token);
   return resolved || t_error;
 }
 
@@ -78,11 +65,7 @@ function resolveObjectType(t: ObjectType, checker: Checker, token?: Token) {
   return t;
 }
 
-function resolveGenericTypeInstance(
-  type: GenericTypeInstance,
-  checker: Checker,
-  token?: Token
-) {
+function resolveGenericTypeInstance(type: GenericTypeInstance, checker: Checker, token?: Token) {
   let resolved = checker.env.findType(type.tag);
 
   if (!resolved) {

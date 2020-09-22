@@ -20,15 +20,9 @@ export function printToken(tok: Token) {
 }
 
 export function coloredTokenInfo(token: Token) {
-  let tokenText: string = chalk.rgb(
-    96,
-    163,
-    188
-  )(`TOKEN_${tokenName(token.type)}`);
+  let tokenText: string = chalk.rgb(96, 163, 188)(`TOKEN_${tokenName(token.type)}`);
 
-  let padding: string = ' '.repeat(
-    MAX_TOKEN_LENGTH - tokenName(token.type).length + 2
-  );
+  let padding: string = ' '.repeat(MAX_TOKEN_LENGTH - tokenName(token.type).length + 2);
 
   // only show upto 17 characters if the raw text is too long
   // eg. a long string or a big number
@@ -45,9 +39,7 @@ export function coloredTokenInfo(token: Token) {
 
   const position: string = `[line ${token.pos.line}: ${token.pos.start}-${token.pos.end}]`;
 
-  return `${tokenText + padding} raw: ${
-    `'${rawText}'` + rawPadding
-  } position: ${position}`;
+  return `${tokenText + padding} raw: ${`'${rawText}'` + rawPadding} position: ${position}`;
 }
 
 export function tokenInfo(token: Token): string {
@@ -151,7 +143,7 @@ export function tokenName(t: TokenType): string {
     case TokenType.NIL:            return 'NIL';
     case TokenType.NAME:           return 'NAME';
     case TokenType.ANY:            return 'ANY';
-    case TokenType.RECORD:      return 'INTERFACE';
+    case TokenType.RECORD:         return 'RECORD';
 
     default:
       return 'UNKNOWN';

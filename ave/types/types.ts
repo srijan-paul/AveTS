@@ -58,10 +58,10 @@ export class Type {
 
   /** searches for the property associated with the 'name' on this type.
    * If not found then looks up the superType.
-   * 
+   *
    * @param  name {string} the name of the property to look for
    * @return type {Type}   that 'name' is bound to on this type, or null if it doesn't exist.
-  */
+   */
   public getProperty(name: string): Type | null {
     if (this.properties.has(name)) return this.properties.get(name) as Type;
     if (this.superType) return this.superType.getProperty(name);
@@ -70,18 +70,14 @@ export class Type {
 
   public hasMethod(name: string): boolean {
     if (this == t_any) return true;
-    if (this.properties.has(name))
-      return this.properties.get(name) instanceof FunctionType;
+    if (this.properties.has(name)) return this.properties.get(name) instanceof FunctionType;
     if (this.superType) this.superType.hasMethod(name);
     return false;
   }
 
   public hasOwnMethod(key: string): boolean {
     if (this == t_any) return true;
-    return (
-      this.properties.has(key) &&
-      this.properties.get(key) instanceof FunctionType
-    );
+    return this.properties.has(key) && this.properties.get(key) instanceof FunctionType;
   }
 
   public defineProperty(name: string, type: Type) {
@@ -119,10 +115,10 @@ export const t_any = new Type(TypeName.any, true);
 
 export const t_string = new Type(TypeName.string, true);
 export const t_number = new Type(TypeName.number, true);
-export const t_bool   = new Type(TypeName.bool  , true);
-export const t_undef  = new Type(TypeName.undef , true);
-export const t_nil    = new Type(TypeName.nil   , true);
-export const t_void   = new Type(TypeName.void  , true);
+export const t_bool = new Type(TypeName.bool, true);
+export const t_undef = new Type(TypeName.undef, true);
+export const t_nil = new Type(TypeName.nil, true);
+export const t_void = new Type(TypeName.void, true);
 
 // error type is returned in places where
 // an operator is used on unexpected operand types
@@ -171,11 +167,11 @@ export function fromString(str: string): Type {
 
 /**
  * If there is a built-in type that the token's raw string
- * refers to, then returns that type, else creates a new 
+ * refers to, then returns that type, else creates a new
  * unresolved type having the `tag` set to the token's raw
  * and returns it.
  * @param   tok {Token} The token to build the type from.
- * @returns     {Type}  A resolved builtin data type or a new unresolved one. 
+ * @returns     {Type}  A resolved builtin data type or a new unresolved one.
  */
 export function fromToken(tok: Token): Type {
   return fromString(tok.raw);
@@ -211,7 +207,7 @@ addTable[strID][strID] = t_string;
 
 // TODO: Account for 'any' type here.
 // TODO: If the lType and rType are union types,
-//       return true if the '+' operator can be applied to 
+//       return true if the '+' operator can be applied to
 //       all possible combinations of the types, else return false.
 mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {
   if (addTable[lt.id] && addTable[lt.id][rt.id]) return addTable[lt.id][rt.id];
@@ -319,8 +315,7 @@ mUnaryRules.set(TokenType.BANG, (to: Type) => {
 });
 
 export function unaryOp(operator: TokenType, t_operand: Type): Type {
-  if (mUnaryRules.has(operator))
-    return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
+  if (mUnaryRules.has(operator)) return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
   return t_error;
 }
 

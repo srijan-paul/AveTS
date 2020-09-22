@@ -19,7 +19,7 @@ function runTests() {
 function testFile(path: string) {
   console.log(chalk.green('Running parser on ') + chalk.yellow(path));
 
-  const lexData   = new Lexer(path, fs.readFileSync(path, 'utf-8')).lex();
+  const lexData = new Lexer(path, fs.readFileSync(path, 'utf-8')).lex();
   const parseTree = new AveParser(lexData).parse();
   new Checker(parseTree).check();
   // console.log(parseTree.ast.toString());

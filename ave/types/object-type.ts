@@ -17,7 +17,7 @@ export default class ObjectType extends Type {
 
   public clone(): Type {
     let copy = new ObjectType(this.tag);
-    
+
     this.properties.forEach((v: Type, k: string) => {
       copy.defineProperty(k, v);
     });
@@ -27,7 +27,7 @@ export default class ObjectType extends Type {
 
   public substitute(ta: Type, tb: Type): Type {
     this.properties.forEach((v, k) => {
-      this.properties.set(k , v.substitute(ta, tb));
+      this.properties.set(k, v.substitute(ta, tb));
     });
     return this;
   }
@@ -40,11 +40,7 @@ export default class ObjectType extends Type {
 }
 // ta: assignment target
 // tb: type of value being assigned
-export function checkObjectAssignment(
-  ta: ObjectType,
-  tb: Type,
-  checker: Checker
-): boolean {
+export function checkObjectAssignment(ta: ObjectType, tb: Type, checker: Checker): boolean {
   if (tb == ta) return true;
 
   const propArray = Array.from(ta.properties);
@@ -77,6 +73,6 @@ export function checkObjectAssignment(
       )}`
     );
   }
-``
+  ``;
   return result;
 }

@@ -111,11 +111,7 @@ export default class Lexer {
     return this.peek() == char;
   }
 
-  private addToken(
-    type: TokenType,
-    value?: string | number | null,
-    raw?: string
-  ) {
+  private addToken(type: TokenType, value?: string | number | null, raw?: string) {
     raw = raw || this.sourceCode.substring(this.start, this.current);
     value = value == undefined ? null : value;
     const pos = {
@@ -136,14 +132,13 @@ export default class Lexer {
       this.start = this.current;
       this.scanToken();
     }
-    
+
     while (this.indentLevels.length) {
       this.indentLevels.pop();
       this.addToken(TokenType.DEDENT, null, '<DEDENT>');
     }
-    
-    this.addToken(TokenType.EOF, null, '<EOF>');
 
+    this.addToken(TokenType.EOF, null, '<EOF>');
 
     return {
       tokens: this.tokens,
@@ -181,10 +176,7 @@ export default class Lexer {
     }
 
     if (!this.eof() && util.isAlpha(this.peek()))
-      this.error(
-        'Identifier starts immediately after numeric literal.',
-        this.current + 1
-      );
+      this.error('Identifier starts immediately after numeric literal.', this.current + 1);
 
     let number = this.sourceCode.substring(this.start, this.current);
     this.addToken(TokenType.LITERAL_NUM, parseFloat(number));
@@ -194,8 +186,7 @@ export default class Lexer {
     // a 0x is consumed before this method is called
     let hexNum: string = '0x';
 
-    if (!util.isHexDigit(this.peek()))
-      this.error('Unexpected token ' + this.peek());
+    if (!util.isHexDigit(this.peek())) this.error('Unexpected token ' + this.peek());
 
     while (!this.eof() && util.isHexDigit(this.peek())) {
       hexNum += this.next();
@@ -212,8 +203,7 @@ export default class Lexer {
 
     let binaryNum: string = '0b';
 
-    if (!util.isBinDigit(this.peek()))
-      this.error('Unexpected token ' + this.peek());
+    if (!util.isBinDigit(this.peek())) this.error('Unexpected token ' + this.peek());
 
     while (!this.eof() && util.isBinDigit(this.peek())) {
       binaryNum += this.next();
@@ -288,8 +278,7 @@ export default class Lexer {
       while (n < this.currentIndentLevel) {
         this.addToken(TokenType.DEDENT, null, '<DEDENT>');
         this.indentLevels.pop();
-        this.currentIndentLevel =
-          this.indentLevels[this.indentLevels.length - 1] || 0;
+        this.currentIndentLevel = this.indentLevels[this.indentLevels.length - 1] || 0;
       }
     }
   }

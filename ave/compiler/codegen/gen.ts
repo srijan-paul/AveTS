@@ -71,15 +71,15 @@ export class JSGenerator {
     for (let stmt of node.statements) {
       out += this.statement(stmt);
     }
-    
+
     this.dedent();
     return out + '\n}';
   }
 
   private varDeclaration(node: AST.VarDeclaration) {
-    return `${this.varDeclKind(
-      node.declarationType
-    )} ${node.declarators.map(d => this.varDeclarator(d)).join(', ')};`;
+    return `${this.varDeclKind(node.declarationType)} ${node.declarators
+      .map(d => this.varDeclarator(d))
+      .join(', ')};`;
   }
 
   private varDeclKind(k: DeclarationKind): string {

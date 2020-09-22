@@ -154,12 +154,7 @@ export default class Parser {
     this.registerInfix(type, parseFn || PostfixUnaryParselet());
   }
 
-  infix(
-    type: TokenType,
-    bp: Precedence,
-    right: boolean = false,
-    parseFn?: InfixParseFn
-  ) {
+  infix(type: TokenType, bp: Precedence, right: boolean = false, parseFn?: InfixParseFn) {
     this.precedenceTable.set(type, bp);
     this.registerInfix(type, parseFn || BinaryOpParselet(bp, right));
   }
