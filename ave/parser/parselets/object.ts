@@ -17,7 +17,10 @@ export const ObjectParser: PrefixParseFn = (parser, indentOrBrace: Token) => {
   // of an expression, the Infix object parser is used,
   // treating ':' as a pseudo-operator.
 
-  const endToken = indentOrBrace.type == TokenType.INDENT ? TokenType.DEDENT : TokenType.R_BRACE;
+  const endToken =
+    indentOrBrace.type == TokenType.INDENT //
+      ? TokenType.DEDENT
+      : TokenType.R_BRACE;
 
   while (!parser.eof() && !parser.match(endToken)) {
     // TODO: allow expressions as key types.

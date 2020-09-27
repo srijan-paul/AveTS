@@ -158,6 +158,8 @@ export function fromString(str: string): Type {
       return t_bool;
     case TypeName.undef:
       return t_undef;
+    case TypeName.nil:
+      return t_nil;
     // case TypeName.object:
     //   return t_object;
   }

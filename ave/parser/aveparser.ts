@@ -26,28 +26,34 @@ export default class AveParser extends Parser {
 
     this.blockScopestack.push(this.ast.body);
 
-    this.prefix(TokenType.LITERAL_NUM, Precedence.NONE, (parser: Parser, token: Token) => {
+    this.prefix(TokenType.LITERAL_NUM, Precedence.NONE, (_, token) => {
       return new AST.Literal(token, token.value as number);
     });
 
-    this.prefix(TokenType.LITERAL_STR, Precedence.NONE, (parser: Parser, token: Token) => {
+    this.prefix(TokenType.LITERAL_STR, Precedence.NONE, (_, token) => {
       return new AST.Literal(token, token.value as string);
     });
 
-    this.prefix(TokenType.TRUE, Precedence.NONE, (parser: Parser, token: Token) => {
+    // true, false
+    this.prefix(TokenType.TRUE, Precedence.NONE, (_, token) => {
       return new AST.Literal(token, true);
     });
 
-    this.prefix(TokenType.FALSE, Precedence.NONE, (parser: Parser, token: Token) => {
+    this.prefix(TokenType.FALSE, Precedence.NONE, (_, token) => {
       return new AST.Literal(token, false);
     });
 
-    this.prefix(TokenType.NAME, Precedence.NONE, (parser: Parser, token: Token) => {
+    this.prefix(TokenType.NAME, Precedence.NONE, (_, token) => {
       return new AST.Identifier(token);
     });
 
+    // nil
+    this.prefix(TokenType.NIL, Precedence.NONE, (_, token) => {
+      return new AST.Literal(token, 'null');
+    });
+
     // a stupid type case workaround but it works.
-    this.prefix(TokenType.FUNC, Precedence.NONE, (parser: Parser, token: Token) => {
+    this.prefix(TokenType.FUNC, Precedence.NONE, (parser, token) => {
       return (<AveParser>parser).funcExpr(token);
     });
 

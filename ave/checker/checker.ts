@@ -20,12 +20,15 @@ import GenericType, { t_Array } from '../types/generic-type';
 import ObjectType, { checkObjectAssignment } from '../types/object-type';
 import * as Typing from '../types/types';
 import UnionType from '../types/union-type';
-import resolveType from './type-resolver';
+import TypeResolver from './type-resolver';
 
 export default class Checker {
   private readonly ast: AST.Program;
   private readonly parseData: ParsedData;
-  private readonly warningStack: AveInfo[] = [];
+  // this stack contains error message "info" that are thrown
+  // all at once after an error is reported at some specific
+  // location.
+  private readonly infoStack: AveInfo[] = [];
 
   // the root (global) environment.
   // at top level scope
@@ -43,6 +46,8 @@ export default class Checker {
   // returns the correct type of expression.
   private functionReturnStack: Typing.Type[] = [];
 
+  private typeResolver: TypeResolver = new TypeResolver(this);
+
   constructor(parseData: ParsedData) {
     this.ast = parseData.ast;
     this.parseData = parseData;
@@ -54,13 +59,13 @@ export default class Checker {
     this.ast.hasError = true;
     throwError(err, this.parseData.sourceCode);
 
-    while (this.warningStack.length) {
-      throwInfo(this.warningStack.pop() as AveInfo);
+    while (this.infoStack.length) {
+      throwInfo(this.infoStack.pop() as AveInfo);
     }
   }
 
   public warn(msg: string) {
-    this.warningStack.push(makeInfo(msg, this.parseData.fileName));
+    this.infoStack.push(makeInfo(msg, this.parseData.fileName));
   }
 
   private pushScope() {
@@ -72,24 +77,21 @@ export default class Checker {
   }
 
   private type(t: AST.TypeInfo | Typing.Type): Typing.Type {
-    if (t instanceof AST.TypeInfo) return resolveType(t.type, this, t.token);
-    return resolveType(t, this);
+    if (t instanceof AST.TypeInfo) return this.typeResolver.resolveType(t.type, t.token);
+    return this.typeResolver.resolveType(t);
   }
 
   /**
    * Checks if the assignment of a type `Tb` to another type `Ta` is valid.
-   * @param ta   {Type}      Data type of the assignment target
-   * @param tb   {Type}      Data type of the
-   * @param type {TokenType} assignment operator to use (=, /= , -=, *= etc).
-   *                         In places like function calls, parameters
-   *                         are checked using '='.
-   * @returns    {boolean}   `true` if the assignment is valid.
+   * @param   {Typing.Type} ta             Data type of the assignment target
+   * @param   {Typing.Type} tb             Data type of the
+   * @param   {TokenType}   tokenType      assignment operator to use (=, /= , -=, *= etc).
+   *                                          In places like function calls, parameters
+   *                                          are checked using '='.
+   * @returns {boolean}                   `true` if the assignment is valid.
    */
-  private isValidAssignment(
-    ta: Typing.Type,
-    tb: Typing.Type,
-    type: TokenType = TokenType.EQ
-  ): boolean {
+
+  private isValidAssignment(ta: Typing.Type, tb: Typing.Type, type = TokenType.EQ): boolean {
     if (type == TokenType.EQ) {
       if (ta instanceof ObjectType) {
         if (!(tb instanceof ObjectType)) return false;
@@ -107,6 +109,15 @@ export default class Checker {
     return ta == Typing.t_any || (ta == Typing.t_number && tb == Typing.t_number);
   }
 
+  /**
+   * "Merges" the types of two statements into a single type.
+   * This function is used for gradual type inferencing of
+   * function bodies. For more information, look at `t__Maybe`
+   * in `"../types/types.ts"`.
+   * @param {Typing.Type} t1 Type of the previous statement.
+   * @param {Typing.Type} t2 Type of the current statement.
+   * @returns {Typing.Type}
+   */
   private mergeTypes(t1: Typing.Type, t2: Typing.Type): Typing.Type {
     // if there is a maybe<T> type, use it as the first
     // argument instead.
@@ -120,7 +131,7 @@ export default class Checker {
       // (having t__notype)
       if (t2 == Typing.t_void) return t1;
       if (t1.type == t2) return t2;
-      return Typing.t_any;
+      return new UnionType(t1.type, t2);
     }
 
     if (t1 == t2) return t1;
@@ -231,7 +242,7 @@ export default class Checker {
 
     let isDefined = false;
 
-    // if the variable has been
+      // if the variable has been
     // declared with a value,
     // then infer it's type from that
 
@@ -326,6 +337,8 @@ export default class Checker {
       case TokenType.TRUE:
       case TokenType.FALSE:
         return Typing.t_bool;
+      case TokenType.NIL:
+        return Typing.t_nil;
       default:
         return Typing.t_any;
     }
@@ -338,7 +351,7 @@ export default class Checker {
     if (symbolData) {
       // if the data type is a free type,
       // return t_any instead.
-      return symbolData.dataType == Typing.t_any ? Typing.t_any : symbolData.dataType;
+      return this.type(symbolData.dataType);
     }
 
     this.error(`Cannot find name ${name}.`, id.token as Token, ErrorType.ReferenceError);
@@ -515,7 +528,7 @@ export default class Checker {
   }
 
   private memberExpression(expr: AST.MemberAccessExpr) {
-    const lType = this.expression(expr.object);
+    const lType = this.type(this.expression(expr.object));
     const property = expr.property;
 
     if (expr.isIndex) {
@@ -524,8 +537,13 @@ export default class Checker {
       // if property key does not exist on type of
       // the object, throw an error.
       if (!lType.hasProperty(property.name))
-        this.error(`cannot access property '${property.name}'`, property.operator);
-      return lType.getProperty(property.name) as Typing.Type;
+        this.error(
+          `property '${property.name}' does not exist on type ${lType}`,
+          property.operator
+        );
+
+      const expType = lType.getProperty(property.name) as Typing.Type;
+      return this.type(expType);
     } else {
       throw new Error('impossible condition encountered.');
     }
@@ -558,7 +576,10 @@ export default class Checker {
     if (rtype == Typing.t_infer) return type;
 
     if (!this.isValidAssignment(rtype, type, TokenType.EQ))
-      this.error(`Cannot assign type '${type}' to type '${rtype}'`, stmt.expr?.token as Token);
+      this.error(
+        `Incorrect return type '${type}'. Expected value of type '${rtype}'`,
+        stmt.expr?.token as Token
+      );
 
     return type;
   }
@@ -588,7 +609,7 @@ export default class Checker {
 
     if (!this.isValidAssignment(this.type(func.returnTypeInfo), returnType))
       this.error(
-        `Function doesn't always return a value of type '${func.returnTypeInfo.toString()}'.`,
+        `Function's type annotation is '${func.returnTypeInfo.type}' but return type is ${returnType}.`,
         func.token as Token
       );
 
@@ -626,7 +647,7 @@ export default class Checker {
 
     if (!this.isValidAssignment(func.returnTypeInfo.type, returnType))
       this.error(
-        `Function doesn't always return a value of type '${annotatedType.toString()}'.`,
+        `Function's type annotation is '${func.returnTypeInfo.type}' but return type is ${returnType}.`,
         func.token as Token
       );
 
@@ -672,38 +693,49 @@ export default class Checker {
     return true;
   }
 
-  private recordDeclaration(stmt: AST.RecordDecl) {
+  private recordDeclaration(decl: AST.RecordDecl) {
     // TODO
-    let typeDef: Typing.Type;
+    let record: Typing.Type;
     this.pushScope();
 
-    if (stmt.isGeneric) {
-      typeDef = new GenericType(stmt.name, stmt.typeArgs);
+    if (decl.isGeneric) {
+      record = new GenericType(decl.name, decl.typeArgs);
 
-      for (let t of (<GenericType>typeDef).typeParams) {
+      for (let t of (<GenericType>record).typeParams) {
         this.env.defineType(t.tag, t);
       }
     } else {
-      typeDef = new ObjectType(stmt.name);
+      record = new ObjectType(decl.name);
     }
 
-    stmt.properties.forEach((value: AST.TypeInfo, key: Token) => {
-      typeDef.defineProperty(key.raw, this.type(value));
+    // We define the record in the local scope too in case
+    // we encounter recursive types like these:
+    // ```
+    // record LinkNode
+    //   value: num
+    //   next:  LinkNode | nil
+    // ```
+    // Here record LinkNode has a member that is
+    // it's own type.
+
+    this.env.defineType(decl.name, record);
+
+    decl.properties.forEach((value: AST.TypeInfo, key: Token) => {
+      record.defineProperty(key.raw, this.type(value));
     });
 
     // undefine the generic type parameters, T, U, K, etc
     // before exiting record body.
 
-    if (stmt.isGeneric) {
-      for (let t of (<GenericType>typeDef).typeParams) {
+    if (decl.isGeneric) {
+      for (let t of (<GenericType>record).typeParams) {
         this.env.undefineType(t.tag);
       }
     }
 
     this.popScope();
 
-    this.env.defineType(stmt.name, typeDef);
-
+    this.env.defineType(decl.name, record);
     return Typing.t_void;
   }
 }

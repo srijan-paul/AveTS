@@ -110,7 +110,7 @@ export default class Parser {
   isValidType(token: Token) {
     return (
       (token.type >= TokenType.STRING && token.type <= TokenType.ANY) ||
-      token.type == TokenType.NAME
+      token.type == TokenType.NAME || token.type == TokenType.NIL
     );
   }
 

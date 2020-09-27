@@ -1,0 +1,11 @@
+record LLNode<E>
+  next: LLNode<E> | nil
+  value: E
+
+head: LLNode<num> = 
+  value: 12
+  next:  
+    value: 13
+    next: nil
+
+ref: LLNode<num> | nil = head.next

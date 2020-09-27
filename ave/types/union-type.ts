@@ -53,6 +53,6 @@ export default class UnionType extends Type {
   }
 
   public toString() {
-    return this.types.map(e => e.toString()).join('|');
+    return this.types.join('|');
   }
 }

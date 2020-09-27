@@ -294,8 +294,10 @@ export class FunctionExpr extends Expression {
   returnTypeInfo: TypeInfo;
   type: Type = t_Function;
   readonly isArrow: boolean;
+  readonly isGeneric: boolean = false;
+  readonly typeParams: Type[] = [];
 
-  constructor(kw: Token, returnType: TypeInfo, isArrow: boolean = false) {
+  constructor(kw: Token, returnType: TypeInfo, isArrow = false) {
     super(kw);
     this.isArrow = isArrow;
     this.returnTypeInfo = returnType;
@@ -455,12 +457,12 @@ export class RecordDecl extends Node {
   readonly name: string;
   readonly isGeneric: boolean;
   // only read from or written to in case
-  // the interface is a Generic.
+  // the record is a Generic.
   readonly typeArgs: Type[] = [];
   readonly properties: Map<Token, TypeInfo> = new Map();
   readonly kind = NodeKind.RecordDeclaration;
 
-  constructor(name: Token, isGeneric: boolean = false, typeArgs: Type[]) {
+  constructor(name: Token, isGeneric = false, typeArgs: Type[]) {
     super(name);
     this.name = name.raw;
     this.isGeneric = isGeneric;

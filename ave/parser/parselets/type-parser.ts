@@ -10,8 +10,8 @@ import UnionType from '../../types/union-type';
 /**
  * Parses a valid Ave Data type, and returns the TypeInfo AST Node
  * wrapping that type.
- * @param parser The Parser to draw tokens from.
- * @return TypeInfo {token: Token, type: Type}
+ * @param  {Parser}   parser The Parser to draw tokens from.
+ * @return {TypeInfo}
  */
 
 export default function parseType(parser: Parser) {
@@ -34,7 +34,7 @@ export default function parseType(parser: Parser) {
 /**
  * Parses a data type but stops on seeing a '|' token. Doesn't parse
  * union types.
- * @param parser The parser to draw tokens from.
+ * @param {Parser} parser The parser to draw tokens from.
  */
 
 function parseNonUnionType(parser: Parser): TypeInfo {
@@ -75,6 +75,10 @@ function parseParams(parser: Parser): ParameterTypeInfo[] {
   let params: ParameterTypeInfo[] = [];
   while (!parser.match(TokenType.R_PAREN)) {
     params.push(parseParam(parser));
+    
+    if (!parser.check(TokenType.R_PAREN)) {
+      parser.expect(TokenType.COMMA, "Expected ','.");
+    }
   }
   return params;
 }

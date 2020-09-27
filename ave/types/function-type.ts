@@ -16,7 +16,7 @@ export default class FunctionType extends Type {
   returnType: Type;
 
   public constructor(name?: string, params?: ParameterTypeInfo[], retType?: Type) {
-    super(name || '');
+    super(name || '<function>');
     this.superType = null;
     this.params = params || [];
     this.returnType = retType || t_any;
@@ -35,9 +35,9 @@ export default class FunctionType extends Type {
     if (!(t instanceof FunctionType)) return false;
     if (!this.returnType.canAssign(t.returnType)) return false;
 
-    if (t.params.length != this.params.length) return false;
+    // if (t.params.length != this.params.length) return false;
 
-    for (let i = 0; i < this.params.length; i++) {
+    for (let i = 0; i < t.params.length; i++) {
       if (this.params[i].rest != t.params[i].rest) return false;
       if (!t.params[i].type.canAssign(this.params[i].type)) return false;
     }
