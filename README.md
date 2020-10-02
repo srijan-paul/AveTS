@@ -2,7 +2,41 @@
 A scripting language that compiles to Javascript.
 For information on language syntax and type system, check the doc folder in this repository.
 
-# Roadmap
+## Run Ave locally
+To run Ave locally, you need `nodejs` and `npm`. You will also need to have typescript installed globally.
+
+1. clone the repo 
+```
+git clone https://github.com/srijan-paul/AveTS
+```
+2.  install dependencies
+
+```
+npm install
+```
+
+3. Compile the typescript code to JS.
+
+```
+tsc
+```
+
+4. Now all the JS files should be written to a new directory `./build`
+To run the tests on lexer, do:
+
+```
+npm run lextest
+```
+
+To run the parser tests:
+
+```
+npm run parsetest
+```
+
+The codegen hasn't been implemented yet, so there is not much to do other than inspect the AST from logs on the terminal. 
+
+## Roadmap
 
 A TODO list of boxes to check towards releasing Ave 1.0
 
