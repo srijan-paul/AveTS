@@ -2,10 +2,10 @@ record LLNode<E>
   next: LLNode<E> | nil
   value: E
 
-head: LLNode<num> = 
-  value: 12
+let head: LLNode<num> = 
+  value: 123
   next:  
     value: 13
     next: nil
 
-ref: LLNode<num> | nil = head.next
+let ref: LLNode<num> | nil = head.next

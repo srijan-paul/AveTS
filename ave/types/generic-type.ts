@@ -74,13 +74,13 @@ export default class GenericType extends Type {
       // For example, in the following code snippet:
       // ```
       // record LLNode<T>
-      //   next: LLNode<T> | null
+      //   next: LLNode<T> | nil
       //   value: T
       // ```
       // when we "create" an instance of this object type :
       // ```
       // let a: Foo<num> =
-      //    next: null
+      //    next: nil
       //    value: 123
       // ```
       // As soon as the checker sees the `Foo<num>`, it will

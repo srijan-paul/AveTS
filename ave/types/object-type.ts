@@ -3,6 +3,10 @@ import { Type } from './types';
 
 export default class ObjectType extends Type {
   public typeArgs?: Type[] = []; //for generic instances.
+  // the types this object type has already successfully checked against
+  // for assignment and has returned true. This is espcially helpful
+  // when checking against recursive types.
+  public readonly cache: Set<Type> = new Set();
 
   constructor(tag: string, typeArgs?: Type[]) {
     super(tag || '', false);
@@ -11,13 +15,23 @@ export default class ObjectType extends Type {
 
   public canAssign(t: Type) {
     if (t == this) return true;
+    if (this.cache.has(t)) return true;
+    this.cache.add(t);
     let propArray = Array.from(this.properties);
 
     for (let [key, type] of propArray) {
       // TODO handle any type
-      if (!t.hasProperty(key)) return false;
+      if (!t.hasProperty(key)) {
+        this.cache.delete(t);
+        return false;
+      }
+      
       let prop = <Type>t.getProperty(key);
-      if (!type.canAssign(prop)) return false;
+      
+      if (!type.canAssign(prop)) {
+        this.cache.delete(t);
+        return false;
+      }
     }
     return true;
   }
@@ -85,8 +99,13 @@ export default class ObjectType extends Type {
 }
 // ta: assignment target
 // tb: type of value being assigned
+// this is a slightly augmented version of
+// ta.canAssign for better error reporting.
+
 export function checkObjectAssignment(ta: ObjectType, tb: Type, checker: Checker): boolean {
   if (tb == ta) return true;
+  if (ta.cache.has(tb)) return true;
+  ta.cache.add(tb);
 
   const propArray = Array.from(ta.properties);
   const missingPropertyNames: string[] = [];
@@ -98,6 +117,7 @@ export function checkObjectAssignment(ta: ObjectType, tb: Type, checker: Checker
     if (!tb.hasProperty(name)) {
       missingPropertyNames.push(name);
       result = false;
+      ta.cache.delete(tb);
       continue;
     }
 
@@ -107,6 +127,7 @@ export function checkObjectAssignment(ta: ObjectType, tb: Type, checker: Checker
       checker.warn(
         `cannot assign value of type '${propertyType}' to property '${name}' of type '${type}'`
       );
+      ta.cache.delete(tb);
       result = false;
     }
   }
@@ -117,5 +138,6 @@ export function checkObjectAssignment(ta: ObjectType, tb: Type, checker: Checker
     );
   }
 
+  if (!result) ta.cache.delete(tb);
   return result;
 }

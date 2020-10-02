@@ -99,15 +99,7 @@ function parseParam(parser: Parser): ParameterTypeInfo {
 function parseGenericInstance(parser: Parser, name: Token) {
   let typeArgs: Typing.Type[] = [];
   while (!parser.match(TokenType.GREATER)) {
-    let t = parser.next();
-
-    if (!parser.isValidType(t)) {
-      parser.error(`Unexpected token '${t.raw}'`, t);
-      parser.consumeUntil(TokenType.GREATER);
-      return new TypeInfo(t, Typing.t_error);
-    }
-
-    typeArgs.push(Typing.fromToken(t));
+      typeArgs.push(parseType(parser).type);
 
     if (!parser.match(TokenType.COMMA)) {
       parser.expect(TokenType.GREATER, "Expected ','");
