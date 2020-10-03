@@ -61,7 +61,7 @@ The backend and code gen has yet to be implemented.
     * `parser\parser.ts` is a basic expression parser. The `Parser` classes defines all the helper methods, and a Pratt parsing algorithm.
     * `parser\aveparser.ts` contains the actual Ave parser that parses Ave syntax. The `AveParser` class extends the `Parser` and adds the ability to parse statements.
     * `parser\pasrselets` contains small files, each containing it's own "mini-parser" to parse certain kinds of AST Nodes \ Expressions. This is to avoid the `AveParser` from growing into a God class.
-    * `parser\symboltable.ts` contains the symbol table implementation used by Ave. A symbol table in Ave is a string->symboldata hashmap mapping names to the data such as the data type, type of declration (block vs function scoped) etc.
+    * `parser\symbol_table\` contains the symbol table implementation used by Ave. A symbol table in Ave is a string->symboldata hashmap mapping names to the data such as the data type, type of declration (block vs function scoped) etc.
 
 3. `ave\types\` contains Ave's implementation of data types. There is a base `Type` class used only for primitives, and all other kinds of types (Objects, generics, functions, Union types) derive from it. 
 
