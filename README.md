@@ -2,6 +2,15 @@
 A scripting language that compiles to Javascript.
 For information on language syntax and type system, check the doc folder in this repository.
 
+## Table of Contents:
+
+* [Run Ave locally](run-ave-locally)
+* [Contributing](contributing)
+* [Roadmap](roadmap)
+    * [Done](done)
+    * [Todo](todo)
+
+
 ## Run Ave locally
 To run Ave locally, you need `nodejs` and `npm`. You will also need to have typescript installed globally.
 
@@ -34,7 +43,12 @@ To run the parser tests:
 npm run parsetest
 ```
 
-The codegen hasn't been implemented yet, so there is not much to do other than inspect the AST from logs on the terminal. 
+The codegen hasn't been implemented yet, so there is not much to do other than inspect the AST from logs on the terminal.
+The backend is being worked upon.
+
+## Contributing
+
+Ave appreciates all help ! check [contributing.md](contributing.md) for contribution guidelines and project structure.
 
 ## Roadmap
 
@@ -59,6 +73,7 @@ A TODO list of boxes to check towards releasing Ave 1.0
     * bool
     * interfaces
     * object types (implicit only)
+    * union types
 
 ### Todo:
 
@@ -68,13 +83,12 @@ A TODO list of boxes to check towards releasing Ave 1.0
 
 * regex literals
 * **types**:
-    * union types
     * bigint data type
     * regex data type
     
 * classes, inheritance
 * type casts using `as`
-* inteface index signatures.
+* record index signatures.
 * object indexes that are array literals or strings.
 * ES5 lib declarations.
 * type aliases.
