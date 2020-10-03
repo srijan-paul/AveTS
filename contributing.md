@@ -3,7 +3,7 @@
 Jump to:
 
 * [Recommended workflow.](#recommended-workflow)
-* [Recommended workflow.](#project-structure) 
+* [Project structure.](#project-structure) 
 
 Ave is still a very young language. I appreciate all help I can get in developing the language.
 To maintain a smooth transaction, I would recommend you follow some very simple rules for contributing to the language.
