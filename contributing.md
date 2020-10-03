@@ -20,7 +20,7 @@ If you want to contribute to Ave, a good place to start looking is the issues se
     * `npm run lextest`
     * `npm run checkertest`
 
-If you get an error thrown by the Ave compiler, that's totally okay, as long as the line at which the error was thrown as a comment next to it saying that it should. For example:
+If you get an error thrown by the Ave compiler, that's totally okay. As long as the line at which the error was thrown has a comment next to it saying that it should throw an error, it is expected behavior. For example:
 
 ```
 ./test/parser/5.ave:5:5 - [TypeError] Cannot assign type 'str' to type 'num'.
