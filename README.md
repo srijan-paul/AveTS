@@ -2,13 +2,13 @@
 A scripting language that compiles to Javascript.
 For information on language syntax and type system, check the doc folder in this repository.
 
-## Table of Contents:
+## Table of contents:
 
-* [Run Ave locally](run-ave-locally)
-* [Contributing](contributing)
-* [Roadmap](roadmap)
-    * [Done](done)
-    * [Todo](todo)
+* [Run Ave locally](#run-ave-locally)
+* [Contributing](#contributing)
+* [Roadmap](#roadmap)
+    * [Done](#done)
+    * [Todo](#todo)
 
 
 ## Run Ave locally
