@@ -66,12 +66,12 @@ otherResult := myFunc('10', 20)
 The ave type checker will tell us that we did something wrong. whereas javascript would simply pass this as okay, and then our 'myFunc' would do all kinds of weird gymnastics and sometimes return a `NaN` sometimes until we finally catch the bug.
 
 
-## Interfaces.
+## Records.
 
-Interfaces let us define the structure of an object.
+Records let us define the structure of an object.
 
 ```ts
-interface Doggy
+record Doggy
   name: str
   age: num
   bark: () -> str
@@ -100,7 +100,7 @@ This is especially helpful in functions :
 func getDogAge(dog: Doggy)
   return dog.ages
 ```
-if you look closely, we mispelled the property 'age' on interface dog as 'ages'. Javascript again, would never complain and would happily return undefined leaving us to work with it.
+if you look closely, we mispelled the property 'age' on record dog as 'ages'. Javascript again, would never complain and would happily return undefined leaving us to work with it.
 
 Ave catches this at compile time, and throws the following error:
 
