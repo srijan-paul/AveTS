@@ -6,7 +6,8 @@
   "scripts": {
     "lextest": "node build/tests/lexTests.js",
     "parsetest": "node build/tests/parseTests.js",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "jest build/tests"
   },
   "repository": {
     "type": "git",
@@ -29,5 +30,8 @@
     "chalk": "^4.1.0",
     "jest": "^26.4.2",
     "prettier": "^2.1.1"
+  },
+  "dependencies": {
+    "@types/jest": "^26.0.14"
   }
 }
