@@ -145,26 +145,26 @@ export default class Parser {
     return this.infixParseMap.get(tokentype) as InfixParseFn;
   }
 
-  prefix(type: TokenType, bp: Precedence, parseFn?: PrefixParseFn) {
+  public prefix(type: TokenType, bp: Precedence, parseFn?: PrefixParseFn) {
     this.registerPrefix(type, parseFn || PrefixUnaryParser(bp));
   }
 
-  postfix(type: TokenType, prec: number, parseFn?: InfixParseFn) {
+  public postfix(type: TokenType, prec: number, parseFn?: InfixParseFn) {
     this.precedenceTable.set(type, prec);
     this.registerInfix(type, parseFn || PostfixUnaryParselet());
   }
 
-  infix(type: TokenType, bp: Precedence, right: boolean = false, parseFn?: InfixParseFn) {
+  public infix(type: TokenType, bp: Precedence, right: boolean = false, parseFn?: InfixParseFn) {
     this.precedenceTable.set(type, bp);
     this.registerInfix(type, parseFn || BinaryOpParselet(bp, right));
   }
 
-  getPrecedence(tokType: TokenType): number {
+  protected getPrecedence(tokType: TokenType): number {
     if (!this.precedenceTable.has(tokType)) return -1;
     return this.precedenceTable.get(tokType) as number;
   }
 
-  parseExpression(precedence: number): AST.Expression {
+  public parseExpression(precedence: number): AST.Expression {
     const token: Token = this.next();
     const prefix = this.prefixParseFn(token.type);
 
@@ -185,7 +185,7 @@ export default class Parser {
     return left;
   }
 
-  makeParseTree(): ParsedData {
+  private makeParseTree(): ParsedData {
     return {
       sourceCode: this.lexedData.source,
       fileName: this.lexedData.fileName,
@@ -194,7 +194,7 @@ export default class Parser {
     };
   }
 
-  parse(): ParsedData {
+  public parse(): ParsedData {
     const expr = this.parseExpression(Precedence.ASSIGN);
     return this.makeParseTree();
   }

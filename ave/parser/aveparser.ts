@@ -190,6 +190,12 @@ export default class AveParser extends Parser {
     return this.blockScopestack[this.blockScopestack.length - 1];
   }
 
+  private parseBlock(body: AST.Body) {
+    while (!this.eof() && !this.match(TokenType.DEDENT)) {
+      body.statements.push(this.statement());
+    }
+  }
+
   parse(): ParsedData {
     while (!this.ast.hasError && !this.match(TokenType.EOF)) {
       this.ast.body.statements.push(this.statement());
@@ -205,17 +211,19 @@ export default class AveParser extends Parser {
     return parseData;
   }
 
-  statement(): AST.Node {
+  private statement(): AST.Node {
     if (this.check(TokenType.IF)) {
       return this.ifStmt();
     } else if (this.check(TokenType.FOR)) {
       return this.forStmt();
     } else if (this.check(TokenType.RETURN)) {
       return this.returnStmt();
-    } else return this.declaration();
+    } else {
+      return this.declaration();
+    }
   }
 
-  declaration(): AST.Node {
+  private declaration(): AST.Node {
     if (this.match(TokenType.VAR, TokenType.CONST, TokenType.LET)) {
       return this.varDeclaration(this.prev());
     } else if (this.check(TokenType.NAME) && this.checkNext(TokenType.COLON)) {
@@ -232,7 +240,7 @@ export default class AveParser extends Parser {
     }
   }
 
-  sugarDeclaration(): AST.VarDeclaration {
+  private sugarDeclaration(): AST.VarDeclaration {
     // intialize the declaration with 'colon' as the token
     // and block scoped symbol
     const varDecl = new AST.VarDeclaration(this.peek(), DeclarationKind.BlockScope);
@@ -241,7 +249,7 @@ export default class AveParser extends Parser {
     return varDecl;
   }
 
-  varDeclaration(tok: Token): AST.VarDeclaration {
+  private varDeclaration(tok: Token): AST.VarDeclaration {
     const varDecl = new AST.VarDeclaration(tok, getDeclarationKind(tok.raw));
 
     if (this.match(TokenType.L_PAREN)) {
@@ -260,7 +268,7 @@ export default class AveParser extends Parser {
     return varDecl;
   }
 
-  varDeclarator(): AST.VarDeclarator {
+  private varDeclarator(): AST.VarDeclarator {
     const varName = this.expect(TokenType.NAME, 'Expected variable name.');
     let value = null;
     let type = new AST.TypeInfo(this.prev(), Typing.t_infer);
@@ -272,7 +280,7 @@ export default class AveParser extends Parser {
     return new AST.VarDeclarator(varName, value, type);
   }
 
-  ifStmt(): AST.IfStmt {
+  private ifStmt(): AST.IfStmt {
     const kw = this.next();
     const cond = this.parseExpression(Precedence.NONE);
     const _then = new AST.Body();
@@ -287,7 +295,7 @@ export default class AveParser extends Parser {
     // < push block scope
     this.blockScopestack.push(_then);
 
-    while (!this.eof() && !this.match(TokenType.DEDENT)) _then.statements.push(this.statement());
+    this.parseBlock(_then);
 
     this.blockScopestack.pop();
     // > pop block scope
@@ -306,7 +314,7 @@ export default class AveParser extends Parser {
       this.consume(TokenType.COLON);
       this.expect(TokenType.INDENT, "Expected indent before 'else' body.");
 
-      while (!this.eof() && !this.match(TokenType.DEDENT)) _else.statements.push(this.statement());
+      this.parseBlock(_else);
 
       this.blockScopestack.pop();
       // < pop block scope
@@ -343,9 +351,7 @@ export default class AveParser extends Parser {
 
     forstmt.body.declarations.push(new HoistedVarDeclaration(i.name, Typing.t_number));
 
-    while (!this.match(TokenType.DEDENT)) {
-      forstmt.body.statements.push(this.statement());
-    }
+    this.parseBlock(forstmt.body);
 
     this.blockScopestack.pop();
     // < pop block scope
@@ -401,8 +407,7 @@ export default class AveParser extends Parser {
     if (isArrow) this.functionScopestack.push(func.body);
     this.blockScopestack.push(func.body);
 
-    while (!this.eof() && !this.match(TokenType.DEDENT))
-      func.body.statements.push(this.statement());
+    this.parseBlock(func.body);
 
     this.blockScopestack.pop();
     if (isArrow) this.functionScopestack.pop();
