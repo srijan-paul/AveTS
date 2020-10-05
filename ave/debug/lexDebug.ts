@@ -144,6 +144,7 @@ export function tokenName(t: TokenType): string {
     case TokenType.NAME:           return 'NAME';
     case TokenType.ANY:            return 'ANY';
     case TokenType.RECORD:         return 'RECORD';
+    case TokenType.SPREAD:         return 'SPREAD';
 
     default:
       return 'UNKNOWN';

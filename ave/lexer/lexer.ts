@@ -298,7 +298,13 @@ export default class Lexer {
         this.addToken(TokenType.SEMI_COLON);
         break;
       case '.':
-        this.addToken(TokenType.DOT);
+        if (this.check('.') && this.peekNext() == '.') {
+          this.next();
+          this.next();
+          this.addToken(TokenType.SPREAD);
+        } else {
+          this.addToken(TokenType.DOT)
+        }
         break;
       case ',':
         this.addToken(TokenType.COMMA);

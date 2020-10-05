@@ -51,6 +51,7 @@ enum TokenType {
   AMP,
   PIPE,
   XOR,
+  SPREAD,
 
   // Keywords
   OR,

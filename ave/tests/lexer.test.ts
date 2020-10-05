@@ -4,7 +4,6 @@ import debug = require('../debug/debug');
 import TokenType = require('../lexer/tokentype');
 import chalk = require('chalk');
 
-
 // declaration to prevent the typescript compiler from croacking.
 
 declare global {
@@ -60,7 +59,7 @@ test('Lexer tests', () => {
 });
 
 test('scanning operators', () => {
-  const src = '++ -- - + * % ** // ! ** or and';
+  const src = '++ -- - + * % ** // ! ** or and ...';
 
   expect(tokens(src)).toMatchTokens([
     TokenType.PLUS_PLUS,
@@ -75,6 +74,7 @@ test('scanning operators', () => {
     TokenType.POW,
     TokenType.OR,
     TokenType.AND,
+    TokenType.SPREAD,
     TokenType.EOF,
   ]);
 });

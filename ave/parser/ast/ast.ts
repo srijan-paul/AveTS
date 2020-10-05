@@ -383,7 +383,7 @@ export interface FunctionParam {
   typeInfo: TypeInfo;
   token: Token;
   defaultValue?: Expression;
-  rest: boolean;
+  isRest: boolean;
   required?: boolean;
 }
 

@@ -425,10 +425,15 @@ export default class AveParser extends Parser {
     this.expect(TokenType.L_PAREN, "Expected '(' before function parameters");
 
     while (!this.match(TokenType.R_PAREN)) {
-      params.push(this.parseParam());
+      const param = this.parseParam();
+      params.push(param);
 
-      if (!this.match(TokenType.COMMA)) {
-        this.expect(TokenType.R_PAREN, "Expected ')' after function parameters");
+      // rest paramter must be the last.
+      if (param.isRest || !this.match(TokenType.COMMA)) {
+        const message = param.isRest
+          ? 'rest parameter must be the last in parameter list.'
+          : "Expected ')' after function parameters";
+        this.expect(TokenType.R_PAREN, message);
         break;
       }
     }
@@ -436,15 +441,15 @@ export default class AveParser extends Parser {
   }
 
   private parseParam(): AST.FunctionParam {
-    // TODO check if rest paramter.
-    let token = this.expect(TokenType.NAME, 'Expected parameter name.');
-    let name = token.raw;
+    const rest = this.match(TokenType.SPREAD);
+
+    const token = this.expect(TokenType.NAME, 'Expected parameter name.');
+    const name = token.raw;
     let type = new AST.TypeInfo(this.prev(), Typing.t_any);
-    let required = true,
-      rest = false;
     let defaultValue;
 
     // TODO check if param required
+    let required = true;
 
     if (this.match(TokenType.COLON)) {
       type = parseType(this);
@@ -459,7 +464,7 @@ export default class AveParser extends Parser {
       typeInfo: type,
       token,
       required,
-      rest,
+      isRest: rest,
       defaultValue,
     };
   }

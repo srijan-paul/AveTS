@@ -7,7 +7,7 @@ export interface ParameterTypeInfo {
   name: string;
   type: Type;
   required: boolean;
-  rest?: boolean;
+  isRest?: boolean;
   hasDefault?: boolean;
 }
 
@@ -38,7 +38,7 @@ export default class FunctionType extends Type {
     // if (t.params.length != this.params.length) return false;
 
     for (let i = 0; i < t.params.length; i++) {
-      if (this.params[i].rest != t.params[i].rest) return false;
+      if (this.params[i].isRest != t.params[i].isRest) return false;
       if (!t.params[i].type.canAssign(this.params[i].type)) return false;
     }
 
@@ -53,7 +53,7 @@ export default class FunctionType extends Type {
         name: param.name,
         type: param.type.clone(),
         required: param.required,
-        rest: param.rest,
+        isRest: param.isRest,
         hasDefault: param.hasDefault,
       });
     }
@@ -66,7 +66,7 @@ export default class FunctionType extends Type {
     return `(${this.params
       .map(e => {
         let s = e.required ? '' : '?';
-        s += e.rest ? '...' : '';
+        s += e.isRest ? '...' : '';
         s += `${e.name}: ${e.type} `;
         return s;
       })
@@ -91,6 +91,6 @@ export const t_Function = new FunctionType('Function', [
     name: 'args',
     type: t_any,
     required: false,
-    rest: true,
+    isRest: true,
   },
 ]);

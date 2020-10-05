@@ -5,7 +5,8 @@ import util = require('util');
 import Checker from './checker/checker';
 
 const code: string = 
-``;
+`func foo(...s: str)
+    return s + 1`;
 
 const lexer = new Lexer('testfile.ave', code);
 const lexedata = lexer.lex();

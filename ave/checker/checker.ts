@@ -662,22 +662,8 @@ export default class Checker {
 
   // TODO handle optional parameters
   private verifyFunctionParams(params: AST.FunctionParam[]) {
-    let seenRest = false;
-
+ 
     for (let i = 0; i < params.length; i++) {
-      if (params[i].rest) {
-        // 1. no more than 1 rest paramters
-        // 2. rest must be the last parameter.
-        if (seenRest || i >= params.length - 1) {
-          this.error(
-            'rest paramter must be the last in parameter list.',
-            params[i].token,
-            ErrorType.SyntaxError
-          );
-          return false;
-        }
-        seenRest = true;
-      }
 
       // default value must be assignable to annotated type.
       if (params[i].defaultValue) {

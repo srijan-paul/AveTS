@@ -3,8 +3,6 @@ import { DeclarationKind } from '../parser/symbol_table/symtable';
 import { Type, t_any } from './types';
 import FunctionType, { ParameterTypeInfo } from './function-type';
 import * as AST from '../parser/ast/ast';
-import Token from '../lexer/token';
-import { Interface } from 'readline';
 
 // declarations that need to be hoisted
 // to the top, these are stored in
@@ -51,7 +49,7 @@ export class FuncDeclaration implements Declaration {
         name: p.name,
         type: p.typeInfo.type,
         required: !!p.required,
-        rest: p.rest,
+        isRest: p.isRest,
       });
     }
     const func = new FunctionType('', params, node.returnTypeInfo.type);
