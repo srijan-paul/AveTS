@@ -242,7 +242,7 @@ export default class Checker {
 
     let isDefined = false;
 
-      // if the variable has been
+    // if the variable has been
     // declared with a value,
     // then infer it's type from that
 
@@ -367,7 +367,12 @@ export default class Checker {
 
     const type = Typing.binaryOp(lType, operator, rType);
 
-    if (type == Typing.t_error) {
+    if (
+      type == Typing.t_error &&
+      // don't report error if one already has been reported in this region.
+      lType != Typing.t_error &&
+      rType != Typing.t_error
+    ) {
       this.error(
         `Cannot use operator '${expr.operator.raw}' on operands of type '${lType}' and '${rType}'`,
         expr.operator
@@ -469,9 +474,9 @@ export default class Checker {
       return Typing.t_undef;
     }
 
-    if (type == Typing.t_infer) {
+    if (type.returnType == Typing.t_infer) {
       this.error(
-        'A function that is called before it has been defined must have an explicit return type, or declared prior to call.',
+        `function requires explicit type annotation, or must be defined before use.`,
         callee.operator
       );
       return Typing.t_error;
