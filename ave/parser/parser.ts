@@ -1,13 +1,13 @@
-import Token from '../lexer/token';
-import TokenType = require('../lexer/tokentype');
-import * as AST from './ast/ast';
-import { PrefixParseFn, InfixParseFn } from './parselets/parsefn';
-import Precedence = require('./precedence');
-import { PrefixUnaryParser } from './parselets/preunary';
-import BinaryOpParselet from './parselets/binary';
-import PostfixUnaryParselet from './parselets/postunary';
-import { AveError, errorFromToken, throwError } from '../error/error';
-import { ScannedData } from '../lexer/lexer';
+import Token from "../lexer/token";
+import TokenType = require("../lexer/tokentype");
+import * as AST from "./ast/ast";
+import { PrefixParseFn, InfixParseFn } from "./parselets/parsefn";
+import Precedence = require("./precedence");
+import { PrefixUnaryParser } from "./parselets/preunary";
+import BinaryOpParselet from "./parselets/binary";
+import PostfixUnaryParselet from "./parselets/postunary";
+import { AveError, errorFromToken, throwError } from "../error/error";
+import { ScannedData } from "../lexer/lexer";
 
 /**
  * A wrapper around a syntax tree.
@@ -110,7 +110,8 @@ export default class Parser {
   isValidType(token: Token) {
     return (
       (token.type >= TokenType.STRING && token.type <= TokenType.ANY) ||
-      token.type == TokenType.NAME || token.type == TokenType.NIL
+      token.type == TokenType.NAME ||
+      token.type == TokenType.NIL
     );
   }
 
@@ -154,7 +155,12 @@ export default class Parser {
     this.registerInfix(type, parseFn || PostfixUnaryParselet());
   }
 
-  public infix(type: TokenType, bp: Precedence, right: boolean = false, parseFn?: InfixParseFn) {
+  public infix(
+    type: TokenType,
+    bp: Precedence,
+    right: boolean = false,
+    parseFn?: InfixParseFn
+  ) {
     this.precedenceTable.set(type, bp);
     this.registerInfix(type, parseFn || BinaryOpParselet(bp, right));
   }
@@ -170,7 +176,7 @@ export default class Parser {
 
     if (!prefix) {
       // throw error
-      this.error(`Unexpected'${token.raw}'`, token);
+      this.error(`Unexpected '${token.raw}'`, token);
       return new AST.Node(token) as AST.Expression;
     }
 

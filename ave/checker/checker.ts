@@ -388,8 +388,8 @@ export default class Checker {
 
     if (!this.isValidAssignTarget(left)) return Typing.t_error;
 
-    const lType = this.typeOf(left);
-    const rType = this.typeOf(right);
+    const lType = this.type(this.typeOf(left));
+    const rType = this.type(this.typeOf(right));
 
     // if the left or right side is erratic
     // and error has already been reported
@@ -427,6 +427,9 @@ export default class Checker {
           this.error(`Invalid assignment to constant '${name}'`, node.token as Token);
           return false;
         }
+        return true;
+      case NodeKind.MemberAcessExpr:
+        // TODO
         return true;
       default:
         return false;
