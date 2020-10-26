@@ -1,11 +1,11 @@
-import Token, { tokenvalue } from '../../lexer/token';
-import NodeKind = require('./nodekind');
-import chalk = require('chalk');
-import { Type, t_any, t_infer } from '../../types/types';
-import { DeclarationKind } from '../symbol_table/symtable';
-import TokenType = require('../../lexer/tokentype');
-import Declaration from '../../types/declaration';
-import { t_Function } from '../../types/function-type';
+import Token, { tokenvalue } from "../../lexer/token";
+import NodeKind = require("./nodekind");
+import chalk = require("chalk");
+import { Type, t_any, t_infer } from "../../types/types";
+import { DeclarationKind } from "../symbol_table/symtable";
+import TokenType = require("../../lexer/tokentype");
+import Declaration from "../../types/declaration";
+import { t_Function } from "../../types/function-type";
 
 interface ASTNode {
   toString(): string;
@@ -19,7 +19,7 @@ let indentLevel = 0;
 const baseColor = chalk.gray;
 
 function indentstr() {
-  return chalk.rgb(150, 85, 60)('  '.repeat(indentLevel - 1) + '|* ');
+  return chalk.rgb(150, 85, 60)("  ".repeat(indentLevel - 1) + "|* ");
 }
 
 function indent() {
@@ -39,7 +39,7 @@ export class Node implements ASTNode {
   }
 
   toString(): string {
-    return '<AST Node>';
+    return "<AST Node>";
   }
 }
 
@@ -51,7 +51,7 @@ export abstract class Expression extends Node {
   }
 
   toString() {
-    return '<Expression>';
+    return "<Expression>";
   }
 }
 
@@ -70,7 +70,9 @@ export class BinaryExpr extends Expression {
   }
 
   toString(): string {
-    return `(${this.left.toString()} ${this.operator.raw} ${this.right.toString()})`;
+    return `(${this.left.toString()} ${
+      this.operator.raw
+    } ${this.right.toString()})`;
   }
 }
 
@@ -78,7 +80,7 @@ export class AssignExpr extends BinaryExpr {
   readonly kind = NodeKind.AssignmentExpr;
 
   toString() {
-    return `${baseColor('assign')} ${BinaryExpr.prototype.toString.call(this)}`;
+    return `${baseColor("assign")} ${BinaryExpr.prototype.toString.call(this)}`;
   }
 }
 
@@ -89,7 +91,7 @@ export class Program extends Node {
   readonly kind = NodeKind.Body;
 
   toString() {
-    return ` ${baseColor('program')}:\n${this.body.toString()}`;
+    return ` ${baseColor("program")}:\n${this.body.toString()}`;
   }
 }
 
@@ -100,9 +102,9 @@ export class Body extends Node {
 
   toString() {
     indent();
-    const str = `${indentstr()}${baseColor('body')}:\n${indentstr()}${this.statements.join(
-      '\n' + indentstr()
-    )}`;
+    const str = `${indentstr()}${baseColor(
+      "body"
+    )}:\n${indentstr()}${this.statements.join("\n" + indentstr())}`;
     dedent();
     return str;
   }
@@ -136,7 +138,7 @@ export class PostfixUnaryExpr extends Expression {
   }
 
   toString(): string {
-    return '(' + this.operand.toString() + ' ' + this.operator.raw + ')';
+    return "(" + this.operand.toString() + " " + this.operator.raw + ")";
   }
 }
 
@@ -161,7 +163,12 @@ export class MemberAccessExpr extends Expression {
   // whether it is computed (accessed using "[]") or not.
   readonly isIndex: boolean;
 
-  constructor(dot: Token, obj: Expression, prop: Expression, isIndex: boolean = false) {
+  constructor(
+    dot: Token,
+    obj: Expression,
+    prop: Expression,
+    isIndex: boolean = false
+  ) {
     super(dot);
     this.object = obj;
     this.property = prop;
@@ -169,7 +176,7 @@ export class MemberAccessExpr extends Expression {
   }
 
   toString() {
-    return this.object + '.' + this.property;
+    return this.object + "." + this.property;
   }
 }
 
@@ -185,7 +192,7 @@ export class Literal extends Expression {
   toString(): string {
     let color = chalk.yellow;
     if (this.token?.type == TokenType.LITERAL_STR) color = chalk.green;
-    return '' + color((this.token as Token).raw);
+    return "" + color((this.token as Token).raw);
   }
 }
 
@@ -199,7 +206,7 @@ export class Identifier extends Expression {
   }
 
   toString(): string {
-    return `${baseColor('id:')} "${this.name}"`;
+    return `${baseColor("id:")} "${this.name}"`;
   }
 }
 
@@ -218,7 +225,9 @@ export class VarDeclaration extends Node {
   }
 
   toString() {
-    return `${baseColor('vardecl')} (${this.declarators.map(e => e.toString()).join(', ')})`;
+    return `${baseColor("vardecl")} (${this.declarators
+      .map((e) => e.toString())
+      .join(", ")})`;
   }
 }
 
@@ -238,7 +247,9 @@ export class VarDeclarator extends Node {
   }
 
   toString() {
-    return `${this.name}: ${this.typeInfo.toString()} = ${this.value ? this.value.toString() : ''}`;
+    return `${this.name}: ${this.typeInfo.toString()} = ${
+      this.value ? this.value.toString() : ""
+    }`;
   }
 }
 
@@ -252,7 +263,7 @@ export class CallExpr extends Expression {
   }
 
   toString() {
-    return `<callexpr> ${this.callee.toString()}(${this.args.join(', ')})`;
+    return `<callexpr> ${this.callee.toString()}(${this.args.join(", ")})`;
   }
 }
 
@@ -266,7 +277,7 @@ export class ArrayExpr extends Expression {
   }
 
   toString() {
-    return `[${this.elements.join(',')}]`;
+    return `[${this.elements.join(",")}]`;
   }
 }
 
@@ -280,8 +291,8 @@ export class ObjectExpr extends Expression {
 
   toString() {
     return `{${Array.from(this.kvPairs)
-      .map(e => `${e[0].raw}: ${e[1].toString()}`)
-      .join(', ')}}`;
+      .map((e) => `${e[0].raw}: ${e[1].toString()}`)
+      .join(", ")}}`;
   }
 }
 
@@ -308,12 +319,15 @@ export class FunctionExpr extends Expression {
   }
 
   toString() {
-    let str = `${chalk.gray('function')} (`;
+    let str = `${chalk.gray("function")} (`;
 
     str +=
       this.params
-        .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.typeInfo.toString()}`)
-        .join(', ') + `) -> ${this.returnTypeInfo.toString()}\n`;
+        .map(
+          (p) =>
+            `${p.name}${p.defaultValue ? "?" : ""}: ${p.typeInfo.toString()}`
+        )
+        .join(", ") + `) -> ${this.returnTypeInfo.toString()}\n`;
 
     indent();
     str += this.body.toString();
@@ -359,7 +373,13 @@ export class ForStmt extends Node {
   readonly body: Body;
   readonly kind = NodeKind.ForStmt;
 
-  constructor(kw: Token, i: Identifier, start: Expression, stop: Expression, step?: Expression) {
+  constructor(
+    kw: Token,
+    i: Identifier,
+    start: Expression,
+    stop: Expression,
+    step?: Expression
+  ) {
     super(kw);
     this.iterator = i;
     this.start = start;
@@ -372,9 +392,23 @@ export class ForStmt extends Node {
     let str = `for ${this.start.toString()}, ${this.stop.toString()}, `;
     if (this.step) str += this.step.toString();
     indent();
-    str += '\n' + this.body.toString();
+    str += "\n" + this.body.toString();
     dedent();
     return str;
+  }
+}
+
+export class WhileStmt extends Node {
+  readonly condition: Expression;
+  readonly body: Body;
+  constructor(kw: Token, cond: Expression) {
+    super(kw);
+    this.condition = cond;
+    this.body = new Body();
+  }
+
+  toString() {
+    return `while (${this.condition}) {${this.body}}`;
   }
 }
 
@@ -411,12 +445,15 @@ export class FunctionDeclaration extends Node {
   }
 
   toString() {
-    let str = `${chalk.gray('function')} ${this.name}(`;
+    let str = `${chalk.gray("function")} ${this.name}(`;
 
     str +=
       this.params
-        .map(p => `${p.name}${p.defaultValue ? '?' : ''}: ${p.typeInfo.toString()}`)
-        .join(', ') + `) -> ${this.returnTypeInfo.toString()}\n`;
+        .map(
+          (p) =>
+            `${p.name}${p.defaultValue ? "?" : ""}: ${p.typeInfo.toString()}`
+        )
+        .join(", ") + `) -> ${this.returnTypeInfo.toString()}\n`;
 
     indent();
     str += this.body.toString();
@@ -436,7 +473,7 @@ export class ReturnStmt extends Node {
   }
 
   public toString() {
-    return `return ${this.expr?.toString() || ' '}`;
+    return `return ${this.expr?.toString() || " "}`;
   }
 }
 
@@ -449,7 +486,7 @@ export class ExprStmt extends Node {
   }
 
   toString() {
-    return `${chalk.gray('exprstmt')}: ${this.expr.toString()}`;
+    return `${chalk.gray("exprstmt")}: ${this.expr.toString()}`;
   }
 }
 
@@ -470,11 +507,11 @@ export class RecordDecl extends Node {
   }
 
   toString() {
-    let str = `${chalk.grey('interface')} ${this.name}:\n`;
+    let str = `${chalk.grey("interface")} ${this.name}:\n`;
     indent();
     str += Array.from(this.properties)
-      .map(e => `${indentstr()} ${e[0].raw}: ${e[1].toString()}`)
-      .join('\n');
+      .map((e) => `${indentstr()} ${e[0].raw}: ${e[1].toString()}`)
+      .join("\n");
     dedent();
     return str;
   }

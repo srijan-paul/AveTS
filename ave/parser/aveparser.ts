@@ -1,18 +1,18 @@
-import Token from '../lexer/token';
-import TokenType = require('../lexer/tokentype');
-import Parser, { ParsedData } from './parser';
-import * as AST from './ast/ast';
-import Precedence = require('./precedence');
-import { ScannedData } from '../lexer/lexer';
-import * as Typing from '../types/types';
-import { AssignmentParser } from './parselets/assign';
-import { DeclarationKind, getDeclarationKind } from './symbol_table/symtable';
-import { callParser } from './parselets/call';
-import { FuncDeclaration, HoistedVarDeclaration } from '../types/declaration';
-import { ArrayParser } from './parselets/array';
-import { ObjectParser, InfixObjectParser } from './parselets/object';
-import parseType from './parselets/type-parser';
-import MemberExprParser = require('./parselets/member-access');
+import Token from "../lexer/token";
+import TokenType = require("../lexer/tokentype");
+import Parser, { ParsedData } from "./parser";
+import * as AST from "./ast/ast";
+import Precedence = require("./precedence");
+import { ScannedData } from "../lexer/lexer";
+import * as Typing from "../types/types";
+import { AssignmentParser } from "./parselets/assign";
+import { DeclarationKind, getDeclarationKind } from "./symbol_table/symtable";
+import { callParser } from "./parselets/call";
+import { FuncDeclaration, HoistedVarDeclaration } from "../types/declaration";
+import { ArrayParser } from "./parselets/array";
+import { ObjectParser, InfixObjectParser } from "./parselets/object";
+import parseType from "./parselets/type-parser";
+import MemberExprParser = require("./parselets/member-access");
 
 export default class AveParser extends Parser {
   // current wrapping body. This is
@@ -49,7 +49,7 @@ export default class AveParser extends Parser {
 
     // nil
     this.prefix(TokenType.NIL, Precedence.NONE, (_, token) => {
-      return new AST.Literal(token, 'null');
+      return new AST.Literal(token, "null");
     });
 
     // a stupid type case workaround but it works.
@@ -76,29 +76,33 @@ export default class AveParser extends Parser {
 
     // objects may also start with '{'
     // optionally followed by an INDENT.
-    this.prefix(TokenType.L_BRACE, Precedence.NONE, (_: Parser, brace: Token) => {
-      let object;
-      // whether or not to eat the closing '}'
-      let eatClosingBrace = false;
+    this.prefix(
+      TokenType.L_BRACE,
+      Precedence.NONE,
+      (_: Parser, brace: Token) => {
+        let object;
+        // whether or not to eat the closing '}'
+        let eatClosingBrace = false;
 
-      if (this.check(TokenType.INDENT)) {
-        object = ObjectParser(this, this.next());
-        // the object parser eats until <DEDENT>
-        // so we manually eat the '}'
-        eatClosingBrace = true;
-      } else {
-        // object parselet eats all the way till '}'
-        // so we no longer have to consume the closing
-        // brace.
-        object = ObjectParser(this, brace);
+        if (this.check(TokenType.INDENT)) {
+          object = ObjectParser(this, this.next());
+          // the object parser eats until <DEDENT>
+          // so we manually eat the '}'
+          eatClosingBrace = true;
+        } else {
+          // object parselet eats all the way till '}'
+          // so we no longer have to consume the closing
+          // brace.
+          object = ObjectParser(this, brace);
+        }
+
+        if (eatClosingBrace) {
+          this.expect(TokenType.R_BRACE, `Expected '}'.`);
+        }
+
+        return object;
       }
-
-      if (eatClosingBrace) {
-        this.expect(TokenType.R_BRACE, `Expected '}'.`);
-      }
-
-      return object;
-    });
+    );
 
     // arrays [a, b, c]
     this.prefix(TokenType.L_SQ_BRACE, Precedence.NONE, ArrayParser);
@@ -154,7 +158,12 @@ export default class AveParser extends Parser {
     // member access "a.b"
     this.infix(TokenType.DOT, Precedence.MEM_ACCESS, false, MemberExprParser);
     // computed member acces "a[b]"
-    this.infix(TokenType.L_BRACE, Precedence.COMP_MEM_ACCESS, false, MemberExprParser);
+    this.infix(
+      TokenType.L_BRACE,
+      Precedence.COMP_MEM_ACCESS,
+      false,
+      MemberExprParser
+    );
 
     // (...) grouping expression
 
@@ -162,7 +171,7 @@ export default class AveParser extends Parser {
       TokenType.L_PAREN,
       Precedence.GROUPING,
       (parser: Parser, lparen: Token): AST.Expression => {
-        const expression = parser.parseExpression(Precedence.NONE);
+        const expression = this.expr();
         parser.expect(TokenType.R_PAREN, "Expected ')'.");
         return new AST.GroupExpr(lparen, expression);
       }
@@ -177,7 +186,7 @@ export default class AveParser extends Parser {
       TokenType.MOD_EQ,
       TokenType.PLUS_EQ,
       TokenType.POW_EQ,
-    ].forEach(toktype => {
+    ].forEach((toktype) => {
       this.infix(toktype, Precedence.ASSIGN, true, AssignmentParser);
     });
 
@@ -191,12 +200,14 @@ export default class AveParser extends Parser {
   }
 
   private parseBlock(body: AST.Body) {
+    this.blockScopestack.push(body);
     while (!this.eof() && !this.match(TokenType.DEDENT)) {
       body.statements.push(this.statement());
     }
+    this.blockScopestack.pop();
   }
 
-  parse(): ParsedData {
+  public parse(): ParsedData {
     while (!this.ast.hasError && !this.match(TokenType.EOF)) {
       this.ast.body.statements.push(this.statement());
     }
@@ -216,6 +227,8 @@ export default class AveParser extends Parser {
       return this.ifStmt();
     } else if (this.check(TokenType.FOR)) {
       return this.forStmt();
+    } else if (this.check(TokenType.WHILE)) {
+      return this.whileStmt();
     } else if (this.check(TokenType.RETURN)) {
       return this.returnStmt();
     } else {
@@ -234,16 +247,24 @@ export default class AveParser extends Parser {
       return this.recordDecl();
     } else {
       // expression statement
-      const expr = this.parseExpression(Precedence.NONE);
+      const expr = this.expr();
       this.consume(TokenType.SEMI_COLON);
       return new AST.ExprStmt(expr);
     }
   }
 
+  private expr() {
+    return this.parseExpression(Precedence.NONE);
+  }
+
+  // ID ':' (type)? '=' exp
   private sugarDeclaration(): AST.VarDeclaration {
     // intialize the declaration with 'colon' as the token
     // and block scoped symbol
-    const varDecl = new AST.VarDeclaration(this.peek(), DeclarationKind.BlockScope);
+    const varDecl = new AST.VarDeclaration(
+      this.peek(),
+      DeclarationKind.BlockScope
+    );
     varDecl.declarators.push(this.varDeclarator());
     this.consume(TokenType.SEMI_COLON);
     return varDecl;
@@ -269,55 +290,39 @@ export default class AveParser extends Parser {
   }
 
   private varDeclarator(): AST.VarDeclarator {
-    const varName = this.expect(TokenType.NAME, 'Expected variable name.');
+    const varName = this.expect(TokenType.NAME, "Expected variable name.");
     let value = null;
     let type = new AST.TypeInfo(this.prev(), Typing.t_infer);
 
-    if (this.match(TokenType.COLON) && !this.check(TokenType.EQ)) type = parseType(this);
+    if (this.match(TokenType.COLON) && !this.check(TokenType.EQ))
+      type = parseType(this);
 
-    if (this.match(TokenType.EQ)) value = this.parseExpression(Precedence.NONE);
+    if (this.match(TokenType.EQ)) value = this.expr();
 
     return new AST.VarDeclarator(varName, value, type);
   }
 
   private ifStmt(): AST.IfStmt {
     const kw = this.next();
-    const cond = this.parseExpression(Precedence.NONE);
+    const cond = this.expr();
     const _then = new AST.Body();
     let _else;
 
     this.consume(TokenType.COLON);
     this.expect(TokenType.INDENT, "Expected indent before 'if' body.");
 
-    // set the current surrounding block scope
-    // to the if statement's then branch
-
-    // < push block scope
-    this.blockScopestack.push(_then);
-
     this.parseBlock(_then);
-
-    this.blockScopestack.pop();
-    // > pop block scope
 
     if (this.check(TokenType.ELIF)) {
       _else = new AST.Body();
-      //> new block scope
-      this.blockScopestack.push(_else);
+      // an else block that only contains a single `if` statement
+      // is treated as an `else-if` block.
       _else.statements.push(this.ifStmt());
-      this.blockScopestack.pop();
-      // < pop block scope
     } else if (this.match(TokenType.ELSE)) {
       _else = new AST.Body();
-      // > new block scope
-      this.blockScopestack.push(_else);
       this.consume(TokenType.COLON);
       this.expect(TokenType.INDENT, "Expected indent before 'else' body.");
-
       this.parseBlock(_else);
-
-      this.blockScopestack.pop();
-      // < pop block scope
     }
 
     return new AST.IfStmt(kw, cond, _then, _else);
@@ -326,48 +331,52 @@ export default class AveParser extends Parser {
   private forStmt(): AST.ForStmt {
     const kw = this.next();
     const i = new AST.Identifier(
-      this.expect(TokenType.NAME, 'Expected name as loop initilializer.')
+      this.expect(
+        TokenType.NAME,
+        "Expected a variable name as loop initilializer."
+      )
     );
 
     this.expect(TokenType.EQ, "Expected '='.");
-    const start = this.parseExpression(Precedence.NONE);
+    const start = this.expr();
     this.expect(TokenType.COMMA, "Expected ','.");
 
-    const stop = this.parseExpression(Precedence.NONE);
+    const stop = this.expr();
     let step;
 
     if (this.match(TokenType.COMMA)) {
-      step = this.parseExpression(Precedence.NONE);
+      step = this.expr();
     }
-
     this.consume(TokenType.COLON);
 
     const forstmt = new AST.ForStmt(kw, i, start, stop, step);
 
-    this.expect(TokenType.INDENT, 'Expected indented block as for loop body.');
-
-    // < push block scope
-    this.blockScopestack.push(forstmt.body);
-
-    forstmt.body.declarations.push(new HoistedVarDeclaration(i.name, Typing.t_number));
-
+    this.expect(TokenType.INDENT, "Expected indented block as for loop body.");
     this.parseBlock(forstmt.body);
-
-    this.blockScopestack.pop();
-    // < pop block scope
 
     // add the iterator as a declaration
     // to the top of the body node.
-
     const iDecl = new HoistedVarDeclaration(i.name, Typing.t_number);
-
     forstmt.body.declarations.push(iDecl);
 
     return forstmt;
   }
 
+  private whileStmt() {
+    const kw = this.next();
+    const condition = this.expr();
+
+    const whilestmt = new AST.WhileStmt(kw, condition);
+    this.expect(TokenType.INDENT, "Expected indented block.");
+    this.parseBlock(whilestmt.body);
+    return whilestmt;
+  }
+
   private funcExpr(kw: Token): AST.FunctionExpr {
-    const func = new AST.FunctionExpr(kw, new AST.TypeInfo(this.peek(), Typing.t_infer));
+    const func = new AST.FunctionExpr(
+      kw,
+      new AST.TypeInfo(this.peek(), Typing.t_infer)
+    );
     func.params = this.parseParams();
 
     if (this.match(TokenType.COLON)) {
@@ -381,7 +390,7 @@ export default class AveParser extends Parser {
 
   private funcDecl(): AST.FunctionDeclaration {
     const func = new AST.FunctionDeclaration(
-      this.expect(TokenType.NAME, 'Expected function name.'),
+      this.expect(TokenType.NAME, "Expected function name."),
       new AST.TypeInfo(this.peek(), Typing.t_infer)
     );
 
@@ -400,24 +409,20 @@ export default class AveParser extends Parser {
     func: AST.FunctionExpr | AST.FunctionDeclaration,
     isArrow: boolean = false
   ) {
-    this.expect(TokenType.INDENT, 'Expected indented block.');
+    this.expect(TokenType.INDENT, "Expected indented block.");
 
     // > push func scope.
-    // > push block scope.
     if (isArrow) this.functionScopestack.push(func.body);
-    this.blockScopestack.push(func.body);
-
     this.parseBlock(func.body);
-
-    this.blockScopestack.pop();
     if (isArrow) this.functionScopestack.pop();
-    // < pop block scope
     // < pop func scope
 
     // hoist the declaration so that it
     // can be accessed from anywhere.
     if (func instanceof AST.FunctionDeclaration)
-      this.currentBlockScope().declarations.push(FuncDeclaration.fromASTNode(func));
+      this.currentBlockScope().declarations.push(
+        FuncDeclaration.fromASTNode(func)
+      );
   }
 
   private parseParams(): AST.FunctionParam[] {
@@ -431,7 +436,7 @@ export default class AveParser extends Parser {
       // rest paramter must be the last.
       if (param.isRest || !this.match(TokenType.COMMA)) {
         const message = param.isRest
-          ? 'rest parameter must be the last in parameter list.'
+          ? "rest parameter must be the last in parameter list."
           : "Expected ')' after function parameters";
         this.expect(TokenType.R_PAREN, message);
         break;
@@ -441,9 +446,9 @@ export default class AveParser extends Parser {
   }
 
   private parseParam(): AST.FunctionParam {
-    const rest = this.match(TokenType.SPREAD);
+    const isRest = this.match(TokenType.SPREAD);
 
-    const token = this.expect(TokenType.NAME, 'Expected parameter name.');
+    const token = this.expect(TokenType.NAME, "Expected parameter name.");
     const name = token.raw;
     let type = new AST.TypeInfo(this.prev(), Typing.t_any);
     let defaultValue;
@@ -456,7 +461,7 @@ export default class AveParser extends Parser {
     }
 
     if (this.match(TokenType.EQ)) {
-      defaultValue = this.parseExpression(Precedence.NONE);
+      defaultValue = this.expr();
     }
 
     return {
@@ -464,11 +469,12 @@ export default class AveParser extends Parser {
       typeInfo: type,
       token,
       required,
-      isRest: rest,
+      isRest,
       defaultValue,
     };
   }
 
+  // returnStmt -> 'return' expr?
   private returnStmt(): AST.ReturnStmt {
     const kw = this.next();
     let expr;
@@ -480,11 +486,12 @@ export default class AveParser extends Parser {
     )
       return new AST.ReturnStmt(kw);
 
-    expr = this.parseExpression(Precedence.NONE);
+    expr = this.expr();
     this.consume(TokenType.SEMI_COLON);
     return new AST.ReturnStmt(kw, expr);
   }
 
+  // recordDecl -> 'record' id ':'? <INDENT> (id ':' type)? <DEDENT>
   private recordDecl(): AST.RecordDecl {
     const name = this.next();
     let isGeneric = false;
@@ -497,10 +504,10 @@ export default class AveParser extends Parser {
 
     const record = new AST.RecordDecl(name, isGeneric, typeArgs);
     this.consume(TokenType.COLON); // optional ':'
-    this.expect(TokenType.INDENT, 'Expected Indented block.');
+    this.expect(TokenType.INDENT, "Expected Indented block.");
 
     while (!this.match(TokenType.DEDENT)) {
-      const name = this.expect(TokenType.NAME, 'Expected property name.');
+      const name = this.expect(TokenType.NAME, "Expected property name.");
       this.expect(TokenType.COLON, "Expected ':'.");
       const type = parseType(this);
       record.properties.set(name, type);

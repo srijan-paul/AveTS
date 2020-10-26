@@ -20,4 +20,4 @@ const number =
 
 let a: Token = number
 
-a.name = 1
+a.name = 1 # expect TypeError
