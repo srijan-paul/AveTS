@@ -6,21 +6,21 @@ import {
   makeInfo,
   throwError,
   throwInfo,
-} from '../error/error';
-import Token from '../lexer/token';
-import TokenType = require('../lexer/tokentype');
-import * as AST from '../parser/ast/ast';
-import NodeKind = require('../parser/ast/nodekind');
-import { ParsedData } from '../parser/parser';
-import Environment from '../parser/symbol_table/environment';
-import { DeclarationKind, SymbolData } from '../parser/symbol_table/symtable';
-import { HoistedVarDeclaration } from '../types/declaration';
-import FunctionType, { ParameterTypeInfo } from '../types/function-type';
-import GenericType, { t_Array } from '../types/generic-type';
-import ObjectType, { checkObjectAssignment } from '../types/object-type';
-import * as Typing from '../types/types';
-import UnionType from '../types/union-type';
-import TypeResolver from './type-resolver';
+} from "../error/error";
+import Token from "../lexer/token";
+import TokenType = require("../lexer/tokentype");
+import * as AST from "../parser/ast/ast";
+import NodeKind = require("../parser/ast/nodekind");
+import { ParsedData } from "../parser/parser";
+import Environment from "../parser/symbol_table/environment";
+import { DeclarationKind, SymbolData } from "../parser/symbol_table/symtable";
+import { HoistedVarDeclaration } from "../types/declaration";
+import FunctionType, { ParameterTypeInfo } from "../types/function-type";
+import GenericType, { t_Array } from "../types/generic-type";
+import ObjectType, { checkObjectAssignment } from "../types/object-type";
+import * as Typing from "../types/types";
+import UnionType from "../types/union-type";
+import TypeResolver from "./type-resolver";
 
 export default class Checker {
   private readonly ast: AST.Program;
@@ -46,6 +46,11 @@ export default class Checker {
   // returns the correct type of expression.
   private functionReturnStack: Typing.Type[] = [];
 
+  // current depth of nested loops.
+  // used to determine if break/continue statements
+  // are inside loops.
+  private loopDepth = 0;
+
   private typeResolver: TypeResolver = new TypeResolver(this);
 
   constructor(parseData: ParsedData) {
@@ -54,8 +59,17 @@ export default class Checker {
     this.env = this.rootEnv;
   }
 
-  public error(message: string, token: Token, errType: ErrorType = ErrorType.TypeError) {
-    const err: AveError = errorFromToken(token, message, this.parseData.fileName, errType);
+  public error(
+    message: string,
+    token: Token,
+    errType: ErrorType = ErrorType.TypeError
+  ) {
+    const err: AveError = errorFromToken(
+      token,
+      message,
+      this.parseData.fileName,
+      errType
+    );
     this.ast.hasError = true;
     throwError(err, this.parseData.sourceCode);
 
@@ -77,7 +91,8 @@ export default class Checker {
   }
 
   private type(t: AST.TypeInfo | Typing.Type): Typing.Type {
-    if (t instanceof AST.TypeInfo) return this.typeResolver.resolveType(t.type, t.token);
+    if (t instanceof AST.TypeInfo)
+      return this.typeResolver.resolveType(t.type, t.token);
     return this.typeResolver.resolveType(t);
   }
 
@@ -91,7 +106,11 @@ export default class Checker {
    * @returns {boolean}                   `true` if the assignment is valid.
    */
 
-  private isValidAssignment(ta: Typing.Type, tb: Typing.Type, type = TokenType.EQ): boolean {
+  private isValidAssignment(
+    ta: Typing.Type,
+    tb: Typing.Type,
+    type = TokenType.EQ
+  ): boolean {
     if (type == TokenType.EQ) {
       if (ta instanceof ObjectType) {
         if (!(tb instanceof ObjectType)) return false;
@@ -104,9 +123,14 @@ export default class Checker {
     // compound assignment operators (*=, += etc)
 
     if (type == TokenType.PLUS_EQ)
-      return (ta == Typing.t_number && tb == Typing.t_number) || ta == Typing.t_string;
+      return (
+        (ta == Typing.t_number && tb == Typing.t_number) ||
+        ta == Typing.t_string
+      );
 
-    return ta == Typing.t_any || (ta == Typing.t_number && tb == Typing.t_number);
+    return (
+      ta == Typing.t_any || (ta == Typing.t_number && tb == Typing.t_number)
+    );
   }
 
   /**
@@ -161,7 +185,9 @@ export default class Checker {
     const t = this.typeOf(node);
 
     if (t == type) return true;
-    msg = msg || `Expected ${(<Token>node.token).raw} to be of type ${type.toString()}`;
+    msg =
+      msg ||
+      `Expected ${(<Token>node.token).raw} to be of type ${type.toString()}`;
 
     this.error(msg, <Token>node.token);
     return false;
@@ -209,10 +235,10 @@ export default class Checker {
         return this.recordDeclaration(<AST.RecordDecl>stmt);
       case NodeKind.ExprStmt:
         // just run it through the expression
-        // to detect type errors.
+        // checker to detect type errors.
         this.expression((<AST.ExprStmt>stmt).expr);
         // statements have no types
-        //(except return statements), so we won't
+        // (except return statements), so we won't
         // return the type of the expression.
         return Typing.t_void;
       case NodeKind.FunctionDecl:
@@ -236,7 +262,7 @@ export default class Checker {
     // check if symbol already exists
 
     if (this.env.has(node.name)) {
-      this.error(`Attempt to redeclare symbol '${node.name}'.`, node.token as Token);
+      this.error(`Attempt to redeclare '${node.name}'.`, node.token as Token);
       return;
     }
 
@@ -251,7 +277,10 @@ export default class Checker {
       isDefined = true;
       if (type == Typing.t_infer) type = currentType;
     } else if (type == Typing.t_infer) {
-      this.error(`'${node.name}' must either be initliazed or type annotated`, node.token as Token);
+      this.error(
+        `'${node.name}' must either be initliazed or type annotated.`,
+        node.token as Token
+      );
     }
 
     if (isDefined && !this.isValidAssignment(type, currentType)) {
@@ -354,7 +383,11 @@ export default class Checker {
       return this.type(symbolData.dataType);
     }
 
-    this.error(`Cannot find name ${name}.`, id.token as Token, ErrorType.ReferenceError);
+    this.error(
+      `Cannot find name ${name}.`,
+      id.token as Token,
+      ErrorType.ReferenceError
+    );
 
     return Typing.t_error;
   }
@@ -418,13 +451,20 @@ export default class Checker {
 
         // check for undefined name
         if (!symbolData) {
-          this.error(`Cannot find name '${name}'`, node.token as Token, ErrorType.ReferenceError);
+          this.error(
+            `Cannot find name '${name}'`,
+            node.token as Token,
+            ErrorType.ReferenceError
+          );
           return false;
         }
 
         // check for assignment to constant
         if (symbolData.declarationKind == DeclarationKind.Constant) {
-          this.error(`Invalid assignment to constant '${name}'`, node.token as Token);
+          this.error(
+            `Invalid assignment to constant '${name}'`,
+            node.token as Token
+          );
           return false;
         }
         return true;
@@ -473,7 +513,11 @@ export default class Checker {
     let args = expr.args;
 
     if (!(type instanceof FunctionType)) {
-      this.error(`Function does not exist.`, callee.token as Token, ErrorType.ReferenceError);
+      this.error(
+        `Function does not exist.`,
+        callee.token as Token,
+        ErrorType.ReferenceError
+      );
       return Typing.t_undef;
     }
 
@@ -516,17 +560,20 @@ export default class Checker {
 
     // unexpected argument
     if (args[i]) {
-      let ord = 'th';
+      let ord = "th";
       let digit = (i + 1) % 10;
-      if (digit == 2) ord = 'nd';
-      else if (digit == 3) ord = 'rd';
-      else if (digit == 1) ord = 'st';
-      this.error(`Unexpected ${digit}${ord} argument to function call.`, args[i].operator);
+      if (digit == 2) ord = "nd";
+      else if (digit == 3) ord = "rd";
+      else if (digit == 1) ord = "st";
+      this.error(
+        `Unexpected ${digit}${ord} argument to function call.`,
+        args[i].operator
+      );
     }
   }
 
   private objectExpr(obj: AST.ObjectExpr): ObjectType {
-    let t_object = new ObjectType('');
+    let t_object = new ObjectType("");
 
     obj.kvPairs.forEach((val: AST.Expression, key: Token) => {
       t_object.defineProperty(key.raw, this.expression(val));
@@ -539,8 +586,8 @@ export default class Checker {
     const lType = this.type(this.expression(expr.object));
     const property = expr.property;
 
-    if (expr.isIndex) {
-      throw new Error('Cannot index yet.');
+    if (expr.isIndexed) {
+      throw new Error("Cannot index yet.");
     } else if (property instanceof AST.Identifier) {
       // if property key does not exist on type of
       // the object, throw an error.
@@ -553,17 +600,29 @@ export default class Checker {
       const expType = lType.getProperty(property.name) as Typing.Type;
       return this.type(expType);
     } else {
-      throw new Error('impossible condition encountered.');
+      throw new Error("impossible condition encountered.");
     }
   }
 
   private forStmt(forStmt: AST.ForStmt): Typing.Type {
-    this.assertType(forStmt.start, Typing.t_number, 'loop start must be a number.');
+    this.assertType(
+      forStmt.start,
+      Typing.t_number,
+      "loop start must be a number."
+    );
 
-    this.assertType(forStmt.stop, Typing.t_number, 'loop limit must be a number.');
+    this.assertType(
+      forStmt.stop,
+      Typing.t_number,
+      "loop limit must be a number."
+    );
 
     if (forStmt.step) {
-      this.assertType(forStmt.step, Typing.t_number, 'loop step must be a number.');
+      this.assertType(
+        forStmt.step,
+        Typing.t_number,
+        "loop step must be a number."
+      );
     }
 
     let type = this.body(forStmt.body);
@@ -577,7 +636,11 @@ export default class Checker {
     let rtype = this.functionReturnStack[this.functionReturnStack.length - 1];
 
     if (!rtype) {
-      this.error(`return statement outside function.`, stmt.token as Token, ErrorType.SyntaxError);
+      this.error(
+        `return statement outside function.`,
+        stmt.token as Token,
+        ErrorType.SyntaxError
+      );
       return type;
     }
 
@@ -597,8 +660,10 @@ export default class Checker {
 
     this.functionReturnStack.push(this.type(func.returnTypeInfo));
 
-    func.params.forEach(e => {
-      func.body.declarations.push(new HoistedVarDeclaration(e.name, this.type(e.typeInfo), true));
+    func.params.forEach((e) => {
+      func.body.declarations.push(
+        new HoistedVarDeclaration(e.name, this.type(e.typeInfo), true)
+      );
     });
 
     let returnType = this.body(func.body);
@@ -632,8 +697,10 @@ export default class Checker {
 
     let paramTypeInfo: ParameterTypeInfo[] = [];
 
-    func.params.forEach(e => {
-      func.body.declarations.push(new HoistedVarDeclaration(e.name, this.type(e.typeInfo)));
+    func.params.forEach((e) => {
+      func.body.declarations.push(
+        new HoistedVarDeclaration(e.name, this.type(e.typeInfo))
+      );
       paramTypeInfo.push({
         name: e.name,
         type: this.type(e.typeInfo),
@@ -660,14 +727,12 @@ export default class Checker {
       );
 
     this.functionReturnStack.pop();
-    return new FunctionType('', paramTypeInfo, returnType);
+    return new FunctionType("", paramTypeInfo, returnType);
   }
 
   // TODO handle optional parameters
   private verifyFunctionParams(params: AST.FunctionParam[]) {
- 
     for (let i = 0; i < params.length; i++) {
-
       // default value must be assignable to annotated type.
       if (params[i].defaultValue) {
         let type = this.expression(<AST.Expression>params[i].defaultValue);

@@ -161,7 +161,7 @@ export class MemberAccessExpr extends Expression {
   readonly property: Expression;
   readonly kind = NodeKind.MemberAcessExpr;
   // whether it is computed (accessed using "[]") or not.
-  readonly isIndex: boolean;
+  readonly isIndexed: boolean;
 
   constructor(
     dot: Token,
@@ -172,7 +172,7 @@ export class MemberAccessExpr extends Expression {
     super(dot);
     this.object = obj;
     this.property = prop;
-    this.isIndex = isIndex;
+    this.isIndexed = isIndex;
   }
 
   toString() {
@@ -401,6 +401,7 @@ export class ForStmt extends Node {
 export class WhileStmt extends Node {
   readonly condition: Expression;
   readonly body: Body;
+  readonly kind = NodeKind.WhileStmt;
   constructor(kw: Token, cond: Expression) {
     super(kw);
     this.condition = cond;

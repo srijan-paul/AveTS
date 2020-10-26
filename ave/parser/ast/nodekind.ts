@@ -13,6 +13,7 @@ const enum NodeKind {
   AssignmentExpr,
   GroupingExpr,
   IfStmt,
+  WhileStmt,
   CallExpr,
   ForStmt,
   ArrayExpr,

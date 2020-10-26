@@ -90,7 +90,7 @@ function matchNodes(a: any, b: any): MatchResult {
 
   return {
     pass: false,
-    message: `Expected ${a} got ${b}`,
+    message: `Expected '${a}' got '${b}'`,
   };
 }
 
@@ -142,4 +142,28 @@ test("parse precedence for operators.", () => {
       }
     }
   }]);
+});
+
+// prettier-ignore
+test("parse while loops.", () => {
+  expect(`
+var k = 4
+while k
+  k -= 1
+  `).toMatchAST([{
+    kind: NodeKind.VarDeclaration,
+    declarators: [ { kind: NodeKind.VarDeclarator, name: "k", value: { kind: NodeKind.Literal, value: 4 } } ],
+  },
+  {
+    kind: NodeKind.WhileStmt,
+    condition: { kind: NodeKind.Identifier, name: "k" },
+    body: {
+      kind: NodeKind.Body,
+      statements: [ {
+          kind: NodeKind.ExprStmt,
+          expr: {
+            kind: NodeKind.AssignmentExpr,
+            left: { kind: NodeKind.Identifier, name: "k" },
+            operator: { type: TokenType.MINUS_EQ },
+            right: { kind: NodeKind.Literal, value: 1 } } } ] } } ] )
 });
