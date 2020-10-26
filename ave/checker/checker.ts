@@ -229,6 +229,8 @@ export default class Checker {
         return this.ifStmt(<AST.IfStmt>stmt);
       case NodeKind.ForStmt:
         return this.forStmt(<AST.ForStmt>stmt);
+      case NodeKind.WhileStmt:
+        return this.whileStmt(<AST.WhileStmt>stmt);
       case NodeKind.ReturnStmt:
         return this.returnStmt(<AST.ReturnStmt>stmt);
       case NodeKind.RecordDeclaration:
@@ -252,7 +254,7 @@ export default class Checker {
     for (let declartor of declNode.declarators) {
       this.checkDeclarator(declartor, declNode.declarationType);
     }
-    return Typing.t_undef;
+    return Typing.t_void;
   }
 
   private checkDeclarator(node: AST.VarDeclarator, kind: DeclarationKind) {
@@ -626,6 +628,12 @@ export default class Checker {
     }
 
     let type = this.body(forStmt.body);
+    return this.checkMaybeType(type);
+  }
+
+  private whileStmt(stmt: AST.WhileStmt): Typing.Type {
+    this.expression(stmt.condition);
+    const type = this.body(stmt.body);
     return this.checkMaybeType(type);
   }
 
