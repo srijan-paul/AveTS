@@ -23,6 +23,7 @@ export interface ParsedData {
   ast: AST.Program;
   sourceCode: string;
   fileName: string;
+  errors: AveError[];
 }
 
 /* Parser
@@ -47,6 +48,7 @@ export default class Parser {
   protected hasError: boolean = false;
   protected lexedData: ScannedData;
   protected ast: AST.Program = new AST.Program();
+  protected errors: AveError[];
 
   private reportError: ErrorReportFn;
 
@@ -56,48 +58,49 @@ export default class Parser {
     this.precedenceTable = new Map();
     this.tokenstream = lexData.tokens;
     this.lexedData = lexData;
+    this.errors = [];
     this.reportError = reporter || throwError;
   }
 
-  registerInfix(toktype: TokenType, parseFn: InfixParseFn) {
+  public registerInfix(toktype: TokenType, parseFn: InfixParseFn) {
     this.infixParseMap.set(toktype, parseFn);
   }
 
-  registerPrefix(toktype: TokenType, parseFn: PrefixParseFn) {
+  public registerPrefix(toktype: TokenType, parseFn: PrefixParseFn) {
     this.prefixParseMap.set(toktype, parseFn);
   }
 
   // helper functions
 
-  prev(): Token {
+  public prev(): Token {
     return this.tokenstream[this.current - 1];
   }
 
-  next(): Token {
+  public next(): Token {
     return this.tokenstream[this.current++];
   }
 
-  eof(): boolean {
+  public eof(): boolean {
     return this.current >= this.tokenstream.length;
   }
 
-  peek(): Token {
+  public peek(): Token {
     return this.tokenstream[this.current];
   }
 
-  peekNext(): Token | undefined {
+  public peekNext(): Token | undefined {
     return this.tokenstream[this.current + 1];
   }
 
-  check(t: TokenType): boolean {
+  public check(t: TokenType): boolean {
     return !this.eof() && this.peek().type == t;
   }
 
-  checkNext(t: TokenType): boolean {
+  public checkNext(t: TokenType): boolean {
     return !this.eof() && this.peekNext()?.type == t;
   }
 
-  match(...types: TokenType[]): boolean {
+  public match(...types: TokenType[]): boolean {
     for (const type of types) {
       if (this.check(type)) {
         this.next();
@@ -107,11 +110,11 @@ export default class Parser {
     return false;
   }
 
-  consume(tok: TokenType) {
+  public consume(tok: TokenType) {
     if (this.check(tok)) this.next();
   }
 
-  isValidType(token: Token) {
+  public isValidType(token: Token) {
     return (
       (token.type >= TokenType.STRING && token.type <= TokenType.ANY) ||
       token.type == TokenType.NAME ||
@@ -121,6 +124,7 @@ export default class Parser {
 
   public error(msg: string, token: Token) {
     const err: AveError = errorFromToken(token, msg, this.lexedData.fileName);
+    this.errors.push(err);
     this.hasError = true;
     this.ast.hasError = true;
     this.reportError(err, this.lexedData.source);
@@ -201,6 +205,7 @@ export default class Parser {
       fileName: this.lexedData.fileName,
       ast: this.ast,
       hasError: this.ast.hasError,
+      errors: this.errors,
     };
   }
 

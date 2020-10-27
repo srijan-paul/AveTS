@@ -1,13 +1,14 @@
 import Lexer from "../lexer/lexer";
-import debug = require("../debug/debug");
 import NodeKind = require("../parser/ast/nodekind");
 import AveParser from "../parser/aveparser";
 import TokenType = require("../lexer/tokentype");
+import { ErrorType, getErrorTypeName } from "../error/error";
 
 declare global {
   namespace jest {
     interface Matchers<R> {
       toMatchAST(expected: UnknownNode[]): R;
+      toHaveError(type: ErrorType, line: number): R;
     }
   }
 }
@@ -19,6 +20,32 @@ expect.extend({
     return {
       pass: match.pass,
       message: () => match.message,
+    };
+  },
+
+  toHaveError(src: string, type: ErrorType, line: number) {
+    const parser = new AveParser(new Lexer("<test>", src).lex());
+    const parseTree = parser.parse();
+
+    const err = parseTree.errors[0];
+    let pass = true;
+    let msg: string = "errors matched";
+
+    if (!err) {
+      pass = false;
+      msg = "Expected program to have error.";
+    }
+
+    if (err.type != type || err.line != line) {
+      pass = false;
+      msg = `Error mismatch. Expected [${getErrorTypeName(err.type)} at ${
+        err.line
+      } got [${getErrorTypeName(type)} at ${line}]`;
+    }
+
+    return {
+      pass,
+      message: () => msg,
     };
   },
 });
@@ -106,6 +133,7 @@ test("variable declarations", () => {
   }]);
 });
 
+// prettier-ignore
 test("assignment expression", () => {
   expect(`a = b = 1`).toMatchAST([
     {
@@ -116,10 +144,7 @@ test("assignment expression", () => {
         right: {
           kind: NodeKind.AssignmentExpr,
           left: { kind: NodeKind.Identifier, name: "b" },
-          right: { kind: NodeKind.Literal, value: 1 },
-        },
-      },
-    },
+          right: { kind: NodeKind.Literal, value: 1 } } } },
   ]);
 });
 
@@ -137,11 +162,8 @@ test("parse precedence for operators.", () => {
         right: { 
           kind: NodeKind.PrefixUnaryExpr,
           operator: { type: TokenType.MINUS },
-          operand: { kind: NodeKind.Literal, value: 3 }
-        }
-      }
-    }
-  }]);
+          operand: { kind: NodeKind.Literal, value: 3 } } } } }      
+  ]);
 });
 
 // prettier-ignore

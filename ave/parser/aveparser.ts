@@ -217,6 +217,7 @@ export default class AveParser extends Parser {
       fileName: this.lexedData.fileName,
       ast: this.ast,
       hasError: this.ast.hasError,
+      errors: this.errors,
     };
 
     return parseData;

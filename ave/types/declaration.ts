@@ -1,8 +1,8 @@
-import Environment from '../parser/symbol_table/environment';
-import { DeclarationKind } from '../parser/symbol_table/symtable';
-import { Type, t_any } from './types';
-import FunctionType, { ParameterTypeInfo } from './function-type';
-import * as AST from '../parser/ast/ast';
+import Environment from "../parser/symbol_table/environment";
+import { DeclarationKind } from "../parser/symbol_table/symtable";
+import { Type, t_any } from "./types";
+import FunctionType, { ParameterTypeInfo } from "./function-type";
+import * as AST from "../parser/ast/ast";
 
 // declarations that need to be hoisted
 // to the top, these are stored in
@@ -42,7 +42,7 @@ export class FuncDeclaration implements Declaration {
   readonly name: string;
   type: FunctionType;
 
-  static fromASTNode(node: AST.FunctionDeclaration) {
+  public static fromASTNode(node: AST.FunctionDeclaration) {
     let params: ParameterTypeInfo[] = [];
     for (let p of node.params) {
       params.push({
@@ -52,16 +52,16 @@ export class FuncDeclaration implements Declaration {
         isRest: p.isRest,
       });
     }
-    const func = new FunctionType('', params, node.returnTypeInfo.type);
+    const func = new FunctionType("", params, node.returnTypeInfo.type);
     return new FuncDeclaration(node.name, func);
   }
 
   constructor(name: string, type: FunctionType) {
-    this.name = name || '<function>';
+    this.name = name || "<function>";
     this.type = type;
   }
 
-  defineIn(env: Environment) {
+  public defineIn(env: Environment) {
     env.define(this.name, {
       name: this.name,
       dataType: this.type,
