@@ -6,7 +6,8 @@ import Precedence = require("./precedence");
 import { PrefixUnaryParser } from "./parselets/preunary";
 import BinaryOpParselet from "./parselets/binary";
 import PostfixUnaryParselet from "./parselets/postunary";
-import { AveError, errorFromToken, throwError } from "../error/error";
+import { AveError, errorFromToken, ErrorReportFn } from "../error/error";
+import { throwError } from "../error/reporter";
 import { ScannedData } from "../lexer/lexer";
 
 /**
@@ -47,12 +48,15 @@ export default class Parser {
   protected lexedData: ScannedData;
   protected ast: AST.Program = new AST.Program();
 
-  constructor(lexData: ScannedData) {
+  private reportError: ErrorReportFn;
+
+  constructor(lexData: ScannedData, reporter?: ErrorReportFn) {
     this.prefixParseMap = new Map();
     this.infixParseMap = new Map();
     this.precedenceTable = new Map();
     this.tokenstream = lexData.tokens;
     this.lexedData = lexData;
+    this.reportError = reporter || throwError;
   }
 
   registerInfix(toktype: TokenType, parseFn: InfixParseFn) {
@@ -119,7 +123,7 @@ export default class Parser {
     const err: AveError = errorFromToken(token, msg, this.lexedData.fileName);
     this.hasError = true;
     this.ast.hasError = true;
-    throwError(err, this.lexedData.source);
+    this.reportError(err, this.lexedData.source);
   }
 
   public expect(type: TokenType, errorMessage: string) {

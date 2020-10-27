@@ -2,11 +2,11 @@ import {
   AveError,
   AveInfo,
   errorFromToken,
+  ErrorReportFn,
   ErrorType,
   makeInfo,
-  throwError,
-  throwInfo,
 } from "../error/error";
+import { throwError, throwInfo } from "../error/reporter";
 import Token from "../lexer/token";
 import TokenType = require("../lexer/tokentype");
 import * as AST from "../parser/ast/ast";
@@ -52,11 +52,13 @@ export default class Checker {
   private loopDepth = 0;
 
   private typeResolver: TypeResolver = new TypeResolver(this);
+  private reportError: ErrorReportFn;
 
-  constructor(parseData: ParsedData) {
+  constructor(parseData: ParsedData, reportErr?: ErrorReportFn) {
     this.ast = parseData.ast;
     this.parseData = parseData;
     this.env = this.rootEnv;
+    this.reportError = reportErr || throwError;
   }
 
   public error(
@@ -71,7 +73,7 @@ export default class Checker {
       errType
     );
     this.ast.hasError = true;
-    throwError(err, this.parseData.sourceCode);
+    this.reportError(err, this.parseData.sourceCode);
 
     while (this.infoStack.length) {
       throwInfo(this.infoStack.pop() as AveInfo);
