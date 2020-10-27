@@ -57,11 +57,11 @@ export abstract class Expression extends Node {
 
 export class BinaryExpr extends Expression {
   readonly operator: Token;
-  readonly left: Node;
-  readonly right: Node;
+  readonly left: Expression;
+  readonly right: Expression;
   readonly kind: NodeKind;
 
-  constructor(left: Node, op: Token, right: Node) {
+  constructor(left: Expression, op: Token, right: Expression) {
     super(op);
     this.left = left;
     this.operator = op;

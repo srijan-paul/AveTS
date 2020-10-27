@@ -544,7 +544,7 @@ export default class Checker {
         if (params[i].required) {
           this.error(
             `Missing argument '${params[i].name}' to function call.`,
-            args[i].token as Token
+            args[i - 1].token as Token
           );
         }
         return;

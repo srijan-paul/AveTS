@@ -7,7 +7,8 @@
     "lextest": "node build/tests/lexTests.js",
     "parsetest": "node build/tests/parseTests.js",
     "build": "tsc",
-    "test": "jest build/tests"
+    "test": "jest build/tests",
+    "gentest": "node build/tests/genTests.js"
   },
   "repository": {
     "type": "git",
