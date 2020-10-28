@@ -57,9 +57,11 @@ export class JSGenerator {
         return this.returnStmt(<AST.ReturnStmt>stmt);
       case NodeKind.IfStmt:
         return this.ifStmt(<AST.IfStmt>stmt);
+      case NodeKind.ExprStmt:
+        return this.writeln(this.expression((<AST.ExprStmt>stmt).expr));
     }
 
-    throw new Error("unhandled statement case in codegen.");
+    throw new Error("Unhandled statement case");
   }
 
   private expression(e: AST.Expression): string {
@@ -68,19 +70,46 @@ export class JSGenerator {
         return this.literal(<AST.Literal>e);
       case NodeKind.BinaryExpr:
         return this.binExpr(<AST.BinaryExpr>e);
+      case NodeKind.PrefixUnaryExpr:
+      case NodeKind.PostfixUnaryExpr:
+        return this.unExpr(<AST.PostfixUnaryExpr | AST.PrefixUnaryExpr>e);
       case NodeKind.Identifier:
         return (<AST.Identifier>e).name;
       case NodeKind.CallExpr:
         return this.callExp(<AST.CallExpr>e);
+      case NodeKind.AssignmentExpr:
+        return this.assignExp(<AST.AssignExpr>e);
     }
 
-    throw new Error("unhandled expression case.");
+    throw new Error("unhandled expression case: " + e.kind);
+  }
+
+  private assignExp(exp: AST.AssignExpr) {
+    return (
+      this.expression(exp.left) +
+      " " +
+      exp.operator.raw +
+      " " +
+      this.expression(exp.right)
+    );
   }
 
   private callExp(exp: AST.CallExpr) {
     return `${this.expression(exp.callee)}(${exp.args
       .map((e) => this.expression(e))
       .join(", ")})`;
+  }
+
+  private unExpr(exp: AST.PrefixUnaryExpr | AST.PostfixUnaryExpr) {
+    const opToken = exp.operator;
+    const op = opToken.type == TType.NOT ? "!" : opToken.raw;
+    const operand = this.expression(exp.operand);
+
+    if (exp.kind == NodeKind.PrefixUnaryExpr) {
+      return op + operand;
+    }
+
+    return operand + op;
   }
 
   private binExpr(exp: AST.BinaryExpr) {

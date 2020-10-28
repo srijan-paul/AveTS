@@ -6,11 +6,11 @@ import AveParser from "../parser/aveparser";
 
 const src = `
 func fib(x: num): num
-    if x == 1
-        return x
+    if x <= 1
+        return 1
     return fib(x - 1) + fib(x - 2)
 
-const a: bool = true
+fib(5)
 `;
 
 const parseTree = new AveParser(new Lexer("<test>", src).lex()).parse();

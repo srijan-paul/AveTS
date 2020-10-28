@@ -112,10 +112,10 @@ export class Body extends Node {
 
 export class PrefixUnaryExpr extends Expression {
   readonly operator: Token;
-  readonly operand: Node;
+  readonly operand: Expression;
   readonly kind = NodeKind.PrefixUnaryExpr;
 
-  constructor(operator: Token, operand: Node) {
+  constructor(operator: Token, operand: Expression) {
     super(operator);
     this.operator = operator;
     this.operand = operand;
@@ -128,10 +128,10 @@ export class PrefixUnaryExpr extends Expression {
 
 export class PostfixUnaryExpr extends Expression {
   readonly operator: Token;
-  readonly operand: Node;
+  readonly operand: Expression;
   readonly kind = NodeKind.PostfixUnaryExpr;
 
-  constructor(operand: Node, operator: Token) {
+  constructor(operand: Expression, operator: Token) {
     super(operator);
     this.operator = operator;
     this.operand = operand;

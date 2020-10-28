@@ -72,6 +72,7 @@ enum TokenType {
   RETURN,
   THIS,
   IN,
+  OF,
   FOR,
   LET,
   CONST,
