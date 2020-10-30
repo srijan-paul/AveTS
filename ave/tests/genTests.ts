@@ -4,15 +4,14 @@ import Lexer from "../lexer/lexer";
 import AveParser from "../parser/aveparser";
 
 const src = `
-func fib(x: num): num
-  if x <= 1
-      return 1
-  return fib(x - 1) + fib(x - 2)
+record Wrapper<T>
+  item: T
 
-fib(5)
+const k: Wrapper<num> =  { item: 5 }
 
-for i = 1, 10
-    fib(i)
+func foo(a: Wrapper<num>): num
+  return a.item + 1
+
 `;
 
 const parseTree = new AveParser(new Lexer("<test>", src).lex()).parse();

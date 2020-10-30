@@ -63,6 +63,8 @@ export class JSGenerator {
         return this.forStmt(<AST.ForStmt>stmt);
       case NodeKind.ExprStmt:
         return this.writeln(this.expression((<AST.ExprStmt>stmt).expr) + ";");
+      case NodeKind.RecordDeclaration:
+        return "";
     }
 
     throw new Error("Unhandled statement case");
@@ -87,9 +89,29 @@ export class JSGenerator {
         return "(" + this.expression((<AST.GroupExpr>e).expr) + ")";
       case NodeKind.ArrayExpr:
         return this.arrayExp(<AST.ArrayExpr>e);
+      case NodeKind.ObjectExpr:
+        return this.objExp(<AST.ObjectExpr>e);
+      case NodeKind.MemberAcessExpr:
+        return this.memAccessExp(<AST.MemberAccessExpr>e);
     }
 
     throw new Error("unhandled expression case: " + e.kind);
+  }
+
+  private objExp(exp: AST.ObjectExpr) {
+    let out = "{ ";
+    exp.kvPairs.forEach((v, k) => {
+      out += k.raw + ": " + this.expression(v);
+    });
+
+    return out + " }";
+  }
+
+  private memAccessExp(exp: AST.MemberAccessExpr) {
+    if (exp.isIndexed) {
+      return `${this.expression(exp.object)}[${this.expression(exp.property)}]`;
+    }
+    return `${this.expression(exp.object)}.${this.expression(exp.property)}`;
   }
 
   private arrayExp(exp: AST.ArrayExpr) {
