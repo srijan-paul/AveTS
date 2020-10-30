@@ -143,10 +143,10 @@ export class PostfixUnaryExpr extends Expression {
 }
 
 export class GroupExpr extends Expression {
-  readonly expr: Node;
+  readonly expr: Expression;
   readonly kind = NodeKind.GroupingExpr;
 
-  constructor(lparen: Token, expr: Node) {
+  constructor(lparen: Token, expr: Expression) {
     super(lparen);
     this.expr = expr;
   }

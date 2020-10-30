@@ -57,8 +57,12 @@ export class JSGenerator {
         return this.returnStmt(<AST.ReturnStmt>stmt);
       case NodeKind.IfStmt:
         return this.ifStmt(<AST.IfStmt>stmt);
+      case NodeKind.WhileStmt:
+        return this.whileStmt(<AST.WhileStmt>stmt);
+      case NodeKind.ForStmt:
+        return this.forStmt(<AST.ForStmt>stmt);
       case NodeKind.ExprStmt:
-        return this.writeln(this.expression((<AST.ExprStmt>stmt).expr));
+        return this.writeln(this.expression((<AST.ExprStmt>stmt).expr) + ";");
     }
 
     throw new Error("Unhandled statement case");
@@ -79,9 +83,20 @@ export class JSGenerator {
         return this.callExp(<AST.CallExpr>e);
       case NodeKind.AssignmentExpr:
         return this.assignExp(<AST.AssignExpr>e);
+      case NodeKind.GroupingExpr:
+        return "(" + this.expression((<AST.GroupExpr>e).expr) + ")";
+      case NodeKind.ArrayExpr:
+        return this.arrayExp(<AST.ArrayExpr>e);
     }
 
     throw new Error("unhandled expression case: " + e.kind);
+  }
+
+  private arrayExp(exp: AST.ArrayExpr) {
+    let out = "[";
+    exp.elements.map((e) => (out += this.expression(e))).join(", ");
+    out += "]";
+    return out;
   }
 
   private assignExp(exp: AST.AssignExpr) {
@@ -205,6 +220,32 @@ export class JSGenerator {
     return (
       stmt.statements.length == 1 && stmt.statements[0].kind == NodeKind.IfStmt
     );
+  }
+
+  private whileStmt(stmt: AST.WhileStmt) {
+    let out = this.writeln("while(");
+    out += this.expression(stmt.condition) + ") {\n";
+    out += this.statements(stmt.body);
+    out += this.writeln("}");
+
+    return out;
+  }
+
+  private forStmt(stmt: AST.ForStmt) {
+    let out = "for (";
+
+    const i = stmt.iterator.name;
+
+    out += `let ${i} = ${this.expression(stmt.start)};`;
+    out += ` ${i} < ${this.expression(stmt.stop)}; `;
+    out += `${i} += ${
+      stmt.step ? this.expression(stmt.step as AST.Expression) : "1"
+    }){\n`;
+
+    out += this.statements(stmt.body);
+
+    out += this.writeln("}\n");
+    return out;
   }
 
   private funcDecl(stmt: AST.FunctionDeclaration) {
