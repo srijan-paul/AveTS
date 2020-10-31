@@ -1,5 +1,5 @@
 import Token from "../lexer/token";
-import TokenType = require("../lexer/tokentype");
+import TType = require("../lexer/tokentype");
 import * as AST from "./ast/ast";
 import { PrefixParseFn, InfixParseFn } from "./parselets/parsefn";
 import Precedence = require("./precedence");
@@ -38,9 +38,9 @@ export interface ParsedData {
 */
 
 export default class Parser {
-  private readonly prefixParseMap: Map<TokenType, PrefixParseFn>;
-  private readonly infixParseMap: Map<TokenType, InfixParseFn>;
-  private readonly precedenceTable: Map<TokenType, number>;
+  private readonly prefixParseMap: Map<TType, PrefixParseFn>;
+  private readonly infixParseMap: Map<TType, InfixParseFn>;
+  private readonly precedenceTable: Map<TType, number>;
   private tokenstream: Token[];
 
   // current index in the tokenstream
@@ -52,6 +52,10 @@ export default class Parser {
 
   private reportError: ErrorReportFn;
 
+  // whether the parser is currently at an error-containing statement.
+  // This is to prevent cascading errors.
+  protected panicMode = false;
+
   constructor(lexData: ScannedData, reporter?: ErrorReportFn) {
     this.prefixParseMap = new Map();
     this.infixParseMap = new Map();
@@ -62,11 +66,11 @@ export default class Parser {
     this.reportError = reporter || throwError;
   }
 
-  public registerInfix(toktype: TokenType, parseFn: InfixParseFn) {
+  public registerInfix(toktype: TType, parseFn: InfixParseFn) {
     this.infixParseMap.set(toktype, parseFn);
   }
 
-  public registerPrefix(toktype: TokenType, parseFn: PrefixParseFn) {
+  public registerPrefix(toktype: TType, parseFn: PrefixParseFn) {
     this.prefixParseMap.set(toktype, parseFn);
   }
 
@@ -92,15 +96,15 @@ export default class Parser {
     return this.tokenstream[this.current + 1];
   }
 
-  public check(t: TokenType): boolean {
+  public check(t: TType): boolean {
     return !this.eof() && this.peek().type == t;
   }
 
-  public checkNext(t: TokenType): boolean {
+  public checkNext(t: TType): boolean {
     return !this.eof() && this.peekNext()?.type == t;
   }
 
-  public match(...types: TokenType[]): boolean {
+  public match(...types: TType[]): boolean {
     for (const type of types) {
       if (this.check(type)) {
         this.next();
@@ -110,29 +114,32 @@ export default class Parser {
     return false;
   }
 
-  public consume(tok: TokenType) {
+  public consume(tok: TType) {
     if (this.check(tok)) this.next();
   }
 
   public isValidType(token: Token) {
     return (
-      (token.type >= TokenType.STRING && token.type <= TokenType.ANY) ||
-      token.type == TokenType.NAME ||
-      token.type == TokenType.NIL
+      (token.type >= TType.STRING && token.type <= TType.ANY) ||
+      token.type == TType.NAME ||
+      token.type == TType.NIL
     );
   }
 
   public error(msg: string, token: Token) {
+    if (this.panicMode) return;
+
     const err: AveError = errorFromToken(token, msg, this.lexedData.fileName);
     this.errors.push(err);
     this.hasError = true;
+    this.panicMode = true;
     this.ast.hasError = true;
     this.reportError(err, this.lexedData.source);
   }
 
-  public expect(type: TokenType, errorMessage: string) {
+  public expect(type: TType, errorMessage: string) {
     if (!this.match(type)) {
-      this.error(errorMessage, this.next());
+      this.error(errorMessage, this.prev());
     }
     return this.prev();
   }
@@ -140,31 +147,31 @@ export default class Parser {
   // keeps moving forward in the token stream
   // until one of the given types is found or
   // <EOF> is reached.
-  public consumeUntil(...t: TokenType[]) {
+  public consumeUntil(...t: TType[]) {
     while (!this.eof() && !this.match(...t)) this.next();
   }
 
   //--
 
-  private prefixParseFn(tokentype: TokenType): PrefixParseFn {
+  private prefixParseFn(tokentype: TType): PrefixParseFn {
     return this.prefixParseMap.get(tokentype) as PrefixParseFn;
   }
 
-  private infixParseFn(tokentype: TokenType): InfixParseFn {
+  private infixParseFn(tokentype: TType): InfixParseFn {
     return this.infixParseMap.get(tokentype) as InfixParseFn;
   }
 
-  public prefix(type: TokenType, bp: Precedence, parseFn?: PrefixParseFn) {
+  public prefix(type: TType, bp: Precedence, parseFn?: PrefixParseFn) {
     this.registerPrefix(type, parseFn || PrefixUnaryParser(bp));
   }
 
-  public postfix(type: TokenType, prec: number, parseFn?: InfixParseFn) {
+  public postfix(type: TType, prec: number, parseFn?: InfixParseFn) {
     this.precedenceTable.set(type, prec);
     this.registerInfix(type, parseFn || PostfixUnaryParselet());
   }
 
   public infix(
-    type: TokenType,
+    type: TType,
     bp: Precedence,
     right: boolean = false,
     parseFn?: InfixParseFn
@@ -173,12 +180,17 @@ export default class Parser {
     this.registerInfix(type, parseFn || BinaryOpParselet(bp, right));
   }
 
-  protected getPrecedence(tokType: TokenType): number {
+  protected getPrecedence(tokType: TType): number {
     if (!this.precedenceTable.has(tokType)) return -1;
     return this.precedenceTable.get(tokType) as number;
   }
 
   public parseExpression(precedence: number): AST.Expression {
+    if (this.eof()) {
+      this.error("Expected expression.", this.prev());
+      return new AST.EmptyExpr(this.peek());
+    }
+
     const token: Token = this.next();
     const prefix = this.prefixParseFn(token.type);
 
@@ -190,10 +202,17 @@ export default class Parser {
 
     let left: AST.Expression = prefix(this, token);
 
-    while (precedence <= this.getPrecedence(this.peek().type)) {
+    while (!this.eof() && precedence <= this.getPrecedence(this.peek().type)) {
       const token: Token = this.next();
       const infix: InfixParseFn = this.infixParseFn(token.type);
       left = infix(this, left, token);
+      if (this.eof()) {
+        this.error(
+          "Reached end of file while parsing expression.",
+          this.prev()
+        );
+        break;
+      }
     }
 
     return left;

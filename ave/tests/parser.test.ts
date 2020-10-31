@@ -8,7 +8,7 @@ declare global {
   namespace jest {
     interface Matchers<R> {
       toMatchAST(expected: UnknownNode[]): R;
-      toHaveError(type: ErrorType, line: number): R;
+      toHaveError(errMsg: string): R;
     }
   }
 }
@@ -23,24 +23,19 @@ expect.extend({
     };
   },
 
-  toHaveError(src: string, type: ErrorType, line: number) {
+  toHaveError(src: string, errMsg: string) {
     const parser = new AveParser(new Lexer("<test>", src).lex());
     const parseTree = parser.parse();
-
     const err = parseTree.errors[0];
     let pass = true;
     let msg: string = "errors matched";
 
-    if (!err) {
+    if (!parseTree.hasError) {
       pass = false;
       msg = "Expected program to have error.";
-    }
-
-    if (err.type != type || err.line != line) {
+    } else if (err.message != errMsg) {
       pass = false;
-      msg = `Error mismatch. Expected [${getErrorTypeName(err.type)} at ${
-        err.line
-      } got [${getErrorTypeName(type)} at ${line}]`;
+      msg = `Error mismatch. Expected: \n${errMsg}\nPassed in: \n${err.message}`;
     }
 
     return {
@@ -188,4 +183,27 @@ while k
             left: { kind: NodeKind.Identifier, name: "k" },
             operator: { type: TokenType.MINUS_EQ },
             right: { kind: NodeKind.Literal, value: 1 } } } ] } } ] )
+});
+
+// negative tests for the Parser.
+// These tests check if the parser produces the expected errors (and doesn't crash)
+
+test("error on unexpected EOF", () => {
+  expect("1 + 2 * -").toHaveError("Unexpected '<EOF>'");
+  expect("1 + 2 +").toHaveError("Unexpected '<EOF>'");
+});
+
+test("error on faulty expressions", () => {
+  expect("a := ()").toHaveError("Unexpected ')'");
+  expect("a: b: c:").toHaveError("Unexpected ':'");
+});
+
+test("error on incorrect blocks", () => {
+  expect(`
+while k
+  var a = 1
+    var b = 2
+  `).toHaveError("Expected object key name.");
+
+  expect("if foo").toHaveError("Expected indent before 'if' body.");
 });

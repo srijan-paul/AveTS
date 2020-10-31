@@ -224,6 +224,21 @@ export default class AveParser extends Parser {
   }
 
   private statement(): AST.Node {
+    if (this.panicMode) {
+      while (!this.eof()) {
+        const ttype = this.peek().type;
+        switch (ttype) {
+          case TokenType.SEMI_COLON:
+          case TokenType.DEDENT:
+          case TokenType.R_BRACE:
+            break;
+          default:
+            this.next();
+        }
+      }
+      this.panicMode = false;
+    }
+
     if (this.check(TokenType.IF)) {
       return this.ifStmt();
     } else if (this.check(TokenType.FOR)) {

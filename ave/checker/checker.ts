@@ -196,6 +196,7 @@ export default class Checker {
   }
 
   check() {
+    if (this.parseData.hasError) return;
     let t = this.body(this.ast.body);
   }
 
@@ -580,7 +581,7 @@ export default class Checker {
     let t_object = new ObjectType("");
 
     obj.kvPairs.forEach((val: AST.Expression, key: Token) => {
-      t_object.defineProperty(key.raw, this.expression(val));
+      t_object.defineProperty(key.raw, this.type(this.expression(val)));
     });
 
     return t_object;

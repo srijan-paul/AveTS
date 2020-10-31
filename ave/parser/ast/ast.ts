@@ -55,6 +55,9 @@ export abstract class Expression extends Node {
   }
 }
 
+// produced by the parser when an error is encountered
+export class EmptyExpr extends Expression {}
+
 export class BinaryExpr extends Expression {
   readonly operator: Token;
   readonly left: Expression;
