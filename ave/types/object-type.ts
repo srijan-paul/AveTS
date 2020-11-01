@@ -1,15 +1,15 @@
-import Checker from '../checker/checker';
-import { Type } from './types';
+import Checker from "../checker/checker";
+import { Type } from "./types";
 
 export default class ObjectType extends Type {
-  public typeArgs?: Type[] = []; //for generic instances.
+  public typeArgs?: Type[] = []; // for generic instances.
   // the types this object type has already successfully checked against
   // for assignment and has returned true. This is espcially helpful
   // when checking against recursive types.
   public readonly cache: Set<Type> = new Set();
 
   constructor(tag: string, typeArgs?: Type[]) {
-    super(tag || '', false);
+    super(tag || "", false);
     this.typeArgs = typeArgs;
   }
 
@@ -25,9 +25,9 @@ export default class ObjectType extends Type {
         this.cache.delete(t);
         return false;
       }
-      
+
       let prop = <Type>t.getProperty(key);
-      
+
       if (!type.canAssign(prop)) {
         this.cache.delete(t);
         return false;
@@ -43,8 +43,10 @@ export default class ObjectType extends Type {
    */
   public matches(ot: ObjectType) {
     // both object types must be generic.
+    // an object type is not generic if it doesn't
+    // have any type arguments assosciated with it.
     if (!ot.typeArgs || !this.typeArgs) return false;
-    // both object types must have the SAME type arguments
+    // both object types must have the *SAME* type arguments
     for (let i = 0; i < this.typeArgs.length; i++) {
       if (this.typeArgs[i] != ot.typeArgs[i]) return false;
     }
@@ -55,7 +57,7 @@ export default class ObjectType extends Type {
   public clone(): ObjectType {
     let copy = new ObjectType(
       this.tag,
-      this.typeArgs?.map(e => e.clone())
+      this.typeArgs?.map((e) => e.clone())
     );
 
     this.properties.forEach((v: Type, k: string) => {
@@ -91,10 +93,12 @@ export default class ObjectType extends Type {
 
   toString() {
     if (this.tag) {
-      return this.typeArgs ? `${this.tag}<${this.typeArgs.join(', ')}>` : this.tag;
+      return this.typeArgs
+        ? `${this.tag}<${this.typeArgs.join(", ")}>`
+        : this.tag;
     }
     const a = Array.from(this.properties);
-    return `{${a.map(e => `${e[0]}: ${e[1].toString()}`).join(', ')}}`;
+    return `{${a.map((e) => `${e[0]}: ${e[1].toString()}`).join(", ")}}`;
   }
 }
 // ta: assignment target
@@ -102,7 +106,11 @@ export default class ObjectType extends Type {
 // this is a slightly augmented version of
 // ta.canAssign for better error reporting.
 
-export function checkObjectAssignment(ta: ObjectType, tb: Type, checker: Checker): boolean {
+export function checkObjectAssignment(
+  ta: ObjectType,
+  tb: Type,
+  checker: Checker
+): boolean {
   if (tb == ta) return true;
   if (ta.cache.has(tb)) return true;
   ta.cache.add(tb);
@@ -134,7 +142,9 @@ export function checkObjectAssignment(ta: ObjectType, tb: Type, checker: Checker
 
   if (missingPropertyNames.length) {
     checker.warn(
-      `missing the follow properties from type '${ta}':\n ${missingPropertyNames.join(', ')}`
+      `missing the follow properties from type '${ta}':\n ${missingPropertyNames.join(
+        ", "
+      )}`
     );
   }
 
