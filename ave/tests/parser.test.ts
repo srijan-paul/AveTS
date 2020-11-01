@@ -3,6 +3,7 @@ import NodeKind = require("../parser/ast/nodekind");
 import AveParser from "../parser/aveparser";
 import TokenType = require("../lexer/tokentype");
 import { ErrorType, getErrorTypeName } from "../error/error";
+import Checker from "../checker/checker";
 
 declare global {
   namespace jest {
@@ -31,6 +32,8 @@ expect.extend({
     let msg: string = "errors matched";
 
     if (!parseTree.hasError) {
+      const checker = new Checker(parseTree);
+      const checkedAST = checker.check();
       pass = false;
       msg = "Expected program to have error.";
     } else if (err.message != errMsg) {

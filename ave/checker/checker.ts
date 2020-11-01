@@ -53,6 +53,8 @@ export default class Checker {
 
   private typeResolver: TypeResolver = new TypeResolver(this);
   private reportError: ErrorReportFn;
+  private hasError = false;
+  private errors: AveError[] = [];
 
   constructor(parseData: ParsedData, reportErr?: ErrorReportFn) {
     this.ast = parseData.ast;
@@ -72,7 +74,8 @@ export default class Checker {
       this.parseData.fileName,
       errType
     );
-    this.ast.hasError = true;
+    this.hasError = true;
+    this.errors.push(err);
     this.reportError(err, this.parseData.sourceCode);
 
     while (this.infoStack.length) {
@@ -196,8 +199,14 @@ export default class Checker {
   }
 
   check() {
-    if (this.parseData.hasError) return;
-    let t = this.body(this.ast.body);
+    if (!this.parseData.hasError) {
+      this.body(this.ast.body);
+    }
+    return {
+      ast: this.ast,
+      errors: this.errors,
+      hasError: this.hasError,
+    };
   }
 
   private body(body: AST.Body): Typing.Type {
@@ -412,7 +421,7 @@ export default class Checker {
       rType != Typing.t_error
     ) {
       this.error(
-        `Cannot use operator '${expr.operator.raw}' on operands of type '${lType}' and '${rType}'`,
+        `Cannot use operator '${expr.operator.raw}' on operands of type '${lType}' and '${rType}'.`,
         expr.operator
       );
     }

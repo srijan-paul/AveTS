@@ -1,2 +1,2 @@
 let a = 1
-a = "this should throw a type error"
+a = 123
