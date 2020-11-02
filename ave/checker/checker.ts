@@ -566,7 +566,7 @@ export default class Checker {
         this.error(
           `cannot assign argument of type '${argumentType.toString()}' to parameter of type '${params[
             i
-          ].type.toString()}'`,
+          ].type.toString()}'.`,
           args[i].token as Token
         );
       }
