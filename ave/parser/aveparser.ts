@@ -208,7 +208,7 @@ export default class AveParser extends Parser {
   }
 
   public parse(): ParsedData {
-    while (!this.ast.hasError && !this.match(TokenType.EOF)) {
+    while (!this.ast.hasError && !this.eof()) {
       this.ast.body.statements.push(this.statement());
     }
 

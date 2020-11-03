@@ -1,8 +1,8 @@
-import {add} from './add'
+a := 1
+b := 2
+let c = a + b
 
-a := 55
-b := 66
+for i = 1, c, b
+    a = i
 
-sum := add(a, b)
-
-console.log(sum)
+let d = 1

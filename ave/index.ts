@@ -1,17 +1,33 @@
 import Lexer from "./lexer/lexer";
 import debug = require("./debug/debug");
-import AveParser from "./parser/aveparser";
+import JSGenerator from "./compiler/codegen/gen";
+import Parser from "./parser/aveparser";
 import Checker from "./checker/checker";
+import { parse } from "path";
 
-const code: string = ``;
+function toJS(filename: string, src: string): string {
+  const lexer = new Lexer(filename, src);
+  const lexed = lexer.lex();
+  if (lexed.hasError) return "";
 
-const lexer = new Lexer("testfile.ave", code);
-const lexedata = lexer.lex();
-const parser = new AveParser(lexedata);
+  const parser = new Parser(lexed);
+  const parseTree = parser.parse();
+  if (parseTree.hasError) return "";
 
-const parsedata = parser.parse();
-const checker = new Checker(parsedata);
-checker.check();
+  const checker = new Checker(parser.parse());
+  const checkedAST = checker.check();
+  if (checkedAST.hasError) return "";
 
-// console.log(parsedata.ast.toString());
-// console.log(util.inspect(parsedata.ast, true, 100))
+  const jsGen = new JSGenerator(checker.check().ast);
+  return jsGen.generateJS();
+}
+
+export default {
+  Lexer,
+  Parser,
+  Checker,
+  JSGenerator,
+  toJS,
+  printToken: debug.printToken,
+  printTokens: debug.printTokens,
+};

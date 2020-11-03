@@ -1,0 +1,4 @@
+func foo(a: num, b: num): num
+    return a + b
+
+const result: bool = foo(1, 2) == 3 

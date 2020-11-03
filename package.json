@@ -21,6 +21,9 @@
     "language",
     "ave"
   ],
+  "bin": {
+    "avec": "build/cli/index.js"
+  },
   "author": "Srijan Paul",
   "license": "MIT",
   "bugs": {

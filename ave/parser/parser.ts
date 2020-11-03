@@ -85,7 +85,10 @@ export default class Parser {
   }
 
   public eof(): boolean {
-    return this.current >= this.tokenstream.length;
+    return (
+      this.current >= this.tokenstream.length ||
+      this.tokenstream[this.current].type == TType.EOF
+    );
   }
 
   public peek(): Token {
@@ -195,7 +198,7 @@ export default class Parser {
     const prefix = this.prefixParseFn(token.type);
 
     if (!prefix) {
-      // throw error
+      throw new Error("yick");
       this.error(`Unexpected '${token.raw}'`, token);
       return new AST.Node(token) as AST.Expression;
     }

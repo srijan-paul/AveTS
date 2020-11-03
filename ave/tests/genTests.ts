@@ -1,5 +1,5 @@
 import Checker from "../checker/checker";
-import { JSGenerator } from "../compiler/codegen/gen";
+import JSGenerator from "../compiler/codegen/gen";
 import Lexer from "../lexer/lexer";
 import AveParser from "../parser/aveparser";
 

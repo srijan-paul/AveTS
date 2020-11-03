@@ -1,7 +1,4 @@
 {
-    "include": [
-        "./src"
-    ],
-
-    "out": "./dist"
+  "in": "src/index.ave",
+  "out": "dist"
 }

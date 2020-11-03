@@ -5,7 +5,7 @@ import * as AST from "../../parser/ast/ast";
 import NodeKind = require("../../parser/ast/nodekind");
 import { DeclarationKind } from "../../parser/symbol_table/symtable";
 
-export class JSGenerator {
+export default class JSGenerator {
   public indentLevel: number = 0;
 
   constructor(public ast: AST.Program) {
