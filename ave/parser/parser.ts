@@ -33,8 +33,8 @@ export interface ParsedData {
   
   eg : parser.infix(TokenType.PLUS, Precedence.ADD)
 
-  the ave parser class extends this in exactly the same way
-  by adding operators
+  the AveParser in the same directory class extends this 
+  in exactly the same way by adding operators
 */
 
 export default class Parser {
