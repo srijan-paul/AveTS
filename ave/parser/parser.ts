@@ -190,7 +190,7 @@ export default class Parser {
 
   public parseExpression(precedence: number): AST.Expression {
     if (this.eof()) {
-      this.error("Expected expression.", this.prev());
+      this.error("Reached end of file while parsing expression.", this.prev());
       return new AST.EmptyExpr(this.peek());
     }
 
@@ -198,7 +198,6 @@ export default class Parser {
     const prefix = this.prefixParseFn(token.type);
 
     if (!prefix) {
-      throw new Error("yick");
       this.error(`Unexpected '${token.raw}'`, token);
       return new AST.Node(token) as AST.Expression;
     }
@@ -209,13 +208,6 @@ export default class Parser {
       const token: Token = this.next();
       const infix: InfixParseFn = this.infixParseFn(token.type);
       left = infix(this, left, token);
-      if (this.eof()) {
-        this.error(
-          "Reached end of file while parsing expression.",
-          this.prev()
-        );
-        break;
-      }
     }
 
     return left;

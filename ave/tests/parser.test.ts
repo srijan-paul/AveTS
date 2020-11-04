@@ -192,8 +192,12 @@ while k
 // These tests check if the parser produces the expected errors (and doesn't crash)
 
 test("error on unexpected EOF", () => {
-  expect("1 + 2 * -").toHaveError("Unexpected '<EOF>'");
-  expect("1 + 2 +").toHaveError("Unexpected '<EOF>'");
+  expect("1 + 2 * -").toHaveError(
+    "Reached end of file while parsing expression."
+  );
+  expect("1 + 2 +").toHaveError(
+    "Reached end of file while parsing expression."
+  );
 });
 
 test("error on faulty expressions", () => {

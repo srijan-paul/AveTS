@@ -202,14 +202,14 @@ export default class AveParser extends Parser {
   private parseBlock(body: AST.Body) {
     this.blockScopestack.push(body);
     while (!this.eof() && !this.match(TokenType.DEDENT)) {
-      body.statements.push(this.statement());
+      body.statements.push(this.declaration());
     }
     this.blockScopestack.pop();
   }
 
   public parse(): ParsedData {
-    while (!this.ast.hasError && !this.eof()) {
-      this.ast.body.statements.push(this.statement());
+    while (!this.hasError && !this.eof()) {
+      this.ast.body.statements.push(this.declaration());
     }
 
     const parseData: ParsedData = {
@@ -248,7 +248,10 @@ export default class AveParser extends Parser {
     } else if (this.check(TokenType.RETURN)) {
       return this.returnStmt();
     } else {
-      return this.declaration();
+      // exression statement
+      const expr = this.expr();
+      this.consume(TokenType.SEMI_COLON);
+      return new AST.ExprStmt(expr);
     }
   }
 
@@ -262,10 +265,7 @@ export default class AveParser extends Parser {
     } else if (this.match(TokenType.RECORD)) {
       return this.recordDecl();
     } else {
-      // expression statement
-      const expr = this.expr();
-      this.consume(TokenType.SEMI_COLON);
-      return new AST.ExprStmt(expr);
+      return this.statement();
     }
   }
 

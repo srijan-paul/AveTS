@@ -1,4 +1,4 @@
-a := 0
+let a = 1
+let b = 2
 
-if a >= 1
-    a := 1
+const c = a + b

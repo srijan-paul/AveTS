@@ -19,10 +19,8 @@ function parse(src: string) {
   return parseTree;
 }
 
-function typecheck(src: string) {
-  const parseTree = parse(src);
+function typecheck(parseTree: ParsedData) {
   const checker = new Checker(parseTree);
-
   return checker.check();
 }
 
@@ -31,7 +29,8 @@ expect.extend({
     let pass = false;
     let msg = "No type error found";
 
-    const checkedParseTree = typecheck(recieved);
+    const parseTree = parse(recieved);
+    const checkedParseTree = typecheck(parseTree);
 
     if (checkedParseTree.hasError) {
       const err = checkedParseTree.errors[0];
@@ -41,6 +40,9 @@ expect.extend({
       } else {
         msg = `Passed in: ${err.message}\nexpected: ${errMsg}`;
       }
+    } else if (checkedParseTree.ast.hasError) {
+      pass = false;
+      msg = `Expected type error, got parse error instead:\n ${parseTree.errors[0].message}`;
     }
 
     return {
@@ -50,7 +52,7 @@ expect.extend({
   },
 
   toBeCorrect(src: string) {
-    const checkedParseTree = typecheck(src);
+    const checkedParseTree = typecheck(parse(src));
 
     if (checkedParseTree.hasError) {
       return {
@@ -67,7 +69,7 @@ expect.extend({
 describe("The Type cheker", () => {
   it("type checks incorrect assignments", () => {
     expect(`c := "this is a string"
-c -= 3 #expect type error`).toHaveTypeError(
+c -= 3`).toHaveTypeError(
       "Cannot use operator '-=' on operand types 'num' and 'str'"
     );
 
