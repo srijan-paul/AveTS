@@ -158,7 +158,7 @@ export default class AveParser extends Parser {
     this.infix(TType.DOT, Precedence.MEM_ACCESS, false, MemberExprParser);
     // computed member acces "a[b]"
     this.infix(
-      TType.L_BRACE,
+      TType.L_SQ_BRACE,
       Precedence.COMP_MEM_ACCESS,
       false,
       MemberExprParser

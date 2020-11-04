@@ -3,6 +3,7 @@
 import ArgParser from "./arg-parser";
 import fs = require("fs");
 import Ave from "../index";
+import path = require("path");
 
 const configFileName = "aveconfig.json";
 
@@ -33,11 +34,12 @@ function parseArgs() {
 }
 
 function compile(opts: CompilerOptions) {
-  const args = parseArgs();
-  const outDir = "dist";
+  const outDir = opts.out;
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir);
   }
   const aveCode = fs.readFileSync(opts.in, { encoding: "utf-8" });
-  fs.writeFileSync(outDir + "index." + "js", Ave.toJS(opts.in, aveCode));
+  const outFile = path.basename(opts.in).replace(".ave", ".js");
+  console.log(`${outDir}/${path.basename(opts.in)}`);
+  fs.writeFileSync(`${outDir}/${outFile}`, Ave.toJS(opts.in, aveCode));
 }

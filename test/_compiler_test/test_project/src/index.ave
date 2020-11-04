@@ -1,8 +1,10 @@
-a := 1
-b := 2
-let c = a + b
+record Id
+  id: num
+  hash: str
 
-for i = 1, c, b
-    a = i
+a: Id = {
+  id: 123, 
+  hash: "6edf3ad"
+}
 
-let d = 1
+a.id = 456

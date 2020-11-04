@@ -14,6 +14,8 @@ function toJS(filename: string, src: string): string {
   const parseTree = parser.parse();
   if (parseTree.hasError) return "";
 
+  console.log(parseTree.ast.toString());
+
   const checker = new Checker(parser.parse());
   const checkedAST = checker.check();
   if (checkedAST.hasError) return "";

@@ -50,7 +50,7 @@ export default class JSGenerator {
   private statement(stmt: AST.Node): string {
     switch (stmt.kind) {
       case NodeKind.VarDeclaration:
-        return this.writeln(this.varDeclaration(<AST.VarDeclaration>stmt));
+        return this.varDeclaration(<AST.VarDeclaration>stmt);
       case NodeKind.FunctionDecl:
         return this.writeln(this.funcDecl(<AST.FunctionDeclaration>stmt));
       case NodeKind.ReturnStmt:
@@ -64,7 +64,9 @@ export default class JSGenerator {
       case NodeKind.ExprStmt:
         return this.writeln(this.expression((<AST.ExprStmt>stmt).expr) + ";");
       case NodeKind.RecordDeclaration:
-        return "";
+        return this.writeln(
+          `/* record declaration : ${(<AST.RecordDecl>stmt).name} */`
+        );
     }
 
     throw new Error("Unhandled statement case");
@@ -99,12 +101,13 @@ export default class JSGenerator {
   }
 
   private objExp(exp: AST.ObjectExpr) {
-    let out = "{ ";
+    let out = "{\n";
+    this.indent();
     exp.kvPairs.forEach((v, k) => {
-      out += k.raw + ": " + this.expression(v);
+      out += this.writeln(k.raw + ": " + this.expression(v) + ",");
     });
-
-    return out + " }";
+    this.dedent();
+    return out + this.write("}");
   }
 
   private memAccessExp(exp: AST.MemberAccessExpr) {
@@ -116,7 +119,7 @@ export default class JSGenerator {
 
   private arrayExp(exp: AST.ArrayExpr) {
     let out = "[";
-    exp.elements.map((e) => (out += this.expression(e))).join(", ");
+    out += exp.elements.map((e) => this.expression(e)).join(", ");
     out += "]";
     return out;
   }
@@ -173,6 +176,10 @@ export default class JSGenerator {
   private literal(e: AST.Literal): string {
     if (typeof e.value == "boolean") {
       return e ? "true" : "false";
+    }
+
+    if (typeof e.value == "string") {
+      return `"${e.value}"`;
     }
 
     return e.value + "";

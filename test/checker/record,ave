@@ -1,0 +1,7 @@
+record Person
+    name: str
+    age: num
+
+let a: Person =
+    name: "Bobo",
+    age: 12

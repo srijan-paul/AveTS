@@ -2,7 +2,6 @@ import Lexer from "../lexer/lexer";
 import NodeKind = require("../parser/ast/nodekind");
 import AveParser from "../parser/aveparser";
 import TokenType = require("../lexer/tokentype");
-import { ErrorType, getErrorTypeName } from "../error/error";
 import Checker from "../checker/checker";
 
 declare global {
@@ -186,6 +185,17 @@ while k
             left: { kind: NodeKind.Identifier, name: "k" },
             operator: { type: TokenType.MINUS_EQ },
             right: { kind: NodeKind.Literal, value: 1 } } } ] } } ] )
+});
+
+// prettier-ignore
+test("arrays and indexing", () => {
+  expect("array[index]").toMatchAST([{
+     kind: NodeKind.ExprStmt,
+      expr: {kind: NodeKind.MemberAcessExpr,
+      isIndexed: true,
+      object: { kind: NodeKind.Identifier, name: "array" },
+      property: { kind: NodeKind.Identifier, name: "index" }, }, },
+  ]);
 });
 
 // negative tests for the Parser.
