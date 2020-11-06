@@ -1,10 +1,17 @@
-record Id
-  id: num
-  hash: str
+record Person
+    name: str
+    age: num
 
-a: Id = {
-  id: 123, 
-  hash: "6edf3ad"
+let a: Person =
+    name: "Bobo",
+    age: 12
+
+let b: Person = {
+    name: "Toto",
+    age: 15
 }
 
-a.id = 456
+func sum_ages(a: Person, b: Person)
+    return a.age + b.age
+
+const my_num: num = sum_ages(a, b)

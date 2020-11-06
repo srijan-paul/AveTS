@@ -3,7 +3,6 @@ import debug = require("./debug/debug");
 import JSGenerator from "./compiler/codegen/gen";
 import Parser from "./parser/aveparser";
 import Checker from "./checker/checker";
-import { parse } from "path";
 
 function toJS(filename: string, src: string): string {
   const lexer = new Lexer(filename, src);

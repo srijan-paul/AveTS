@@ -186,9 +186,9 @@ export default class JSGenerator {
   }
 
   private body(node: AST.Body): string {
-    let out = this.writeln("{\n");
+    let out = this.writeln("{");
     out += this.statements(node);
-    return out + "\n" + this.writeln("}");
+    return out + this.writeln("}");
   }
 
   private statements(node: AST.Body) {

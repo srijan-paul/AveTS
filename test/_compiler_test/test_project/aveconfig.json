@@ -1,4 +1,4 @@
 {
-  "in": "src/index.ave",
+  "in": "src",
   "out": "dist"
 }
