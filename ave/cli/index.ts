@@ -11,6 +11,20 @@ interface CompilerOptions {
   out: string;
   in: string;
 }
+const argParser = new ArgParser([
+  {
+    type: "flag",
+    short: "v",
+    long: "version",
+    help: "show compiler version",
+  },
+  {
+    type: "flag",
+    short: "h",
+    long: "help",
+    help: "show this message",
+  },
+]);
 
 if (fs.existsSync(configFileName)) {
   const contents = fs.readFileSync(configFileName, { encoding: "utf-8" });
@@ -20,17 +34,8 @@ if (fs.existsSync(configFileName)) {
     out: json.out,
   };
   compile(compilerOptions);
-}
-
-function parseArgs() {
-  const argParser = new ArgParser([
-    {
-      type: "flag",
-      short: "v",
-      long: "version",
-    },
-  ]);
-  return argParser.parse(process.argv);
+} else {
+  console.error("No 'aveconfig.json' file found");
 }
 
 interface File {
@@ -41,13 +46,28 @@ interface File {
 
 function compile(opts: CompilerOptions) {
   const outDir = opts.out;
+  const args = argParser.parse(process.argv);
+
+  if (args.flags.has("help")) {
+    argParser.displayHelp();
+    return;
+  } else if (args.flags.has("version")) {
+    console.log(`Ave version: ${Ave.VERSION_STRING}`);
+    return;
+  }
+
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir);
   }
 
   const subdirs: string[] = [];
-  const files: File[] = getAllSourceFiles(opts.in, opts.in, opts.out, subdirs);
-  console.log(subdirs, files);
+  const files: File[] = buildFileAndDirList(
+    opts.in,
+    opts.in,
+    opts.out,
+    subdirs
+  );
+  // console.log(subdirs, files);
 
   for (const dir of subdirs) {
     if (!fs.existsSync(dir)) {
@@ -58,19 +78,15 @@ function compile(opts: CompilerOptions) {
   for (const file of files) {
     compileFile(file);
   }
-
-  // const aveCode = fs.readFileSync(opts.in, { encoding: "utf-8" });
-  // console.log(`${outDir}/${path.basename(opts.in)}`);
-  // const outFile = path.basename(opts.in).replace(".ave", ".js");
-  // fs.writeFileSync(`${outDir}/${outFile}`, Ave.toJS(opts.in, aveCode));
 }
 
 function compileFile(file: File) {
   const code = fs.readFileSync(file.path, { encoding: "utf-8" });
-  fs.writeFileSync(file.outPath, Ave.toJS(file.path, code));
+  const compiled = Ave.toJS(file.path, code);
+  if (compiled) fs.writeFileSync(file.outPath, compiled);
 }
 
-function getAllSourceFiles(
+function buildFileAndDirList(
   dirPath: string,
   root: string,
   out: string,
@@ -84,7 +100,7 @@ function getAllSourceFiles(
     const outPath = out + fPath.substring(root.length, fPath.length);
     if (fs.statSync(fPath).isDirectory()) {
       subDirList.push(outPath);
-      files = getAllSourceFiles(fPath, root, out, subDirList, files);
+      files = buildFileAndDirList(fPath, root, out, subDirList, files);
     } else if (path.extname(fPath) == ".ave") {
       files.push({
         path: fPath,

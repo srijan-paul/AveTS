@@ -1,3 +1,6 @@
+import chalk = require("chalk");
+import Ave from "../index";
+
 interface ParseResult {
   [key: string]: any;
   flags: Set<string>;
@@ -110,5 +113,21 @@ export default class {
     }
 
     return optsMap;
+  }
+
+  displayHelp() {
+    console.log(`
+Ave compiler | Version ${Ave.VERSION_STRING}
+commands:\n${this.params
+      .map(
+        (e) => `${e.longName}: (-${e.shortName}, ${e.longName}) ${e.helpTip}`
+      )
+      .join("\n\n")}
+compiler flags:\n${this.flags
+      .map(
+        (e) => `${e.longName}: (-${e.shortName}, ${e.longName}) ${e.helpTip}`
+      )
+      .join("\n")}
+`);
   }
 }
