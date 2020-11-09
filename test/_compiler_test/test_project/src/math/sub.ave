@@ -1,2 +1,3 @@
-func sub(a: num, b: num): num
-    return a + b
+func sub(a: num, b: num): num 
+    let result = a - b
+    return result
