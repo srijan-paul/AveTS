@@ -389,6 +389,7 @@ export default class AveParser extends Parser {
       kw,
       new AST.TypeInfo(this.peek(), Typing.t_infer)
     );
+    this.consume(TType.NAME); // anonymous functions may still have a name
     func.params = this.parseParams();
 
     if (this.match(TType.COLON)) {
@@ -401,26 +402,18 @@ export default class AveParser extends Parser {
   }
 
   private funcDecl(): AST.FunctionDeclaration {
-    const func = new AST.FunctionDeclaration(
-      this.expect(TType.NAME, "Expected function name."),
-      new AST.TypeInfo(this.peek(), Typing.t_infer)
+    const name = this.expect(TType.NAME, "Expected function name.");
+    const lambda = this.funcExpr(this.prev());
+
+    // hoist the declaration so that it
+    // can be accessed from anywhere within this block.
+    this.currentBlockScope().declarations.push(
+      FuncDeclaration.fromASTNode(name.raw, lambda)
     );
-
-    func.params = this.parseParams();
-
-    if (this.match(TType.COLON)) {
-      func.returnTypeInfo = parseType(this);
-    }
-
-    this.consume(TType.COLON);
-    this.parseFunctionBody(func);
-    return func;
+    return new AST.FunctionDeclaration(name.raw, lambda);
   }
 
-  private parseFunctionBody(
-    func: AST.FunctionExpr | AST.FunctionDeclaration,
-    isArrow: boolean = false
-  ) {
+  private parseFunctionBody(func: AST.FunctionExpr, isArrow: boolean = false) {
     this.expect(TType.INDENT, "Expected indented block.");
 
     // > push func scope.
@@ -428,13 +421,6 @@ export default class AveParser extends Parser {
     this.parseBlock(func.body);
     if (isArrow) this.functionScopestack.pop();
     // < pop func scope
-
-    // hoist the declaration so that it
-    // can be accessed from anywhere.
-    if (func instanceof AST.FunctionDeclaration)
-      this.currentBlockScope().declarations.push(
-        FuncDeclaration.fromASTNode(func)
-      );
   }
 
   private parseParams(): AST.FunctionParam[] {

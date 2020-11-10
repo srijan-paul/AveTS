@@ -42,7 +42,7 @@ export class FuncDeclaration implements Declaration {
   readonly name: string;
   type: FunctionType;
 
-  public static fromASTNode(node: AST.FunctionDeclaration) {
+  public static fromASTNode(name: string, node: AST.FunctionExpr) {
     let params: ParameterTypeInfo[] = [];
     for (let p of node.params) {
       params.push({
@@ -53,7 +53,7 @@ export class FuncDeclaration implements Declaration {
       });
     }
     const func = new FunctionType("", params, node.returnTypeInfo.type);
-    return new FuncDeclaration(node.name, func);
+    return new FuncDeclaration(name, func);
   }
 
   constructor(name: string, type: FunctionType) {

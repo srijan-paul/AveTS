@@ -676,38 +676,7 @@ export default class Checker {
   }
 
   private functionDeclaration(func: AST.FunctionDeclaration): Typing.Type {
-    this.verifyFunctionParams(func.params);
-
-    this.functionReturnStack.push(this.type(func.returnTypeInfo));
-
-    func.params.forEach((e) => {
-      func.body.declarations.push(
-        new HoistedVarDeclaration(e.name, this.type(e.typeInfo), true)
-      );
-    });
-
-    let returnType = this.body(func.body);
-
-    // if there was no return statement
-    // anywhere inside the function's body,
-    // it has a return type of undefined.
-
-    if (returnType == Typing.t_void) returnType = Typing.t_undef;
-
-    if (this.type(func.returnTypeInfo) == Typing.t_infer) {
-      func.returnTypeInfo.type = returnType;
-      let fntype = this.env.find(func.name);
-      (<FunctionType>fntype?.dataType).returnType = returnType;
-    }
-
-    if (!this.isValidAssignment(this.type(func.returnTypeInfo), returnType))
-      this.error(
-        `Function's type annotation is '${func.returnTypeInfo.type}' but return type is ${returnType}.`,
-        func.token as Token
-      );
-
-    this.functionReturnStack.pop();
-    return returnType;
+    return this.funcExpr(func.lambda);
   }
 
   private funcExpr(func: AST.FunctionExpr) {

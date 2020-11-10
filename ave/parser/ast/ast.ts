@@ -430,37 +430,28 @@ export interface FunctionParam {
 // but I'll just go with this for now.
 export class FunctionDeclaration extends Node {
   readonly name: string;
-  params: FunctionParam[] = [];
-  readonly body: Body = new Body();
   readonly kind = NodeKind.FunctionDecl;
-  // return type of the function, inferred
-  // in the type checking phase.
-  returnTypeInfo: TypeInfo;
-  type: Type = t_Function;
+  readonly lambda: FunctionExpr;
 
-  constructor(name: Token, returnType: TypeInfo) {
-    super(name);
-    this.name = name.raw;
-    this.returnTypeInfo = returnType;
-  }
-
-  addParam(p: FunctionParam) {
-    this.params.push(p);
+  constructor(name: string, lambda: FunctionExpr) {
+    super(lambda.token);
+    this.name = name;
+    this.lambda = lambda;
   }
 
   toString() {
     let str = `${chalk.gray("function")} ${this.name}(`;
 
     str +=
-      this.params
+      this.lambda.params
         .map(
           (p) =>
             `${p.name}${p.defaultValue ? "?" : ""}: ${p.typeInfo.toString()}`
         )
-        .join(", ") + `) -> ${this.returnTypeInfo.toString()}\n`;
+        .join(", ") + `) -> ${this.lambda.returnTypeInfo.toString()}\n`;
 
     indent();
-    str += this.body.toString();
+    str += this.lambda.body.toString();
     dedent();
 
     return str;

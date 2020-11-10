@@ -281,14 +281,14 @@ export default class JSGenerator {
     return (
       "\n" +
       this.writeln(
-        `function ${stmt.name}(${this.funcParams(stmt)}) ${this.body(
-          stmt.body
+        `function ${stmt.name}(${this.funcParams(stmt.lambda)}) ${this.body(
+          stmt.lambda.body
         )}`
       )
     );
   }
 
-  private funcParams(stmt: AST.FunctionDeclaration): string {
+  private funcParams(stmt: AST.FunctionExpr): string {
     const params = stmt.params;
     return `${params.map((e) => this.param(e)).join(", ")}`;
   }
