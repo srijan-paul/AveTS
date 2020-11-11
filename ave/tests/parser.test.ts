@@ -224,3 +224,25 @@ while k
 
   expect("if foo").toHaveError("Expected indent before 'if' body.");
 });
+
+test("arrow functions.", () => {
+  // prettier-ignore
+  expect(`
+var dbl = (a: num) -> a * 2
+  `).toMatchAST([{
+    kind: NodeKind.VarDeclaration,
+    declarators: [{
+      name: "dbl",
+      value: {
+        kind: NodeKind.FunctionExpr,
+        isArrow: true,
+        body: {
+          statements: [{
+            kind: NodeKind.ReturnStmt,
+            expr: {
+              kind: NodeKind.BinaryExpr,
+              left: { name: "a" }, 
+              operator: { type: TokenType.STAR }, 
+              right: { value: 2 }}}]}}}]}]
+  );
+});

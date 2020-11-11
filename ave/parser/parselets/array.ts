@@ -1,10 +1,9 @@
-import Parser from '../parser';
-import * as AST from '../ast/ast';
-import { PrefixParseFn } from './parsefn';
-import Precedence = require('../precedence');
-import Token from '../../lexer/token';
-import NodeKind = require('../ast/nodekind');
-import TokenType = require('../../lexer/tokentype');
+import Parser from "../parser";
+import * as AST from "../ast/ast";
+import { PrefixParseFn } from "./parsefn";
+import Precedence = require("../precedence");
+import Token from "../../lexer/token";
+import TokenType = require("../../lexer/tokentype");
 
 export const ArrayParser: PrefixParseFn = (parser: Parser, lbrace: Token) => {
   const elements: Array<AST.Expression> = [];

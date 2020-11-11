@@ -188,6 +188,10 @@ export default class Parser {
     return this.precedenceTable.get(tokType) as number;
   }
 
+  public expr() {
+    return this.parseExpression(Precedence.NONE);
+  }
+
   public parseExpression(precedence: number): AST.Expression {
     if (this.eof()) {
       this.error("Reached end of file while parsing expression.", this.prev());

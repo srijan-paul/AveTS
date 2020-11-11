@@ -13,6 +13,7 @@ import { ArrayParser } from "./parselets/array";
 import { ObjectParser, InfixObjectParser } from "./parselets/object";
 import parseType from "./parselets/type-parser";
 import MemberExprParser = require("./parselets/member-access");
+import NodeKind = require("./ast/nodekind");
 
 export default class AveParser extends Parser {
   // stack of block and function scopes. This is
@@ -170,9 +171,44 @@ export default class AveParser extends Parser {
       TType.L_PAREN,
       Precedence.GROUPING,
       (parser: Parser, lparen: Token): AST.Expression => {
-        const expression = this.expr();
-        parser.expect(TType.R_PAREN, "Expected ')'.");
-        return new AST.GroupExpr(lparen, expression);
+        let startPos = (parser as AveParser).current;
+        const id = parser.next();
+
+        if (id.type != TType.NAME) {
+          (parser as AveParser).current = startPos;
+          const exp = parser.expr();
+          parser.expect(TType.R_PAREN, "Expected ')' after expression.");
+          return new AST.GroupExpr(lparen, exp);
+        }
+
+        if (
+          parser.check(TType.COMMA) ||
+          parser.check(TType.COLON) ||
+          (parser.check(TType.R_PAREN) &&
+            (parser.checkNext(TType.ARROW) || parser.checkNext(TType.COLON)))
+        ) {
+          (parser as AveParser).current = startPos;
+          const params = (parser as AveParser).parseParams();
+          let type = new AST.TypeInfo(this.peek(), Typing.t_infer);
+          if (this.match(TType.COLON)) type = parseType(parser as AveParser);
+          this.expect(TType.ARROW, "Expected '->' before lambda body.");
+
+          const fun = new AST.FunctionExpr(lparen, type, true);
+          fun.params = params;
+          if (parser.check(TType.INDENT))
+            (parser as AveParser).parseFunctionBody(fun, true);
+          else
+            fun.body.statements.push(
+              new AST.ReturnStmt(parser.peek(), parser.expr())
+            );
+
+          return fun;
+        }
+
+        (parser as AveParser).current = startPos;
+        const exp = parser.expr();
+        parser.expect(TType.R_PAREN, "Expected ')' after expression.");
+        return new AST.GroupExpr(lparen, exp);
       }
     );
 
@@ -266,10 +302,6 @@ export default class AveParser extends Parser {
     } else {
       return this.statement();
     }
-  }
-
-  private expr() {
-    return this.parseExpression(Precedence.NONE);
   }
 
   // ID ':' (type)? '=' exp
@@ -390,6 +422,7 @@ export default class AveParser extends Parser {
       new AST.TypeInfo(this.peek(), Typing.t_infer)
     );
     this.consume(TType.NAME); // anonymous functions may still have a name
+    this.expect(TType.L_PAREN, "Expected '(' before function parameters.");
     func.params = this.parseParams();
 
     if (this.match(TType.COLON)) {
@@ -425,7 +458,6 @@ export default class AveParser extends Parser {
 
   private parseParams(): AST.FunctionParam[] {
     let params: AST.FunctionParam[] = [];
-    this.expect(TType.L_PAREN, "Expected '(' before function parameters");
 
     while (!this.match(TType.R_PAREN)) {
       const param = this.parseParam();

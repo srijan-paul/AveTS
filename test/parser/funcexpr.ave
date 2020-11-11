@@ -2,3 +2,6 @@ let pow: (x: num) -> num
 
 pow = func (x: num): num
   return x ** 2
+
+pow = (a: num) -> 
+  return a ** 2
