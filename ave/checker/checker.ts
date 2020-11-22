@@ -1,3 +1,4 @@
+import { resolve } from "path";
 import {
   AveError,
   AveInfo,
@@ -247,6 +248,8 @@ export default class Checker {
         return this.returnStmt(<AST.ReturnStmt>stmt);
       case NodeKind.RecordDeclaration:
         return this.recordDeclaration(<AST.RecordDecl>stmt);
+      case NodeKind.TypeAlias:
+        return this.typeAlias(<AST.TypeDef>stmt);
       case NodeKind.ExprStmt:
         // just run it through the expression
         // checker to detect type errors.
@@ -785,5 +788,11 @@ export default class Checker {
 
     this.env.defineType(decl.name, record);
     return Typing.t_void;
+  }
+
+  private typeAlias(stmt: AST.TypeDef) {
+    const resolvedType = this.type(stmt.typeInfo.type);
+    this.env.defineType(stmt.name, resolvedType);
+    return resolvedType;
   }
 }

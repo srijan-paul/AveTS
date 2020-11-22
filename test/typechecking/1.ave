@@ -1,8 +1,4 @@
-const a = 1
-a = 2 # expect type error
+const a: num = 12456;
+let b: str= "abcde"
 
-let myint: num = 123; 
-myint = 'string' #expect type error
-
-let mystring: str = 'abcdef'
-mystring = '1234' #no error
+b = "ada"

@@ -1,6 +1,6 @@
-import TokenType = require('../lexer/tokentype');
-import Token from '../lexer/token';
-import chalk = require('chalk');
+import TokenType = require("../lexer/tokentype");
+import Token from "../lexer/token";
+import chalk = require("chalk");
 
 // length of the longest token name
 // (TOKEN_LITERAL_STR) used for
@@ -20,31 +20,39 @@ export function printToken(tok: Token) {
 }
 
 export function coloredTokenInfo(token: Token) {
-  let tokenText: string = chalk.rgb(96, 163, 188)(`TOKEN_${tokenName(token.type)}`);
+  let tokenText: string = chalk.rgb(
+    96,
+    163,
+    188
+  )(`TOKEN_${tokenName(token.type)}`);
 
-  let padding: string = ' '.repeat(MAX_TOKEN_LENGTH - tokenName(token.type).length + 2);
+  let padding: string = " ".repeat(
+    MAX_TOKEN_LENGTH - tokenName(token.type).length + 2
+  );
 
   // only show upto 17 characters if the raw text is too long
   // eg. a long string or a big number
 
   let rawText: string =
     token.raw.length > MAX_LOG_TEXT_LENGTH
-      ? token.raw.substring(0, MAX_LOG_TEXT_LENGTH - 3) + '... '
+      ? token.raw.substring(0, MAX_LOG_TEXT_LENGTH - 3) + "... "
       : token.raw;
 
-  const rawPadding = ' '.repeat(MAX_LOG_TEXT_LENGTH - rawText.length + 2);
+  const rawPadding = " ".repeat(MAX_LOG_TEXT_LENGTH - rawText.length + 2);
 
   // color the text
   rawText = chalk.rgb(120, 224, 143)(rawText);
 
   const position: string = `[line ${token.pos.line}: ${token.pos.start}-${token.pos.end}]`;
 
-  return `${tokenText + padding} raw: ${`'${rawText}'` + rawPadding} position: ${position}`;
+  return `${tokenText + padding} raw: ${
+    `'${rawText}'` + rawPadding
+  } position: ${position}`;
 }
 
 export function tokenInfo(token: Token): string {
   return `TOKEN_${tokenName(token.type)}   raw: '${token.raw}' pos: [${
-    'line ' + token.pos.line
+    "line " + token.pos.line
   } : ${token.pos.start}-${token.pos.end}]`;
 }
 
@@ -145,7 +153,7 @@ export function tokenName(t: TokenType): string {
     case TokenType.ANY:            return 'ANY';
     case TokenType.RECORD:         return 'RECORD';
     case TokenType.SPREAD:         return 'SPREAD';
-
+    case TokenType.TYPE:           return 'TYPE';
     default:
       return 'UNKNOWN';
   }

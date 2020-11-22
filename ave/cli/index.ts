@@ -86,6 +86,7 @@ function compileFile(file: File) {
   if (compiled) fs.writeFileSync(file.outPath, compiled);
 }
 
+// TODO: optimize, and split
 function buildFileAndDirList(
   dirPath: string,
   root: string,

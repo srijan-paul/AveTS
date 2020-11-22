@@ -23,6 +23,7 @@ const enum NodeKind {
   RecordDeclaration,
   FunctionExpr,
   MemberAcessExpr,
+  TypeAlias,
 }
 
 export = NodeKind;

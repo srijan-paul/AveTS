@@ -38,13 +38,15 @@ const keywords: Map<string, TType> = new Map([
   ['new'      , TType.NEW     ],
   ['export'   , TType.EXPORT  ],
   ['import'   , TType.IMPORT  ],
-  ['record'             , TType.RECORD],
+  ['type'     , TType.TYPE    ],
+  ['record'   , TType.RECORD  ],
+  
   [TypeName.string      , TType.STRING],
   [TypeName.number      , TType.NUMBER],
   [TypeName.bool        , TType.BOOL  ],
   [TypeName.any         , TType.ANY   ],
   [TypeName.object      , TType.OBJECT],
-  [TypeName.nil         , TType.NIL   ],
+  [TypeName.nil         , TType.NIL   ]
 ]);
 
 export default keywords;

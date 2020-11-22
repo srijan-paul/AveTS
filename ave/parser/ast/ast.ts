@@ -515,7 +515,7 @@ export class RecordDecl extends Node {
 export class TypeDef extends Node {
   readonly name: string;
   readonly typeInfo: TypeInfo;
-
+  readonly kind = NodeKind.TypeAlias;
   constructor(tok: Token, t: TypeInfo) {
     super(tok);
     this.name = tok.raw;

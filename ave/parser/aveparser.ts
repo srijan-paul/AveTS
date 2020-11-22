@@ -291,17 +291,22 @@ export default class AveParser extends Parser {
   }
 
   private declaration(): AST.Node {
+    let decl: AST.Node;
     if (this.match(TType.VAR, TType.CONST, TType.LET)) {
-      return this.varDeclaration(this.prev());
+      decl = this.varDeclaration(this.prev());
     } else if (this.check(TType.NAME) && this.checkNext(TType.COLON)) {
-      return this.sugarDeclaration();
+      decl = this.sugarDeclaration();
     } else if (this.match(TType.FUNC)) {
-      return this.funcDecl();
+      decl = this.funcDecl();
     } else if (this.match(TType.RECORD)) {
-      return this.recordDecl();
+      decl = this.recordDecl();
+    } else if (this.match(TType.TYPE)) {
+      decl = this.parseTypeAlias();
     } else {
-      return this.statement();
+      decl = this.statement();
     }
+    this.consume(TType.SEMI_COLON);
+    return decl;
   }
 
   // ID ':' (type)? '=' exp
@@ -446,7 +451,7 @@ export default class AveParser extends Parser {
     return new AST.FunctionDeclaration(name.raw, lambda);
   }
 
-  private parseFunctionBody(func: AST.FunctionExpr, isArrow: boolean = false) {
+  private parseFunctionBody(func: AST.FunctionExpr, isArrow = false) {
     this.expect(TType.INDENT, "Expected indented block.");
 
     // > push func scope.
@@ -563,5 +568,12 @@ export default class AveParser extends Parser {
       }
     }
     return types;
+  }
+
+  private parseTypeAlias(): AST.TypeDef {
+    const name = this.expect(TType.NAME, "Expected type-alias name.");
+    this.expect(TType.EQ, "Expected '='");
+    const type = parseType(this);
+    return new AST.TypeDef(name, type);
   }
 }

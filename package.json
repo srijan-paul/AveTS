@@ -9,7 +9,8 @@
     "build": "tsc",
     "test": "jest build/tests --silent",
     "test-verbose": "jest build/tests",
-    "gentest": "node build/tests/genTests.js"
+    "gentest": "node build/tests/genTests.js",
+    "checkertest": "node build/tests/checker-tests.js"
   },
   "repository": {
     "type": "git",

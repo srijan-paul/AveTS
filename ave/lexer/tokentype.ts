@@ -89,7 +89,7 @@ enum TokenType {
   IMPORT,
   EXPORT,
   RECORD,
-
+  TYPE,
   // primary data types
   // (also keywords)
   // TODO: remove these and make them contextual
