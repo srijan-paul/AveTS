@@ -792,6 +792,7 @@ export default class Checker {
 
   private typeAlias(stmt: AST.TypeDef) {
     const resolvedType = this.type(stmt.typeInfo.type);
+    resolvedType.setTag(stmt.name);
     this.env.defineType(stmt.name, resolvedType);
     return resolvedType;
   }

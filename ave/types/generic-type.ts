@@ -1,6 +1,6 @@
-import TokenType = require('../lexer/tokentype');
-import ObjectType from './object-type';
-import { Type, unresolvedType } from './types';
+import TokenType = require("../lexer/tokentype");
+import ObjectType from "./object-type";
+import { Type, unresolvedType } from "./types";
 
 type TypeCacheEntry = [Type[], ObjectType];
 
@@ -43,7 +43,7 @@ export default class GenericType extends Type {
 
   constructor(tag: string, typeParams: Type[]) {
     super(tag);
-    this.typeParams = typeParams.map(t => {
+    this.typeParams = typeParams.map((t) => {
       // generic type parameters
       // are assumed to be resolved.
       t.unresolved = false;
@@ -60,7 +60,7 @@ export default class GenericType extends Type {
 
   public create(...typeArgs: Type[]): ObjectType {
     if (typeArgs.length != this.typeParams.length)
-      throw new Error('incorrect number of arguments to generic type.');
+      throw new Error("incorrect number of arguments to generic type.");
 
     let cached = this.instanceCache.get(typeArgs);
     if (cached != null) return cached;
@@ -97,7 +97,9 @@ export default class GenericType extends Type {
 
       // replace all T, U, K etc with actual types
       // arguments.
-      this.typeParams.forEach((e, i) => (_type = _type.substitute(e, typeArgs[i])));
+      this.typeParams.forEach(
+        (e, i) => (_type = _type.substitute(e, typeArgs[i]))
+      );
 
       _type = _type.substitute(instance, instance); // This function call may seem weird
       // so here is an explanation:
@@ -126,7 +128,7 @@ export default class GenericType extends Type {
   }
 
   public toString() {
-    return `${this.tag}<${this.typeParams.join(', ')}>`;
+    return `${this.tag}<${this.typeParams.join(", ")}>`;
   }
 }
 
@@ -143,7 +145,7 @@ export class GenericTypeInstance extends ObjectType {
   }
 
   public clone() {
-    let args = this.typeArgs.map(t => t.clone());
+    let args = this.typeArgs.map((t) => t.clone());
     return new GenericTypeInstance(this.tag, args);
   }
 
@@ -165,8 +167,8 @@ export class GenericTypeInstance extends ObjectType {
   }
 
   public toString() {
-    return `${this.tag}<${this.typeArgs.join(', ')}>`;
+    return `${this.tag}<${this.typeArgs.join(", ")}>`;
   }
 }
 
-export const t_Array = new GenericType('Array', [unresolvedType('T')]);
+export const t_Array = new GenericType("Array", [unresolvedType("T")]);

@@ -1,4 +1,4 @@
-import { Type, t_any } from './types';
+import { Type, t_any } from "./types";
 
 // Function Types
 // declared as (p1: t1, p2: t2) -> rt
@@ -14,15 +14,25 @@ export interface ParameterTypeInfo {
 export default class FunctionType extends Type {
   readonly params: ParameterTypeInfo[];
   returnType: Type;
+  private static readonly defaultTag = "<function>";
 
-  public constructor(name?: string, params?: ParameterTypeInfo[], retType?: Type) {
-    super(name || '<function>');
+  public constructor(
+    name?: string,
+    params?: ParameterTypeInfo[],
+    retType?: Type
+  ) {
+    super(name || FunctionType.defaultTag);
     this.superType = null;
     this.params = params || [];
     this.returnType = retType || t_any;
   }
 
-  public addParam(name: string, type: Type, required: boolean, hasDefault?: boolean) {
+  public addParam(
+    name: string,
+    type: Type,
+    required: boolean,
+    hasDefault?: boolean
+  ) {
     this.params.push({
       name,
       type,
@@ -46,7 +56,7 @@ export default class FunctionType extends Type {
   }
 
   public clone(): FunctionType {
-    let fnType = new FunctionType('', [], this.returnType.clone());
+    let fnType = new FunctionType("", [], this.returnType.clone());
 
     for (let param of this.params) {
       fnType.params.push({
@@ -62,15 +72,15 @@ export default class FunctionType extends Type {
   }
 
   public toString() {
-    if (this.tag) return this.tag;
+    if (this.tag != FunctionType.defaultTag) return this.tag;
     return `(${this.params
-      .map(e => {
-        let s = e.required ? '' : '?';
-        s += e.isRest ? '...' : '';
+      .map((e) => {
+        let s = e.required ? "" : "?";
+        s += e.isRest ? "..." : "";
         s += `${e.name}: ${e.type} `;
         return s;
       })
-      .join(', ')}) -> ${this.returnType}`;
+      .join(", ")}) -> ${this.returnType}`;
   }
 
   public substitute(t1: Type, t2: Type): Type {
@@ -86,9 +96,9 @@ export default class FunctionType extends Type {
 }
 
 // Javascript functions
-export const t_Function = new FunctionType('Function', [
+export const t_Function = new FunctionType("Function", [
   {
-    name: 'args',
+    name: "args",
     type: t_any,
     required: false,
     isRest: true,

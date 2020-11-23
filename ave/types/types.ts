@@ -1,24 +1,24 @@
-import Checker from '../checker/checker';
-import Token from '../lexer/token';
-import TokenType = require('../lexer/tokentype');
-import FunctionType from './function-type';
+import Checker from "../checker/checker";
+import Token from "../lexer/token";
+import TokenType = require("../lexer/tokentype");
+import FunctionType from "./function-type";
 // import MaybeType from './maybe-type';
 
 export const enum TypeName {
-  string = 'str',
-  number = 'num',
-  any = 'any',
-  object = 'object',
-  bool = 'bool',
-  undef = 'undefined',
-  nil = 'nil',
-  void = 'void',
+  string = "str",
+  number = "num",
+  any = "any",
+  object = "object",
+  bool = "bool",
+  undef = "undefined",
+  nil = "nil",
+  void = "void",
 }
 
 export class Type {
   static nextID: number = 0;
 
-  readonly tag: string;
+  tag: string;
   superType: Type | null;
   readonly id: number;
   unresolved: boolean = false;
@@ -70,14 +70,18 @@ export class Type {
 
   public hasMethod(name: string): boolean {
     if (this == t_any) return true;
-    if (this.properties.has(name)) return this.properties.get(name) instanceof FunctionType;
+    if (this.properties.has(name))
+      return this.properties.get(name) instanceof FunctionType;
     if (this.superType) this.superType.hasMethod(name);
     return false;
   }
 
   public hasOwnMethod(key: string): boolean {
     if (this == t_any) return true;
-    return this.properties.has(key) && this.properties.get(key) instanceof FunctionType;
+    return (
+      this.properties.has(key) &&
+      this.properties.get(key) instanceof FunctionType
+    );
   }
 
   public defineProperty(name: string, type: Type) {
@@ -104,6 +108,10 @@ export class Type {
     if (t1 == this) return t2;
     return this;
   }
+
+  public setTag(t: string) {
+    this.tag = t;
+  }
 }
 
 // top type (https://en.wikipedia.org/wiki/Top_type)
@@ -122,14 +130,14 @@ export const t_void = new Type(TypeName.void, true);
 
 // error type is returned in places where
 // an operator is used on unexpected operand types
-export const t_error = new Type('<%error%>', true);
+export const t_error = new Type("<%error%>", true);
 
 // used as a place holder for types that need
 // to be infererenced from the declaration
-export const t_infer = new Type('<%_infer_%>', true);
+export const t_infer = new Type("<%_infer_%>", true);
 
 // a bottom type (https://en.wikipedia.org/wiki/Bottom_type).
-export const t_bottom = new Type('bottom', true);
+export const t_bottom = new Type("bottom", true);
 
 // create a new unresolved type to
 // be used as a place holder type
@@ -317,7 +325,8 @@ mUnaryRules.set(TokenType.BANG, (to: Type) => {
 });
 
 export function unaryOp(operator: TokenType, t_operand: Type): Type {
-  if (mUnaryRules.has(operator)) return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
+  if (mUnaryRules.has(operator))
+    return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
   return t_error;
 }
 
