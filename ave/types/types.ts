@@ -180,11 +180,11 @@ export function fromString(str: string): Type {
  * refers to, then returns that type, else creates a new
  * unresolved type having the `tag` set to the token's raw
  * and returns it.
- * @param   tok {Token} The token to build the type from.
- * @returns     {Type}  A resolved builtin data type or a new unresolved one.
+ * @param   {Token} token The token to build the type from.
+ * @returns {Type}  A resolved builtin data type or a new unresolved one.
  */
-export function fromToken(tok: Token): Type {
-  return fromString(tok.raw);
+export function fromToken(token: Token): Type {
+  return fromString(token.raw);
 }
 
 // a rule specifies the data type of the result
