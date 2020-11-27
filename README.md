@@ -7,6 +7,7 @@ applications.
 ## Table of contents:
 
 - [Install Ave](#install-ave)
+- [A Tour of the language](#a-tour-of-the-language)
 - [Usage](#usage)
 - [Running the test suite](#running-the-test-suite)
 - [Contributing](#contributing)
