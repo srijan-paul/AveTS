@@ -107,11 +107,13 @@ A basic config file looks like this:
 
 ```json
 {
-	"in": "src", // source directory containing all the Ave project files.
-	"out": "dist" // Output directoru where all the Javascript files are written to.
+	"in": "src",
+	"out": "dist"
 }
 ```
 
+`in` is the source directory containing all the Ave project files.
+`out` output directoru where all the Javascript files are written to.
 Now create a directory named `src`.
 
 ```
