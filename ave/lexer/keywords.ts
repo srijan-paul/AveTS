@@ -39,7 +39,7 @@ const keywords: Map<string, TType> = new Map([
   ['export'   , TType.EXPORT  ],
   ['import'   , TType.IMPORT  ],
   ['type'     , TType.TYPE    ],
-  ['record'   , TType.RECORD  ],
+  ['struct'   , TType.STRUCT  ],
   
   [TypeName.string      , TType.STRING],
   [TypeName.number      , TType.NUMBER],

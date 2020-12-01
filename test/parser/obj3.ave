@@ -1,10 +1,10 @@
-record Position
+struct Position
   line:   num
   column: num
   start:  num
   end:    num
 
-record Token
+struct Token
   name: str
   pos: Position
   value: num

@@ -1,7 +1,7 @@
-record Foo<T>
+struct Foo<T>
   bar: T
 
-record Baz<T>
+struct Baz<T>
   biz: Foo<T>
   cuz: num
 

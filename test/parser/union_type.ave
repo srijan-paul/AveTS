@@ -1,10 +1,10 @@
 let a: num | str = "aa"; #expect type error.
 
-record TypeA
+struct TypeA
   tag: str
   foo: num
 
-record TypeB
+struct TypeB
   tag: str
   foo: num
 

@@ -12,48 +12,40 @@ const MAX_TOKEN_LENGTH: number = 17;
 const MAX_LOG_TEXT_LENGTH: number = 17;
 
 export function printTokens(tokens: Token[]) {
-  for (let token of tokens) printToken(token);
+	for (let token of tokens) printToken(token);
 }
 
 export function printToken(tok: Token) {
-  console.log(coloredTokenInfo(tok));
+	console.log(coloredTokenInfo(tok));
 }
 
 export function coloredTokenInfo(token: Token) {
-  let tokenText: string = chalk.rgb(
-    96,
-    163,
-    188
-  )(`TOKEN_${tokenName(token.type)}`);
+	let tokenText: string = chalk.rgb(96, 163, 188)(`TOKEN_${tokenName(token.type)}`);
 
-  let padding: string = " ".repeat(
-    MAX_TOKEN_LENGTH - tokenName(token.type).length + 2
-  );
+	let padding: string = " ".repeat(MAX_TOKEN_LENGTH - tokenName(token.type).length + 2);
 
-  // only show upto 17 characters if the raw text is too long
-  // eg. a long string or a big number
+	// only show upto 17 characters if the raw text is too long
+	// eg. a long string or a big number
 
-  let rawText: string =
-    token.raw.length > MAX_LOG_TEXT_LENGTH
-      ? token.raw.substring(0, MAX_LOG_TEXT_LENGTH - 3) + "... "
-      : token.raw;
+	let rawText: string =
+		token.raw.length > MAX_LOG_TEXT_LENGTH
+			? token.raw.substring(0, MAX_LOG_TEXT_LENGTH - 3) + "... "
+			: token.raw;
 
-  const rawPadding = " ".repeat(MAX_LOG_TEXT_LENGTH - rawText.length + 2);
+	const rawPadding = " ".repeat(MAX_LOG_TEXT_LENGTH - rawText.length + 2);
 
-  // color the text
-  rawText = chalk.rgb(120, 224, 143)(rawText);
+	// color the text
+	rawText = chalk.rgb(120, 224, 143)(rawText);
 
-  const position: string = `[line ${token.pos.line}: ${token.pos.start}-${token.pos.end}]`;
+	const position: string = `[line ${token.pos.line}: ${token.pos.start}-${token.pos.end}]`;
 
-  return `${tokenText + padding} raw: ${
-    `'${rawText}'` + rawPadding
-  } position: ${position}`;
+	return `${tokenText + padding} raw: ${`'${rawText}'` + rawPadding} position: ${position}`;
 }
 
 export function tokenInfo(token: Token): string {
-  return `TOKEN_${tokenName(token.type)}   raw: '${token.raw}' pos: [${
-    "line " + token.pos.line
-  } : ${token.pos.start}-${token.pos.end}]`;
+	return `TOKEN_${tokenName(token.type)}   raw: '${token.raw}' pos: [${
+		"line " + token.pos.line
+	} : ${token.pos.start}-${token.pos.end}]`;
 }
 
 //prettier-ignore
@@ -151,7 +143,7 @@ export function tokenName(t: TokenType): string {
     case TokenType.NIL:            return 'NIL';
     case TokenType.NAME:           return 'NAME';
     case TokenType.ANY:            return 'ANY';
-    case TokenType.RECORD:         return 'RECORD';
+    case TokenType.STRUCT:         return 'RECORD';
     case TokenType.SPREAD:         return 'SPREAD';
     case TokenType.TYPE:           return 'TYPE';
     default:

@@ -1,4 +1,4 @@
-record LLNode<E>
+struct LLNode<E>
   next: LLNode<E> | nil
   value: E
 

@@ -1,4 +1,4 @@
-record CanFly:
+struct CanFly
   fly: () -> str
   wingsCount: num
 
@@ -7,8 +7,8 @@ let bird: CanFly =
     return "i am flyiiiing !"
   wingsCount: 2
 
-record Token:
-  type: num
+struct Token
+  ttype: num
   raw: str
 
 
@@ -17,7 +17,7 @@ func printToken(a: Token): str
 
 
 tok: Token =
-  type: 3,
+  ttype: 3,
   raw: "aa"
 
 printToken(tok)

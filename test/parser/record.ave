@@ -1,4 +1,4 @@
-record List<T>
+struct List<T>
   length: num
   pop: () -> T | undefined
   push: (e: T) -> num

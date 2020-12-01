@@ -1,4 +1,4 @@
-record Person
+struct Person
     name: str
     age: num
 
