@@ -5,3 +5,6 @@ pow = func (x: num): num
 
 pow = (a: num) -> 
   return a ** 2
+
+let id = (x: any) -> x
+let shello = id("hello")
