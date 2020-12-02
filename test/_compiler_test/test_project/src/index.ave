@@ -1,17 +1,3 @@
-struct Person
-    name: str
-    age: num
+type BinopFn = (a: num, b: num) -> num
 
-let a: Person =
-    name: "Bobo",
-    age: 12
-
-let b: Person = {
-    name: "Toto",
-    age: 15
-}
-
-func sum_ages(a: Person, b: Person)
-    return a.age + b.age
-
-const my_num: num = sum_ages(a, b)
+let add: BinopFn = (a: num, b: num) -> a + b
