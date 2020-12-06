@@ -1,0 +1,23 @@
+struct LLNode<T>
+  data: T
+  next: LLNode<T> | nil
+
+const head: LLNode<num> = 
+  data: 12
+  next: 
+    data: 100
+    next: nil
+
+struct Wrapper<T> 
+  data: T
+
+const nww: Wrapper<Wrapper<num>> = 
+  data: 
+    data: 10
+
+const llwrapper: Wrapper<LLNode<bool>> = 
+  data:
+    data: false
+    next:
+      data: true
+      next: nil

@@ -5,113 +5,109 @@ import FunctionType from "./function-type";
 // import MaybeType from './maybe-type';
 
 export const enum TypeName {
-  string = "str",
-  number = "num",
-  any = "any",
-  object = "object",
-  bool = "bool",
-  undef = "undefined",
-  nil = "nil",
-  void = "void",
+	string = "str",
+	number = "num",
+	any = "any",
+	object = "object",
+	bool = "bool",
+	undef = "undefined",
+	nil = "nil",
+	void = "void",
 }
 
 export class Type {
-  static nextID: number = 0;
+	static nextID: number = 0;
 
-  tag: string;
-  superType: Type | null;
-  readonly id: number;
-  unresolved: boolean = false;
-  isPrimitive: boolean = false;
-  properties: Map<string, Type> = new Map();
+	tag: string;
+	superType: Type | null;
+	readonly id: number;
+	unresolved: boolean = false;
+	isPrimitive: boolean = false;
+	properties: Map<string, Type> = new Map();
 
-  constructor(tag: string, isPrimirive = false, tSuper?: Type) {
-    this.id = Type.nextID++;
-    this.tag = tag;
-    this.isPrimitive = isPrimirive;
-    this.superType = tSuper || null;
-  }
+	constructor(tag: string, isPrimirive = false, tSuper?: Type) {
+		this.id = Type.nextID++;
+		this.tag = tag;
+		this.isPrimitive = isPrimirive;
+		this.superType = tSuper || null;
+	}
 
-  /**
-   * Returns `true` if a value of type `t2` can be assigned to
-   * this type.
-   * @param t2 {Type} The data type to test for assignment to this.
-   */
-  public canAssign(t2: Type): boolean {
-    return this.id == t_any.id || t2.id == this.id || t2.id == t_bottom.id;
-  }
+	/**
+	 * Returns `true` if a value of type `t2` can be assigned to
+	 * this type.
+	 * @param t2 {Type} The data type to test for assignment to this.
+	 */
+	public canAssign(t2: Type): boolean {
+		return this.id == t_any.id || t2.id == this.id || t2.id == t_bottom.id;
+	}
 
-  public toString() {
-    return this.tag;
-  }
+	public toString() {
+		return this.tag;
+	}
 
-  public hasProperty(key: string): boolean {
-    if (this == t_any) return true;
-    if (this.superType) return this.superType.hasProperty(key);
-    return this.properties.has(key);
-  }
+	public hasProperty(key: string): boolean {
+		if (this == t_any) return true;
+		if (this.superType) return this.superType.hasProperty(key);
+		return this.properties.has(key);
+	}
 
-  public hasOwnProperty(key: string): boolean {
-    if (this == t_any) return true;
-    return this.properties.has(key);
-  }
+	public hasOwnProperty(key: string): boolean {
+		if (this == t_any) return true;
+		return this.properties.has(key);
+	}
 
-  /** searches for the property associated with the 'name' on this type.
-   * If not found then looks up the superType.
-   *
-   * @param  name {string} the name of the property to look for
-   * @return type {Type}   that 'name' is bound to on this type, or null if it doesn't exist.
-   */
-  public getProperty(name: string): Type | null {
-    if (this.properties.has(name)) return this.properties.get(name) as Type;
-    if (this.superType) return this.superType.getProperty(name);
-    return null;
-  }
+	/** searches for the property associated with the 'name' on this type.
+	 * If not found then looks up the superType.
+	 *
+	 * @param  name {string} the name of the property to look for
+	 * @return type {Type}   that 'name' is bound to on this type, or null if it doesn't exist.
+	 */
+	public getProperty(name: string): Type | null {
+		if (this.properties.has(name)) return this.properties.get(name) as Type;
+		if (this.superType) return this.superType.getProperty(name);
+		return null;
+	}
 
-  public hasMethod(name: string): boolean {
-    if (this == t_any) return true;
-    if (this.properties.has(name))
-      return this.properties.get(name) instanceof FunctionType;
-    if (this.superType) this.superType.hasMethod(name);
-    return false;
-  }
+	public hasMethod(name: string): boolean {
+		if (this == t_any) return true;
+		if (this.properties.has(name)) return this.properties.get(name) instanceof FunctionType;
+		if (this.superType) this.superType.hasMethod(name);
+		return false;
+	}
 
-  public hasOwnMethod(key: string): boolean {
-    if (this == t_any) return true;
-    return (
-      this.properties.has(key) &&
-      this.properties.get(key) instanceof FunctionType
-    );
-  }
+	public hasOwnMethod(key: string): boolean {
+		if (this == t_any) return true;
+		return this.properties.has(key) && this.properties.get(key) instanceof FunctionType;
+	}
 
-  public defineProperty(name: string, type: Type) {
-    this.properties.set(name, type);
-  }
+	public defineProperty(name: string, type: Type) {
+		this.properties.set(name, type);
+	}
 
-  // returns a new type with the same properties
-  // but a different ID.
-  // a primitive when cloned returns only a reference
-  // to itself.
-  public clone(): Type {
-    if (this.isPrimitive) return this;
-    return new Type(this.tag);
-  }
+	// returns a new type with the same properties
+	// but a different ID.
+	// a primitive when cloned returns only a reference
+	// to itself.
+	public clone(): Type {
+		if (this.isPrimitive) return this;
+		return new Type(this.tag);
+	}
 
-  // if it's a compound type, replaces
-  // all occurances of a type 'T' with
-  // the provided type 't2'.
-  // when called on a primitive type, it
-  // just returns t2 if the type is equal to
-  // t1. else returns itself.
-  public substitute(t1: Type, t2: Type): Type {
-    // primtives are not compound types.
-    if (t1 == this) return t2;
-    return this;
-  }
+	// if it's a compound type, replaces
+	// all occurances of a type 'T' with
+	// the provided type 't2'.
+	// when called on a primitive type, it
+	// just returns t2 if the type is equal to
+	// t1. else returns itself.
+	public substitute(t1: Type, t2: Type): Type {
+		// primtives are not compound types.
+		if (t1 == this) return t2;
+		return this;
+	}
 
-  public setTag(t: string) {
-    this.tag = t;
-  }
+	public setTag(t: string) {
+		this.tag = t;
+	}
 }
 
 // top type (https://en.wikipedia.org/wiki/Top_type)
@@ -149,30 +145,30 @@ export const t_bottom = new Type("bottom", true);
 // thrown.
 
 export function unresolvedType(tag: string): Type {
-  const t_unknown = new Type(tag, true);
-  t_unknown.unresolved = true;
-  return t_unknown;
+	const t_unknown = new Type(tag, true);
+	t_unknown.unresolved = true;
+	return t_unknown;
 }
 
 export function fromString(str: string): Type {
-  switch (str) {
-    case TypeName.string:
-      return t_string;
-    case TypeName.any:
-      return t_any;
-    case TypeName.number:
-      return t_number;
-    case TypeName.bool:
-      return t_bool;
-    case TypeName.undef:
-      return t_undef;
-    case TypeName.nil:
-      return t_nil;
-    // case TypeName.object:
-    //   return t_object;
-  }
+	switch (str) {
+		case TypeName.string:
+			return t_string;
+		case TypeName.any:
+			return t_any;
+		case TypeName.number:
+			return t_number;
+		case TypeName.bool:
+			return t_bool;
+		case TypeName.undef:
+			return t_undef;
+		case TypeName.nil:
+			return t_nil;
+		// case TypeName.object:
+		//   return t_object;
+	}
 
-  return unresolvedType(str);
+	return unresolvedType(str);
 }
 
 /**
@@ -184,7 +180,7 @@ export function fromString(str: string): Type {
  * @returns {Type}  A resolved builtin data type or a new unresolved one.
  */
 export function fromToken(token: Token): Type {
-  return fromString(token.raw);
+	return fromString(token.raw);
 }
 
 // a rule specifies the data type of the result
@@ -220,20 +216,20 @@ addTable[strID][strID] = t_string;
 //       return true if the '+' operator can be applied to
 //       all possible combinations of the types, else return false.
 mBinaryRules.set(TokenType.PLUS, (lt: Type, rt: Type) => {
-  if (addTable[lt.id] && addTable[lt.id][rt.id]) return addTable[lt.id][rt.id];
-  return t_error;
+	if (addTable[lt.id] && addTable[lt.id][rt.id]) return addTable[lt.id][rt.id];
+	return t_error;
 });
 
 // equality operators == and !=
 
 mBinaryRules.set(TokenType.EQ_EQ, (lt: Type, rt: Type) => {
-  if (lt != t_error && rt != t_error) return t_bool;
-  return t_error;
+	if (lt != t_error && rt != t_error) return t_bool;
+	return t_error;
 });
 
 mBinaryRules.set(TokenType.BANG_EQ, (lt: Type, rt: Type) => {
-  if (lt != t_error && rt != t_error) return t_bool;
-  return t_error;
+	if (lt != t_error && rt != t_error) return t_bool;
+	return t_error;
 });
 
 // comparison operators > < >= <= have similar rules
@@ -242,12 +238,12 @@ mBinaryRules.set(TokenType.BANG_EQ, (lt: Type, rt: Type) => {
 // those rules
 
 const comparisonTypeCheck: BinaryRule = (lt: Type, rt: Type) => {
-  if (lt == t_number && rt == t_number) return t_bool;
-  return t_error;
+	if (lt == t_number && rt == t_number) return t_bool;
+	return t_error;
 };
 
 function makeComparisonRule(t: TokenType) {
-  mBinaryRules.set(t, comparisonTypeCheck);
+	mBinaryRules.set(t, comparisonTypeCheck);
 }
 
 makeComparisonRule(TokenType.LESS);
@@ -261,12 +257,12 @@ makeComparisonRule(TokenType.GREATER_EQ);
 // generate the functions for -, * , / and %
 
 const binaryTypeCheck: BinaryRule = (lt: Type, rt: Type) => {
-  if (lt == t_number && rt == t_number) return t_number;
-  return t_error;
+	if (lt == t_number && rt == t_number) return t_number;
+	return t_error;
 };
 
 function makeBinaryRule(toktype: TokenType) {
-  mBinaryRules.set(toktype, binaryTypeCheck);
+	mBinaryRules.set(toktype, binaryTypeCheck);
 }
 
 makeBinaryRule(TokenType.MINUS); // a - b
@@ -282,20 +278,20 @@ makeBinaryRule(TokenType.XOR); // a ^ b
 // TODO, modify 'or' and 'and' to return a union type
 
 const checkConditionalType: BinaryRule = (l: Type, r: Type): Type => {
-  if (l == t_error || r == t_error) return t_error;
-  return t_bool;
+	if (l == t_error || r == t_error) return t_error;
+	return t_bool;
 };
 
 function makeConditionalRule(t: TokenType) {
-  mBinaryRules.set(t, checkConditionalType);
+	mBinaryRules.set(t, checkConditionalType);
 }
 
 makeConditionalRule(TokenType.OR);
 makeConditionalRule(TokenType.AND);
 
 export function binaryOp(l: Type, op: TokenType, r: Type): Type {
-  if (mBinaryRules.has(op)) return (<BinaryRule>mBinaryRules.get(op))(l, r);
-  return t_error;
+	if (mBinaryRules.has(op)) return (<BinaryRule>mBinaryRules.get(op))(l, r);
+	return t_error;
 }
 
 // similarly, with unary rules for operators
@@ -303,11 +299,11 @@ export function binaryOp(l: Type, op: TokenType, r: Type): Type {
 // of number type and return the same.
 
 const unaryTypeCheck: UnaryRule = (tOperand: Type) => {
-  return tOperand == t_number ? t_number : t_error;
+	return tOperand == t_number ? t_number : t_error;
 };
 
 function makeUnaryRule(t: TokenType) {
-  mUnaryRules.set(t, unaryTypeCheck);
+	mUnaryRules.set(t, unaryTypeCheck);
 }
 
 // both prefix and postfix -- and ++
@@ -321,13 +317,12 @@ makeUnaryRule(TokenType.MINUS);
 // and returns a bool
 
 mUnaryRules.set(TokenType.BANG, (to: Type) => {
-  return to == t_error ? t_error : t_bool;
+	return to == t_error ? t_error : t_bool;
 });
 
 export function unaryOp(operator: TokenType, t_operand: Type): Type {
-  if (mUnaryRules.has(operator))
-    return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
-  return t_error;
+	if (mUnaryRules.has(operator)) return (<UnaryRule>mUnaryRules.get(operator))(t_operand);
+	return t_error;
 }
 
 /*
@@ -376,27 +371,27 @@ type becomes number | string
 */
 
 export class t__Maybe extends Type {
-  readonly type: Type;
+	readonly type: Type;
 
-  // "unwraps" a type
-  // this is used to avoid nesting in
-  // maybe types. since Maybe<Maybe<T>> is
-  // just Maybe<T>, this function just
-  // perfoms the reduction to return T.
+	// "unwraps" a type
+	// this is used to avoid nesting in
+	// maybe types. since Maybe<Maybe<T>> is
+	// just Maybe<T>, this function just
+	// perfoms the reduction to return T.
 
-  static unwrap(mt: t__Maybe | Type) {
-    while (mt instanceof t__Maybe) {
-      mt = mt.type;
-    }
-    return mt;
-  }
+	static unwrap(mt: t__Maybe | Type) {
+		while (mt instanceof t__Maybe) {
+			mt = mt.type;
+		}
+		return mt;
+	}
 
-  constructor(type: Type) {
-    super(`<maybe ${type.toString()}>`);
-    this.type = t__Maybe.unwrap(type);
-  }
+	constructor(type: Type) {
+		super(`<maybe ${type.toString()}>`);
+		this.type = t__Maybe.unwrap(type);
+	}
 
-  public toString() {
-    return `${this.type.toString()}|undefined`;
-  }
+	public toString() {
+		return `${this.type.toString()}|undefined`;
+	}
 }

@@ -14,13 +14,12 @@ import NodeKind = require("../parser/ast/nodekind");
 import { ParsedData } from "../parser/parser";
 import Environment from "../parser/symbol_table/environment";
 import { DeclarationKind, SymbolData } from "../parser/symbol_table/symtable";
-import { HoistedVarDeclaration } from "../types/declaration";
-import FunctionType, { ParameterTypeInfo } from "../types/function-type";
-import GenericType, { t_Array } from "../types/generic-type";
-import ObjectType, { checkObjectAssignment } from "../types/object-type";
-import * as Typing from "../types/types";
-import UnionType from "../types/union-type";
-import TypeResolver from "./type-resolver";
+import { HoistedVarDeclaration } from "../type/declaration";
+import FunctionType, { ParameterTypeInfo } from "../type/function-type";
+import GenericType, { GenericInstance, t_Array } from "../type/generic-type";
+import ObjectType, { checkObjectAssignment } from "../type/object-type";
+import * as Typing from "../type/types";
+import UnionType from "../type/union-type";
 
 export default class Checker {
 	private readonly ast: AST.Program;
@@ -51,7 +50,6 @@ export default class Checker {
 	// are inside loops.
 	private loopDepth = 0;
 
-	private typeResolver: TypeResolver = new TypeResolver(this);
 	private reportError: ErrorReportFn;
 	private hasError = false;
 	private errors: AveError[] = [];
@@ -84,11 +82,6 @@ export default class Checker {
 
 	private popScope() {
 		this.env = this.env.pop();
-	}
-
-	private type(t: AST.TypeInfo | Typing.Type): Typing.Type {
-		if (t instanceof AST.TypeInfo) return this.typeResolver.resolveType(t.type, t.token);
-		return this.typeResolver.resolveType(t);
 	}
 
 	/**
@@ -200,6 +193,10 @@ export default class Checker {
 			decl.defineIn(this.env);
 		}
 
+		body.types.forEach((type, name) => {
+			this.env.defineType(name, type);
+		});
+
 		let type = Typing.t_void;
 
 		for (let stmt of body.statements) {
@@ -225,9 +222,8 @@ export default class Checker {
 			case NodeKind.ReturnStmt:
 				return this.returnStmt(stmt as AST.ReturnStmt);
 			case NodeKind.RecordDeclaration:
-				return this.recordDeclaration(stmt as AST.RecordDecl);
 			case NodeKind.TypeAlias:
-				return this.typeAlias(stmt as AST.TypeDef);
+				return Typing.t_void;
 			case NodeKind.ExprStmt:
 				// just run it through the expression
 				// checker to detect type errors.
@@ -251,7 +247,7 @@ export default class Checker {
 	}
 
 	private checkDeclarator(node: AST.VarDeclarator, kind: DeclarationKind) {
-		let type = this.type(node.typeInfo);
+		let type = node.typeInfo.type;
 		let currentType = type;
 
 		// check if symbol already exists
@@ -375,7 +371,7 @@ export default class Checker {
 		if (symbolData) {
 			// if the data type is a free type,
 			// return t_any instead.
-			return this.type(symbolData.dataType);
+			return symbolData.dataType;
 		}
 
 		this.error(`Cannot find name ${name}.`, id.token as Token, ErrorType.ReferenceError);
@@ -412,8 +408,8 @@ export default class Checker {
 
 		if (!this.isValidAssignTarget(left)) return Typing.t_error;
 
-		const lType = this.type(this.typeOf(left));
-		const rType = this.type(this.typeOf(right));
+		const lType = this.typeOf(left);
+		const rType = this.typeOf(right);
 
 		// if the left or right side is erratic
 		// and error has already been reported
@@ -478,22 +474,22 @@ export default class Checker {
 	}
 
 	private array(arr: AST.ArrayExpr): Typing.Type {
-		if (arr.elements.length == 0) return t_Array.create(Typing.t_bottom);
+		if (arr.elements.length == 0) return t_Array.instantiate([Typing.t_bottom]);
 
 		let type = this.typeOf(arr.elements[0]);
 
 		for (let el of arr.elements) {
 			const t = this.typeOf(el);
 			if (t == Typing.t_error) return Typing.t_error;
-			if (t != type) return t_Array.create(Typing.t_any);
+			if (t != type) return t_Array.instantiate([Typing.t_any]);
 		}
 
-		return t_Array.create(type);
+		return t_Array.instantiate([type]);
 	}
 
 	private callExpr(expr: AST.CallExpr): Typing.Type {
 		let callee = expr.callee;
-		let type = this.type(this.expression(expr.callee));
+		let type = this.expression(expr.callee);
 		let args = expr.args;
 
 		if (!(type instanceof FunctionType)) {
@@ -509,7 +505,7 @@ export default class Checker {
 			return Typing.t_error;
 		}
 
-		this.verifyArguments(args, (<FunctionType>type).params);
+		this.verifyArguments(args, (type as FunctionType).params);
 		return type.returnType;
 	}
 
@@ -528,7 +524,7 @@ export default class Checker {
 
 			let argumentType = this.expression(args[i]);
 
-			if (!this.isValidAssignment(this.type(params[i].type), argumentType)) {
+			if (!this.isValidAssignment(params[i].type, argumentType)) {
 				this.error(
 					`cannot assign argument of type '${argumentType.toString()}' to parameter of type '${params[
 						i
@@ -553,14 +549,14 @@ export default class Checker {
 		let t_object = new ObjectType("");
 
 		obj.kvPairs.forEach((val: AST.Expression, key: Token) => {
-			t_object.defineProperty(key.raw, this.type(this.expression(val)));
+			t_object.defineProperty(key.raw, this.expression(val));
 		});
 
 		return t_object;
 	}
 
 	private memberExpression(expr: AST.MemberAccessExpr) {
-		const lType = this.type(this.expression(expr.object));
+		const lType = this.expression(expr.object);
 		const property = expr.property;
 
 		if (expr.isIndexed) {
@@ -575,7 +571,7 @@ export default class Checker {
 				);
 
 			const expType = lType.getProperty(property.name) as Typing.Type;
-			return this.type(expType);
+			return expType;
 		} else {
 			throw new Error("impossible condition encountered.");
 		}
@@ -629,16 +625,16 @@ export default class Checker {
 	private funcExpr(func: AST.FunctionExpr) {
 		this.verifyFunctionParams(func.params);
 
-		this.functionReturnStack.push(this.type(func.returnTypeInfo));
+		this.functionReturnStack.push(func.returnTypeInfo.type);
 
 		let paramTypeInfo: ParameterTypeInfo[] = [];
 
-		func.params.forEach(e => {
-			func.body.declarations.push(new HoistedVarDeclaration(e.name, this.type(e.typeInfo)));
+		func.params.forEach(param => {
+			func.body.declarations.push(new HoistedVarDeclaration(param.name, param.typeInfo.type));
 			paramTypeInfo.push({
-				name: e.name,
-				type: this.type(e.typeInfo),
-				required: !!e.required,
+				name: param.name,
+				type: param.typeInfo.type,
+				required: !!param.required,
 			});
 		});
 
@@ -650,7 +646,7 @@ export default class Checker {
 
 		if (returnType == Typing.t_void) returnType = Typing.t_undef;
 
-		let annotatedType = this.type(func.returnTypeInfo);
+		let annotatedType = func.returnTypeInfo.type;
 
 		if (annotatedType == Typing.t_infer) func.returnTypeInfo.type = returnType;
 
@@ -671,7 +667,7 @@ export default class Checker {
 			if (params[i].defaultValue) {
 				let type = this.expression(params[i].defaultValue as AST.Expression);
 
-				let annotatedType = this.type(params[i].typeInfo);
+				let annotatedType = params[i].typeInfo.type;
 				if (!this.isValidAssignment(annotatedType, type)) {
 					this.error(
 						`Cannot assign value of type '${type.toString()}' to paramter of type '${params[
@@ -684,58 +680,5 @@ export default class Checker {
 			}
 		}
 		return true;
-	}
-
-	private recordDeclaration(decl: AST.RecordDecl) {
-		// TODO
-		let record: Typing.Type;
-		this.pushScope();
-
-		if (decl.isGeneric) {
-			record = new GenericType(decl.name, decl.typeArgs);
-
-			for (let t of (<GenericType>record).typeParams) {
-				this.env.defineType(t.tag, t);
-			}
-		} else {
-			record = new ObjectType(decl.name);
-		}
-
-		// We define the record in the local scope too in case
-		// we encounter recursive types like these:
-		// ```
-		// record LinkNode
-		//   value: num
-		//   next:  LinkNode | nil
-		// ```
-		// Here record LinkNode has a member that is
-		// it's own type.
-
-		this.env.defineType(decl.name, record);
-
-		decl.properties.forEach((value: AST.TypeInfo, key: Token) => {
-			record.defineProperty(key.raw, this.type(value));
-		});
-
-		// undefine the generic type parameters, T, U, K, etc
-		// before exiting record body.
-
-		if (decl.isGeneric) {
-			for (let t of (<GenericType>record).typeParams) {
-				this.env.undefineType(t.tag);
-			}
-		}
-
-		this.popScope();
-
-		this.env.defineType(decl.name, record);
-		return Typing.t_void;
-	}
-
-	private typeAlias(stmt: AST.TypeDef) {
-		const resolvedType = this.type(stmt.typeInfo.type);
-		resolvedType.setTag(stmt.name);
-		this.env.defineType(stmt.name, resolvedType);
-		return resolvedType;
 	}
 }

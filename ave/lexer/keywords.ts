@@ -1,4 +1,4 @@
-import { TypeName } from "../types/types";
+import { TypeName } from "../type/types";
 import TType = require("./tokentype");
 
 // prettier-ignore

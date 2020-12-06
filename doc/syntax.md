@@ -1,11 +1,12 @@
 # Syntax
 
 Ave is a language built for rapid prototyping of applications.
-The syntax reflects that and is as minimal as can be. If you're familiar with coffeescript or Python, you will find this pretty similar. Since Ave compiles to Javascript, you can use all javascript functions
-and APIs in Ave.
+The syntax reflects that and is as minimal as can be. 
+If you're familiar with coffeescript or Python, you will find this pretty similar. 
+Since Ave compiles to Javascript, you can use all javascript functions
+and APIs in Ave, with some declarations.
 
 ## A Tour of the language.
-
 
 ### Variable declaration.
 
@@ -52,7 +53,7 @@ else
 
 ```
 
-Note that ':'s are not needed before a block. The syntax of Ave is indentation sensitive.
+Note that `{}`s are not needed around blocks. The syntax of Ave is indentation sensitive.
 
 
 ### Loops
@@ -111,3 +112,26 @@ while (a > 10) {
   console.log(a--);
 }
 ```
+
+
+### Functions.
+
+Functions in ave can be declared in two ways. The first and 
+most "vanilla" form goes like this:
+
+```go
+func fib(n: num): num
+  if n <= 1:
+    return 1
+  return fib(n - 1) + fib(n - 2)
+```
+
+Or you could go with an arrow function:
+
+```go
+fib := (n: num): num -> 
+  if n <= 1:
+    return 1
+  return fib(n - 1) + fib(n - 2)
+```
+  

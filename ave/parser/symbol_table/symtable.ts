@@ -1,22 +1,22 @@
-import { Type } from '../../types/types';
+import { Type } from "../../type/types";
 
 export const enum DeclarationKind {
-  Constant,
-  BlockScope,
-  FunctionScope,
+	Constant,
+	BlockScope,
+	FunctionScope,
 }
 
 export function getDeclarationKind(kw: string): DeclarationKind {
-  switch (kw) {
-    case 'let':
-      return DeclarationKind.BlockScope;
-    case 'var':
-      return DeclarationKind.FunctionScope;
-    case 'const':
-      return DeclarationKind.Constant;
-  }
-  // deafault to block scoped
-  return DeclarationKind.BlockScope;
+	switch (kw) {
+		case "let":
+			return DeclarationKind.BlockScope;
+		case "var":
+			return DeclarationKind.FunctionScope;
+		case "const":
+			return DeclarationKind.Constant;
+	}
+	// deafault to block scoped
+	return DeclarationKind.BlockScope;
 }
 
 /**
@@ -28,41 +28,41 @@ export function getDeclarationKind(kw: string): DeclarationKind {
  */
 
 export interface SymbolData {
-  name: string;
-  declarationKind: DeclarationKind;
-  dataType: Type;
-  currentType: Type;
-  isDefined: boolean;
+	name: string;
+	declarationKind: DeclarationKind;
+	dataType: Type;
+	currentType: Type;
+	isDefined: boolean;
 }
 
 /**
  * @class  SymbolTable        A mapping of symbol names (strings) to SymbolData objects.
  * @method define(name, data) Map the name to the symbol data object.
- * @method has(name: string)  Whether the symbol data has a symbol with this name   
+ * @method has(name: string)  Whether the symbol data has a symbol with this name
  */
 
 export default class SymbolTable {
-  private readonly mSymbols: Map<string, SymbolData>;
+	private readonly mSymbols: Map<string, SymbolData>;
 
-  constructor() {
-    this.mSymbols = new Map();
-  }
+	constructor() {
+		this.mSymbols = new Map();
+	}
 
-  define(name: string, data: SymbolData): boolean {
-    if (this.mSymbols.has(name)) return false;
-    this.mSymbols.set(name, data);
-    return true;
-  }
+	define(name: string, data: SymbolData): boolean {
+		if (this.mSymbols.has(name)) return false;
+		this.mSymbols.set(name, data);
+		return true;
+	}
 
-  has(name: string): boolean {
-    return this.mSymbols.has(name);
-  }
+	has(name: string): boolean {
+		return this.mSymbols.has(name);
+	}
 
-  undefine(name: string) {
-    this.mSymbols.delete(name);
-  }
+	undefine(name: string) {
+		this.mSymbols.delete(name);
+	}
 
-  get(name: string): SymbolData | undefined {
-    return this.mSymbols.get(name);
-  }
+	get(name: string): SymbolData | undefined {
+		return this.mSymbols.get(name);
+	}
 }

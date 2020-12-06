@@ -49,8 +49,7 @@ func myFunc(a: num, b: num)
 
 ```
 
-The compiler now automatically infers that the function
-adder takes two arguments of type number and returns a number.
+The compiler can infer the return type of `myFunc` to be `num`.
 
 ```py
 a := 20
@@ -63,15 +62,17 @@ otherResult := myFunc('10', 20)
 
 ```
 
-The ave type checker will tell us that we did something wrong. whereas javascript would simply pass this as okay, and then our 'myFunc' would do all kinds of weird gymnastics and sometimes return a `NaN` sometimes until we finally catch the bug.
+The ave type checker will tell us that we did something wrong. whereas javascript would
+simply pass this as okay, and then our 'myFunc' would do all kinds of weird gymnastics and 
+sometimes return a `NaN` sometimes until we finally catch the bug.
 
 
-## Records.
+## Structs.
 
-Records let us define the structure of an object.
+Structs let us define the structure of an object.
 
 ```ts
-record Doggy
+struct Dog
   name: str
   age: num
   bark: () -> str
@@ -80,13 +81,13 @@ record Doggy
 now we could do:
 
 ```py
-goodDog: Doggy =
+goodDog: Dog =
   name: "bobo",
   age: 20,
   bark: func ()
     return "bow bow"
 
-badDoggy: Doggy =
+badDoggy: Dog =
   name: "dodo",
   age: 10
 
@@ -94,13 +95,26 @@ badDoggy: Doggy =
 #   'badDoggy' is missing the property 'bark' defined in 'Doggy'
 ```
 
+Objects can also be defined with `{}` similar to javascript. When declared 
+with `{}`, the indentation does inside doesn't not matter (unless compiling a function body).
+
+```coffee
+me := {
+  name: "Srijan"
+  age: 19
+  greet: (name: str): void #indentation sensitive again starting here.
+    return `Hello ${name}!`
+}
+```
+
 This is especially helpful in functions :
 
 ```go
-func getDogAge(dog: Doggy)
+func getDogAge(dog: Dog)
   return dog.ages
 ```
-if you look closely, we mispelled the property 'age' on record dog as 'ages'. Javascript again, would never complain and would happily return undefined leaving us to work with it.
+if you look closely, we mispelled the property 'age' on record dog as 'ages'. Javascript again, would never complain and 
+would happily return undefined leaving us to work with it.
 
 Ave catches this at compile time, and throws the following error:
 

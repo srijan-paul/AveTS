@@ -64,9 +64,9 @@ export default class JSGenerator {
 			case NodeKind.ExprStmt:
 				return this.writeln(this.expression((stmt as AST.ExprStmt).expr) + ";");
 			case NodeKind.RecordDeclaration:
-				return this.writeln(`/* record declaration : ${(stmt as AST.RecordDecl).name} */`);
+				return this.writeln(`/* struct declaration omitted: ${(stmt as AST.StructDecl).name} */`);
 			case NodeKind.TypeAlias:
-				return this.writeln(`/* type declaration omitted: '${(stmt as AST.TypeDef).name}' */`);
+				return this.writeln(`/* typedef omitted: '${(stmt as AST.TypeDef).name}' */`);
 		}
 
 		throw new Error("Unhandled statement case");
@@ -156,11 +156,11 @@ export default class JSGenerator {
 	}
 
 	private binOp(t: Token): string {
-		//prettier-ignore
+		// prettier-ignore
 		switch (t.type) {
-      case TType.OR:  return "||";
-      case TType.AND: return "&&";
-    }
+			case TType.OR:  return "||";
+			case TType.AND: return "&&";
+		}
 
 		return t.raw;
 	}

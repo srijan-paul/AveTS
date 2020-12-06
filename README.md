@@ -186,9 +186,10 @@ A TODO list of boxes to check towards releasing Ave 1.0.0
 ### Done
 
 - Variable declaration and assignment
-- Control flow structures
-  - `for` loops
-  - `if-elif-else` statements
+- Control flow
+  - `for` loops.
+  - `while` loops.
+  - `if-elif-else` statements.
 - object literals
 - function declarations
 - function calls
@@ -200,33 +201,44 @@ A TODO list of boxes to check towards releasing Ave 1.0.0
   - any
   - bottom
   - bool
-  - interfaces
+  - structs
   - object types (implicit only)
   - union types
 - type aliases.
-- a command line utility.
-- `aveconfig.json` support
+- basic command line utility.
+- configuration file (`aveconfig.json`) support.
 
 ### Todo:
 
+- Regex literals
+- **Types**:
+  - `bigint` data type
+  - `regex` data type
+  - `symbol` data type
+- Proper Generic types.
+- Type casts using `as`.
+- Ignore indentation inside `{}` blocks (except for arrow functions).
+- Struct index signatures.
+- Object indexes that are array literals or strings.
+- Ignore newline with `\` character.
+- String interpolation.
+- Basic OOP (classes, inheritance).
+- Constructor type annotation in object types (`new` member).
+- Declaration syntax. (`declare` statement).
+- ES6 type declaration files.
+- Imports and exports.
+- Async await.
 - Control flow:
-
-  - `while` loops
-  - `do` while loops
-
-- regex literals
-- **types**:
-  - bigint data type
-  - regex data type
-- classes, inheritance
-- type casts using `as`
-- record index signatures.
-- object indexes that are array literals or strings.
-- ES5 lib declarations.
-- ignore newline with `\` token.
-- imports and exports
-- compilation context
-- declaration syntax.
-- support for `.decl.ave` files
+  - `for..of` and `for..in` loops.
+  - `switch` statements.
+  - `match` expressions.
+- Operators:
+  - `?.` operator.
+  - spread operator (`...`).
+- Type checking rest parameter.
+- Generator functions.
+- Proper array literals with all array methods and properties defined.
+- Support for `.decl.ave` files.
 - QoL :
   - a web page for feature listing.
+  - Online ave compiler and playground.

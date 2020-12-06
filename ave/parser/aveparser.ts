@@ -4,11 +4,11 @@ import Parser, { ParsedData } from "./parser";
 import * as AST from "./ast/ast";
 import Precedence = require("./precedence");
 import { ScannedData } from "../lexer/lexer";
-import * as Typing from "../types/types";
+import * as Typing from "../type/types";
 import { AssignmentParser } from "./parselets/assign";
 import { DeclarationKind, getDeclarationKind } from "./symbol_table/symtable";
 import { callParser } from "./parselets/call";
-import { FuncDeclaration, HoistedVarDeclaration } from "../types/declaration";
+import { FuncDeclaration, HoistedVarDeclaration } from "../type/declaration";
 import { ArrayParser } from "./parselets/array";
 import { ObjectParser, InfixObjectParser } from "./parselets/object";
 import parseType from "./parselets/type-parser";
@@ -53,7 +53,7 @@ export default class AveParser extends Parser {
 
 		// nil
 		this.prefix(TType.NIL, Precedence.NONE, (_, token) => {
-			return new AST.Literal(token, "null");
+			return new AST.Literal(token, null);
 		});
 
 		// a stupid type case workaround but it works.
@@ -113,6 +113,7 @@ export default class AveParser extends Parser {
 		this.infix(TType.MINUS, Precedence.ADD);
 		this.infix(TType.STAR, Precedence.MULT);
 		this.infix(TType.DIV, Precedence.MULT);
+		this.infix(TType.FLOOR_DIV, Precedence.MULT);
 		this.infix(TType.MOD, Precedence.MULT);
 
 		// -- ++ ! - + (prefix, unary)
@@ -160,29 +161,49 @@ export default class AveParser extends Parser {
 		// computed member acces "a[b]"
 		this.infix(TType.L_SQ_BRACE, Precedence.COMP_MEM_ACCESS, false, MemberExprParser);
 
-		// (...) grouping expression
+		// (...) grouping expression or an arrow function.
 
 		this.prefix(
 			TType.L_PAREN,
 			Precedence.GROUPING,
 			(parser: Parser, lparen: Token): AST.Expression => {
-				let startPos = (parser as AveParser).current;
-				const id = parser.next();
+				// we "save" the current location in the token stream
+				// in this variable, we will move forward with certain
+				// assumptions and roll back to this point if they're false.
+				const startPos = (parser as AveParser).current;
 
-				if (id.type != TType.NAME) {
-					(parser as AveParser).current = startPos;
+				// If the next token is neither an identifier and nor
+				// a ")" then it must be a parenthesized expression.
+				if (!(parser.check(TType.NAME) || parser.check(TType.R_PAREN))) {
 					const exp = parser.expr();
 					parser.expect(TType.R_PAREN, "Expected ')' after expression.");
 					return new AST.GroupExpr(lparen, exp);
 				}
 
+				// if the next token is an identifier, then it
+				// could either be a parameter name, or the start of
+				// a parenthesized expression. We consume it for further
+				// inspection, and later roll back to this point before
+				// parsing the actual arrow function / grouping expr.
+				parser.consume(TType.NAME);
+
+				// we have already consumed a "(" and perhaps an identifier too.
+				// now, it's an arrow function if and only if ->
+				// - The next token is a "," (implying more parameters)
+				// - The next token is a ":" (implying a type for the first parameter)
+				// - A ")" followed by a "->" is seen.
+				// - A ")" followed by a ":" is seen.
+
 				if (
-					parser.check(TType.COMMA) ||
-					parser.check(TType.COLON) ||
-					(parser.check(TType.R_PAREN) &&
+					parser.check(TType.COMMA) || // parameter separator
+					parser.check(TType.COLON) || // parameter type annotation
+					(parser.check(TType.R_PAREN) && // ) -> or ):
 						(parser.checkNext(TType.ARROW) || parser.checkNext(TType.COLON)))
 				) {
+					// Forcefully rollback to the first left parenthesis.
 					(parser as AveParser).current = startPos;
+
+					// continue parsing the function as usual.
 					const params = (parser as AveParser).parseParams();
 					let type = new AST.TypeInfo(this.peek(), Typing.t_infer);
 					if (this.match(TType.COLON)) type = parseType(parser as AveParser);
@@ -290,7 +311,7 @@ export default class AveParser extends Parser {
 		} else if (this.match(TType.FUNC)) {
 			decl = this.funcDecl();
 		} else if (this.match(TType.STRUCT)) {
-			decl = this.recordDecl();
+			decl = this.structDecl();
 		} else if (this.match(TType.TYPE)) {
 			decl = this.parseTypeAlias();
 		} else {
@@ -508,8 +529,8 @@ export default class AveParser extends Parser {
 		return new AST.ReturnStmt(kw, expr);
 	}
 
-	// recordDecl -> 'record' id ':'? <INDENT> (id ':' type)? <DEDENT>
-	private recordDecl(): AST.RecordDecl {
+	// structDecl -> 'struct' ID ':'? <INDENT> (ID ':' type)* <DEDENT>
+	private structDecl(): AST.StructDecl {
 		const name = this.next();
 		let isGeneric = false;
 		let typeArgs: Typing.Type[] = [];
@@ -519,7 +540,7 @@ export default class AveParser extends Parser {
 			typeArgs = this.parseGenericParams();
 		}
 
-		const record = new AST.RecordDecl(name, isGeneric, typeArgs);
+		const struct = new AST.StructDecl(name, isGeneric, typeArgs);
 		this.consume(TType.COLON); // optional ':'
 		this.expect(TType.INDENT, "Expected Indented block.");
 
@@ -528,10 +549,11 @@ export default class AveParser extends Parser {
 			if (name.type != TType.NAME) break;
 			this.expect(TType.COLON, "Expected ':'.");
 			const type = parseType(this);
-			record.properties.set(name, type);
+			struct.properties.set(name, type);
 		}
 
-		return record;
+		this.currentBlockScope().bindTypeNode(struct.name, struct);
+		return struct;
 	}
 
 	/**
@@ -543,7 +565,10 @@ export default class AveParser extends Parser {
 		const types: Typing.Type[] = [];
 
 		while (!this.match(TType.GREATER)) {
-			types.push(parseType(this).type);
+			const name = this.expect(TType.NAME, "Expected type name.").raw;
+			const param = new Typing.Type(name, false);
+			param.unresolved = false;
+			types.push(param);
 
 			if (!this.match(TType.COMMA)) {
 				this.expect(TType.GREATER, "Expected '>' after type arguments.");
@@ -553,10 +578,13 @@ export default class AveParser extends Parser {
 		return types;
 	}
 
+	// typealias -> KW_TYPE NAME '=' type
 	private parseTypeAlias(): AST.TypeDef {
-		const name = this.expect(TType.NAME, "Expected type-alias name.");
+		const nameToken = this.expect(TType.NAME, "Expected type-alias name.");
 		this.expect(TType.EQ, "Expected '='");
 		const type = parseType(this);
-		return new AST.TypeDef(name, type);
+		const typedef = new AST.TypeDef(nameToken, type);
+		this.currentBlockScope().bindTypeNode(nameToken.raw, typedef);
+		return typedef;
 	}
 }
