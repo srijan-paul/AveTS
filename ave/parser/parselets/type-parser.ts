@@ -57,7 +57,8 @@ function parseNonUnionType(parser: Parser): TypeInfo {
 	}
 
 	if (parser.match(TT.L_BRACE)) {
-		return new TypeInfo(parser.prev(), parseObjectType(parser));
+		const type = parseObjectType(parser);
+		return new TypeInfo(parser.prev(), type);
 	}
 
 	return new TypeInfo(parser.peek(), Typing.t_any);
@@ -117,9 +118,11 @@ function parseGenericInstance(parser: Parser, name: Token) {
 
 function parseObjectType(parser: Parser): ObjectType {
 	const objectType = new ObjectType();
-	while (!parser.match(TT.R_BRACE)) {
+	while (!parser.match(TT.R_BRACE) && !parser.eof()) {
 		const name = parser.expect(TT.NAME, "Expected property name.").raw;
+		parser.expect(TT.COLON, "Expected ':' after field name.");
 		const type = parseType(parser).type;
+		parser.consume(TT.COMMA, TT.SEMI_COLON);
 		objectType.defineProperty(name, type);
 	}
 	return objectType;

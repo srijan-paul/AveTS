@@ -566,7 +566,7 @@ export default class AveParser extends Parser {
 
 		while (!this.match(TType.GREATER)) {
 			const name = this.expect(TType.NAME, "Expected type name.").raw;
-			const param = new Typing.Type(name, false);
+			const param = new Typing.PlaceHolderType(name);
 			param.unresolved = false;
 			types.push(param);
 
@@ -581,10 +581,20 @@ export default class AveParser extends Parser {
 	// typealias -> KW_TYPE NAME '=' type
 	private parseTypeAlias(): AST.TypeDef {
 		const nameToken = this.expect(TType.NAME, "Expected type-alias name.");
+		let isGeneric = false;
+		let typeParams: Typing.Type[] = [];
+
+		if (this.match(TType.LESS)) {
+			typeParams = this.parseGenericParams();
+			isGeneric = true;
+		}
+
 		this.expect(TType.EQ, "Expected '='");
 		const type = parseType(this);
-		const typedef = new AST.TypeDef(nameToken, type);
+		const typedef = new AST.TypeDef(nameToken, type, isGeneric, typeParams);
 		this.currentBlockScope().bindTypeNode(nameToken.raw, typedef);
 		return typedef;
 	}
 }
+
+type Fn<T> = () => T;

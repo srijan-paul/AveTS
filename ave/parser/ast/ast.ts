@@ -527,13 +527,21 @@ export class TypeDef extends Node {
 	readonly name: string;
 	readonly typeInfo: TypeInfo;
 	readonly kind = NodeKind.TypeAlias;
-	constructor(tok: Token, t: TypeInfo) {
+	typeParams: Type[] = [];
+	public isGeneric: boolean;
+	constructor(tok: Token, t: TypeInfo, isGeneric = false, typeParams: Type[] = []) {
 		super(tok);
 		this.name = tok.raw;
 		this.typeInfo = t;
+		this.isGeneric = isGeneric;
+		this.typeParams = typeParams;
 	}
 
-	toString() {
+	public setTypeParams(params: Type[]) {
+		this.typeParams = params;
+	}
+
+	public toString() {
 		return `typedef ${this.name} = ${this.typeInfo.toString()}`;
 	}
 }

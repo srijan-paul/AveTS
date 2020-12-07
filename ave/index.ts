@@ -29,14 +29,12 @@ function toJS(filename: string, src: string): string {
 }
 
 const code = `
-struct LLNode<T>
-  data: T
-  next: LLNode<T> | nil
 
-let a: LLNode<num> = 
-  data: 12
+type LLNode<T> = { data: T, next: LLNode<T> | nil };
+const head: LLNode<num> = 
+  data: 10
   next:
-    data: 24
+    data: 20
     next: nil
 `;
 

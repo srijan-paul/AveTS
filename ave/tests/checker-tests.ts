@@ -5,7 +5,6 @@ import chalk = require("chalk");
 import AveParser from "../parser/aveparser";
 import Checker from "../checker/checker";
 import Binder from "../checker/type-binder";
-import { parse } from "path";
 
 // contains only files, no sub directories.
 const parseTestDir = "./test/typechecking";
@@ -35,6 +34,7 @@ function testFile(path: string) {
 	const parseTree = new AveParser(lexData).parse();
 	if (parseTree.hasError) return false;
 	new Binder(parseTree).bind();
+	if (parseTree.ast.hasError) return false;
 	const checkedParseTree = new Checker(parseTree).check();
 	return !checkedParseTree.hasError;
 }

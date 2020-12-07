@@ -106,6 +106,7 @@ export class Type {
 	}
 
 	public setTag(t: string) {
+		if (this.isPrimitive) return;
 		this.tag = t;
 	}
 }
@@ -134,6 +135,17 @@ export const t_infer = new Type("<%_infer_%>", true);
 
 // a bottom type (https://en.wikipedia.org/wiki/Bottom_type).
 export const t_bottom = new Type("bottom", true);
+
+export class PlaceHolderType extends Type {
+	constructor(tag: string) {
+		super(tag, false);
+		this.unresolved = false;
+	}
+
+	clone() {
+		return this;
+	}
+}
 
 // create a new unresolved type to
 // be used as a place holder type

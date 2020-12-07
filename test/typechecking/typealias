@@ -1,3 +1,2 @@
 type BinopFn = (a: num, b: num) -> num;
-
 let add: BinopFn = (a: num, b: num) -> a + b;

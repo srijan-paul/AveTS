@@ -1,43 +1,44 @@
 {
-  "name": "avejs",
-  "version": "0.0.1",
-  "description": "A scripting language that compiles to Javascript",
-  "main": "index.js",
-  "scripts": {
-    "lextest": "node build/tests/lexTests.js",
-    "parsetest": "node build/tests/parseTests.js",
-    "build": "tsc",
-    "test": "jest build/tests --silent",
-    "test-verbose": "jest build/tests",
-    "gentest": "node build/tests/genTests.js",
-    "checkertest": "node build/tests/checker-tests.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/inJuly0/AveJS.git"
-  },
-  "keywords": [
-    "transpiler",
-    "programming",
-    "language",
-    "ave"
-  ],
-  "bin": {
-    "avec": "build/cli/index.js"
-  },
-  "author": "Srijan Paul",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/inJuly0/AveJS/issues"
-  },
-  "homepage": "https://github.com/inJuly0/AveJS#readme",
-  "devDependencies": {
-    "@types/node": "^14.6.0",
-    "chalk": "^4.1.0",
-    "jest": "^26.4.2",
-    "prettier": "^2.1.1"
-  },
-  "dependencies": {
-    "@types/jest": "^26.0.14"
-  }
+	"name": "avejs",
+	"version": "0.0.1",
+	"description": "A scripting language that compiles to Javascript",
+	"main": "index.js",
+	"scripts": {
+		"lextest": "node build/tests/lexTests.js",
+		"parsetest": "node build/tests/parseTests.js",
+		"build": "tsc",
+		"test": "jest build/tests --silent",
+		"test-verbose": "jest build/tests",
+		"gentest": "node build/tests/genTests.js",
+		"checkertest": "node build/tests/checker-tests.js",
+		"testproject": "node build/tests/lexTests.js && node build/tests/parseTests.js && node build/tests/checker-tests.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/inJuly0/AveJS.git"
+	},
+	"keywords": [
+		"transpiler",
+		"programming",
+		"language",
+		"ave"
+	],
+	"bin": {
+		"avec": "build/cli/index.js"
+	},
+	"author": "Srijan Paul",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/inJuly0/AveJS/issues"
+	},
+	"homepage": "https://github.com/inJuly0/AveJS#readme",
+	"devDependencies": {
+		"@types/node": "^14.6.0",
+		"chalk": "^4.1.0",
+		"jest": "^26.4.2",
+		"prettier": "^2.1.1"
+	},
+	"dependencies": {
+		"@types/jest": "^26.0.14"
+	}
 }

@@ -70,7 +70,7 @@ export default class GenericType extends Type {
 			instance = this.replace(instance, args, instance, i);
 		});
 
-		instance.tag = this.name + `<${args.join(",")}>`;
+		instance.setTag(this.name + `<${args.join(",")}>`);
 		return instance;
 	}
 

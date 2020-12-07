@@ -77,6 +77,18 @@ export default class Binder {
 		this.currentBlock().unbindType(name);
 	}
 
+	/**
+	 * Checks if a type is capable of containing recursive references.
+	 * @param type the type to check.
+	 */
+	private isTypeRecursable(type: Typing.Type): boolean {
+		return (
+			type instanceof ObjectType || //
+			type instanceof UnionType ||
+			type instanceof FunctionType
+		);
+	}
+
 	private resolve(type: Typing.Type, token?: Token) {
 		if (type.isPrimitive && !type.unresolved) return type;
 		if (type instanceof UnionType) return this.resolveUnionType(type, token);
@@ -86,6 +98,7 @@ export default class Binder {
 			return Typing.t_error;
 		}
 		if (type instanceof FunctionType) return this.resolveFnType(type, token);
+		if (type instanceof ObjectType) return this.resolveObjectType(type, token);
 
 		// if this type has already been visited and defined
 		// in this scope, then return the cached type instead.
@@ -108,6 +121,13 @@ export default class Binder {
 		}
 
 		return this.typeNode(astNode);
+	}
+
+	private resolveObjectType(otype: ObjectType, token?: Token): ObjectType {
+		otype.properties.forEach((fieldType, fieldName) => {
+			otype.properties.set(fieldName, this.resolve(fieldType, token));
+		});
+		return otype;
 	}
 
 	private resolveFnType(type: FunctionType, token?: Token) {
@@ -184,11 +204,48 @@ export default class Binder {
 
 	// TODO fix and make this work.
 	private typedef(decl: AST.TypeDef): Typing.Type {
+		if (decl.isGeneric) return this.genericTypedef(decl);
 		const name = decl.name;
-		this.currentBlock().bindType(name, decl.typeInfo.type);
+
+		if (this.isTypeRecursable(decl.typeInfo.type)) {
+			this.addType(name, decl.typeInfo.type);
+		}
+
 		decl.typeInfo.type = this.resolve(decl.typeInfo.type, decl.token as Token);
-		// this.currentBlock().bindType(name, decl.typeInfo.type);
+		this.addType(name, decl.typeInfo.type);
+
 		return decl.typeInfo.type;
+	}
+
+	private genericTypedef(typedef: AST.TypeDef) {
+		const name = typedef.name;
+		// define type parameters <T, U, K> etc
+		typedef.typeParams.forEach(type => {
+			this.addType(type.tag, type);
+		});
+
+		let innerType = typedef.typeInfo.type;
+		const isRecursable = this.isTypeRecursable(innerType);
+		// If the type is capable of containing recursive references to itself,
+		// then we first create the (incomplete) Generic template, then we bind that
+		// template to the type name. Finally we resolve the type.
+
+		// else we resolve the type first (since resolving may sometimes return a new type
+		// altogether instead of modifying the type inplace) and then use the resolved
+		// type to construct the generic.
+		if (!isRecursable) innerType = this.resolve(innerType, typedef.typeInfo.token);
+		const template = new GenericType(name, innerType, typedef.typeParams);
+		this.currentGeneric = template;
+		this.addType(name, template);
+		if (isRecursable) this.resolve(innerType, typedef.typeInfo.token);
+
+		// undefine type parameters.
+		typedef.typeParams.forEach(type => {
+			this.removeType(type.tag);
+		});
+
+		this.currentGeneric = null;
+		return template;
 	}
 
 	private structDecl(decl: AST.StructDecl): Typing.Type {
@@ -248,4 +305,8 @@ export default class Binder {
 			decl.typeInfo.type = this.resolve(decl.typeInfo.type, decl.typeInfo.token);
 		}
 	}
+
+	// private funDecl(fdecl: AST.FunctionDeclaration) {
+
+	// }
 }

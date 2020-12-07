@@ -116,8 +116,10 @@ export default class Parser {
 		return false;
 	}
 
-	public consume(tok: TType) {
-		if (this.check(tok)) this.next();
+	public consume(...ttypes: TType[]) {
+		for (let t of ttypes) {
+			if (this.check(t)) this.next();
+		}
 	}
 
 	public isValidType(token: Token) {
@@ -141,7 +143,7 @@ export default class Parser {
 
 	public expect(type: TType, errorMessage: string) {
 		if (!this.match(type)) {
-			this.error(errorMessage, this.prev());
+			this.error(errorMessage, this.peek());
 		}
 		return this.prev();
 	}

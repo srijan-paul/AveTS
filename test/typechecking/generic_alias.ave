@@ -1,0 +1,13 @@
+# 1
+type Id<T> = T;
+const myNumber: Id<num> = 10;
+
+# 2
+type Op<T> = (a: T, b: T) -> T
+const addNums: Op<num> = (a: num, b: num) -> a + b
+
+# 3
+struct Wrapper<T>
+  data: T
+type WrapFn<T> = (el: T) -> Wrapper<T>
+const wrap: WrapFn<num> = (el: num) -> { data: el }
