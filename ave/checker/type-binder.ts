@@ -5,7 +5,7 @@ import TT = require("../lexer/tokentype");
 import * as AST from "../parser/ast/ast";
 import NKind = require("../parser/ast/nodekind");
 import { ParsedData } from "../parser/parser";
-import FunctionType, { ParameterTypeInfo } from "../type/function-type";
+import FunctionType, { ParameterType } from "../type/function-type";
 import GenericType, { GenericInstance, t_Array } from "../type/generic-type";
 import ObjectType, { checkObjectAssignment } from "../type/object-type";
 import * as Typing from "../type/types";
@@ -90,6 +90,7 @@ export default class Binder {
 	}
 
 	private resolve(type: Typing.Type, token?: Token) {
+		if (type == Typing.t_infer) return type;
 		if (type.isPrimitive && !type.unresolved) return type;
 		if (type instanceof UnionType) return this.resolveUnionType(type, token);
 		if (type instanceof GenericInstance) return this.resolveGenericInstance(type, token);
@@ -191,8 +192,18 @@ export default class Binder {
 				return this.structDecl(stmt as AST.StructDecl);
 			case NKind.VarDeclaration:
 				return this.varDecl(stmt as AST.VarDeclaration);
+			case NKind.FunctionDecl:
+				return this.funDecl(stmt as AST.FunctionDeclaration);
 			default:
+				this.visitExpr(stmt as AST.Expression);
 				break;
+		}
+	}
+
+	private visitExpr(exp: AST.Expression) {
+		switch (exp.kind) {
+			case NKind.FunctionExpr:
+				return this.lambda(exp as AST.FunctionExpr);
 		}
 	}
 
@@ -302,11 +313,46 @@ export default class Binder {
 
 	private varDecl(vdecl: AST.VarDeclaration) {
 		for (const decl of vdecl.declarators) {
-			decl.typeInfo.type = this.resolve(decl.typeInfo.type, decl.typeInfo.token);
+			if (decl.typeInfo.type != Typing.t_infer)
+				decl.typeInfo.type = this.resolve(decl.typeInfo.type, decl.typeInfo.token);
+			if (decl.value) this.visitExpr(decl.value);
 		}
 	}
 
-	// private funDecl(fdecl: AST.FunctionDeclaration) {
+	private funDecl(fdecl: AST.FunctionDeclaration): FunctionType {
+		return this.lambda(fdecl.lambda, fdecl.name);
+	}
 
-	// }
+	private lambda(func: AST.FunctionExpr, fname?: string): FunctionType {
+		const params = func.params;
+
+		for (let param of params) {
+			const { type, token } = param.typeInfo;
+			if (type != Typing.t_infer) {
+				param.typeInfo.type = this.resolve(type, token);
+			}
+		}
+
+		const ftype = new FunctionType(
+			fname,
+			params.map(p => {
+				const pInfo: ParameterType = {
+					name: p.name,
+					type: p.typeInfo.type,
+					required: !!p.required,
+					isRest: p.isRest,
+					hasDefault: !!p.defaultValue,
+				};
+
+				return pInfo;
+			})
+		);
+
+		const returnInfo = func.returnTypeInfo;
+		returnInfo.type = this.resolve(returnInfo.type, returnInfo.token);
+		ftype.returnType = returnInfo.type;
+
+		func.type = ftype;
+		return ftype;
+	}
 }

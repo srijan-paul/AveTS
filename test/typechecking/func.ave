@@ -1,0 +1,11 @@
+func add(a: num, b: num): num
+    return a + b
+
+const five = add(2, 3)
+
+func fib(n: num): num
+    if n <= 1
+        return 1
+    return fib(n - 1) + fib(n - 2)
+
+const fib10: num = fib(10)

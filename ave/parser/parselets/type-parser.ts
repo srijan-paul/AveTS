@@ -1,5 +1,5 @@
 import TT = require("../../lexer/tokentype");
-import FunctionType, { ParameterTypeInfo } from "../../type/function-type";
+import FunctionType, { ParameterType } from "../../type/function-type";
 import GenericType, { GenericInstance, t_Array } from "../../type/generic-type";
 import * as Typing from "../../type/types";
 import Parser from "../parser";
@@ -76,8 +76,8 @@ function parseFunctionType(parser: Parser): Typing.Type {
 	return ftype;
 }
 
-function parseParams(parser: Parser): ParameterTypeInfo[] {
-	let params: ParameterTypeInfo[] = [];
+function parseParams(parser: Parser): ParameterType[] {
+	let params: ParameterType[] = [];
 	while (!parser.match(TT.R_PAREN)) {
 		params.push(parseParam(parser));
 
@@ -88,7 +88,7 @@ function parseParams(parser: Parser): ParameterTypeInfo[] {
 	return params;
 }
 
-function parseParam(parser: Parser): ParameterTypeInfo {
+function parseParam(parser: Parser): ParameterType {
 	let name = parser.expect(TT.NAME, "Expected paramter name.").raw;
 	let type = Typing.t_any;
 
@@ -98,6 +98,8 @@ function parseParam(parser: Parser): ParameterTypeInfo {
 		name,
 		type,
 		required: true,
+		hasDefault: false,
+		isRest: false,
 	};
 }
 

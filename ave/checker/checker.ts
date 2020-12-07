@@ -15,7 +15,7 @@ import { ParsedData } from "../parser/parser";
 import Environment from "../parser/symbol_table/environment";
 import { DeclarationKind, SymbolData } from "../parser/symbol_table/symtable";
 import { HoistedVarDeclaration } from "../type/declaration";
-import FunctionType, { ParameterTypeInfo } from "../type/function-type";
+import FunctionType, { ParameterType } from "../type/function-type";
 import GenericType, { GenericInstance, t_Array } from "../type/generic-type";
 import ObjectType, { checkObjectAssignment } from "../type/object-type";
 import * as Typing from "../type/types";
@@ -509,7 +509,7 @@ export default class Checker {
 		return type.returnType;
 	}
 
-	private verifyArguments(args: AST.Expression[], params: ParameterTypeInfo[]) {
+	private verifyArguments(args: AST.Expression[], params: ParameterType[]) {
 		let i = 0;
 		for (; i < params.length; i++) {
 			if (!args[i]) {
@@ -618,46 +618,37 @@ export default class Checker {
 		return type;
 	}
 
-	private functionDeclaration(func: AST.FunctionDeclaration): Typing.Type {
+	private functionDeclaration(func: AST.FunctionDeclaration): FunctionType {
 		return this.funcExpr(func.lambda);
 	}
 
-	private funcExpr(func: AST.FunctionExpr) {
+	private funcExpr(func: AST.FunctionExpr): FunctionType {
 		this.verifyFunctionParams(func.params);
+		let expectedReturnType = func.type.returnType;
+		this.functionReturnStack.push(expectedReturnType);
 
-		this.functionReturnStack.push(func.returnTypeInfo.type);
-
-		let paramTypeInfo: ParameterTypeInfo[] = [];
-
-		func.params.forEach(param => {
-			func.body.declarations.push(new HoistedVarDeclaration(param.name, param.typeInfo.type));
-			paramTypeInfo.push({
-				name: param.name,
-				type: param.typeInfo.type,
-				required: !!param.required,
-			});
+		func.type.params.forEach(param => {
+			func.body.declarations.push(new HoistedVarDeclaration(param.name, param.type));
 		});
 
 		let returnType = this.body(func.body);
 
-		// if there was no return statement
+		// If there was no return statement
 		// anywhere inside the function's body,
 		// it has a return type of undefined.
-
 		if (returnType == Typing.t_void) returnType = Typing.t_undef;
+		if (expectedReturnType == Typing.t_infer)
+			expectedReturnType = func.type.returnType = returnType;
 
-		let annotatedType = func.returnTypeInfo.type;
-
-		if (annotatedType == Typing.t_infer) func.returnTypeInfo.type = returnType;
-
-		if (!this.isValidAssignment(func.returnTypeInfo.type, returnType))
+		if (!this.isValidAssignment(expectedReturnType, returnType)) {
 			this.error(
-				`Function's type annotation is '${func.returnTypeInfo.type}' but return type is ${returnType}.`,
+				`Function's type annotation is '${expectedReturnType}' but return type is '${returnType}'.`,
 				func.token as Token
 			);
+		}
 
 		this.functionReturnStack.pop();
-		return new FunctionType("", paramTypeInfo, returnType);
+		return func.type;
 	}
 
 	// TODO handle optional parameters
@@ -665,14 +656,12 @@ export default class Checker {
 		for (let i = 0; i < params.length; i++) {
 			// default value must be assignable to annotated type.
 			if (params[i].defaultValue) {
-				let type = this.expression(params[i].defaultValue as AST.Expression);
+				const type = this.expression(params[i].defaultValue as AST.Expression);
+				const annotatedType = params[i].typeInfo.type;
 
-				let annotatedType = params[i].typeInfo.type;
 				if (!this.isValidAssignment(annotatedType, type)) {
 					this.error(
-						`Cannot assign value of type '${type.toString()}' to paramter of type '${params[
-							i
-						].typeInfo.toString()}'`,
+						`Cannot assign value of type '${type}' to paramter of type '${params[i].typeInfo}'`,
 						params[i].token
 					);
 					return false;

@@ -5,7 +5,7 @@ import { Type, t_any, t_infer } from "../../type/types";
 import { DeclarationKind } from "../symbol_table/symtable";
 import TokenType = require("../../lexer/tokentype");
 import Declaration from "../../type/declaration";
-import { t_Function } from "../../type/function-type";
+import FunctionType, { t_Function } from "../../type/function-type";
 
 interface ASTNode {
 	toString(): string;
@@ -329,7 +329,7 @@ export class FunctionExpr extends Expression {
 	// return type of the function, inferred
 	// in the type checking phase.
 	returnTypeInfo: TypeInfo;
-	type: Type = t_Function;
+	type: FunctionType = t_Function;
 	readonly isArrow: boolean;
 	readonly isGeneric: boolean = false;
 	readonly typeParams: Type[] = [];
