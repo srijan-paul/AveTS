@@ -92,15 +92,15 @@ const head: LLNode<num> =
 
 test("Type checking generic aliases.", () => {
 	expect(generic_alias_tests[0]).toHaveTypeError(
-		"cannot intialize 'myNum' of type 'num' with type 'str'"
+		"Cannot initialize 'myNum' of type 'num' with type 'str'."
 	);
 
 	expect(generic_alias_tests[1]).toHaveTypeError(
-		"cannot intialize 'myBoolAdder' of type 'Op<bool>' with type '(a: bool , b: bool ) -> num'"
+		"Cannot initialize 'myBoolAdder' of type 'Op<bool>' with type '(a: bool , b: bool ) -> num'."
 	);
 
 	expect(generic_alias_tests[2]).toHaveTypeError(
-		"cannot intialize 'head' of type 'LLNode<num>' with type '{data: num, next: {data: num, next: num}}'"
+		"Cannot initialize 'head' of type 'LLNode<num>' with type '{data: num, next: {data: num, next: num}}'."
 	);
 });
 
@@ -182,9 +182,27 @@ func foo(a: num, b: num): num
 foo(1)
 `;
 
+func_tests[2] = `
+func foo(x: num)
+  return x + x
+
+a: str = foo(10)
+`;
+
+func_tests[3] = `
+func foo(x: num): num
+  if x > 10
+    return "abc"
+  return 123
+`;
+
 test("Type checking functions.", () => {
 	expect(func_tests[0]).toHaveTypeError(
 		"cannot assign argument of type 'bool' to parameter of type 'num'."
 	);
 	expect(func_tests[1]).toHaveTypeError("Missing argument 'b' to function call.");
+	expect(func_tests[2]).toHaveTypeError("Cannot initialize 'a' of type 'str' with type 'num'.");
+	expect(func_tests[3]).toHaveTypeError(
+		"Return value has type 'str'. Expected value of type 'num'."
+	);
 });

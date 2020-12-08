@@ -189,7 +189,7 @@ export default class Checker {
 		// so we can access them throughout
 		// the body.
 
-		for (let decl of body.declarations) {
+		for (const decl of body.declarations) {
 			decl.defineIn(this.env);
 		}
 
@@ -199,7 +199,7 @@ export default class Checker {
 
 		let type = Typing.t_void;
 
-		for (let stmt of body.statements) {
+		for (const stmt of body.statements) {
 			type = this.mergeTypes(type, this.statement(stmt));
 		}
 
@@ -276,9 +276,9 @@ export default class Checker {
 
 		if (isDefined && !this.isValidAssignment(type, currentType)) {
 			this.error(
-				`cannot intialize '${
+				`Cannot initialize '${
 					node.name
-				}' of type '${type.toString()}' with type '${currentType.toString()}'`,
+				}' of type '${type.toString()}' with type '${currentType.toString()}'.`,
 				node.token as Token
 			);
 		}
@@ -489,15 +489,16 @@ export default class Checker {
 
 	private callExpr(expr: AST.CallExpr): Typing.Type {
 		let callee = expr.callee;
-		let type = this.expression(expr.callee);
+		let ftype = this.expression(expr.callee);
 		let args = expr.args;
 
-		if (!(type instanceof FunctionType)) {
+		if (!(ftype instanceof FunctionType)) {
 			this.error(`Function does not exist.`, callee.token as Token, ErrorType.ReferenceError);
 			return Typing.t_undef;
 		}
 
-		if (type.returnType == Typing.t_infer) {
+		if (ftype.returnType == Typing.t_infer) {
+			console.log(ftype.returnType);
 			this.error(
 				`function requires explicit type annotation, or must be defined before use.`,
 				callee.operator
@@ -505,24 +506,24 @@ export default class Checker {
 			return Typing.t_error;
 		}
 
-		this.verifyArguments(args, (type as FunctionType).params);
-		return type.returnType;
+		this.verifyArguments(args, (ftype as FunctionType).params, callee.token as Token);
+		return ftype.returnType;
 	}
 
-	private verifyArguments(args: AST.Expression[], params: ParameterType[]) {
+	private verifyArguments(args: AST.Expression[], params: ParameterType[], calleeToken: Token) {
 		let i = 0;
 		for (; i < params.length; i++) {
 			if (!args[i]) {
 				if (params[i].required) {
 					this.error(
 						`Missing argument '${params[i].name}' to function call.`,
-						args[i - 1].token as Token
+						calleeToken as Token
 					);
 				}
 				return;
 			}
 
-			let argumentType = this.expression(args[i]);
+			const argumentType = this.expression(args[i]);
 
 			if (!this.isValidAssignment(params[i].type, argumentType)) {
 				this.error(
@@ -600,18 +601,18 @@ export default class Checker {
 		let type = Typing.t_undef;
 		if (stmt.expr) type = this.expression(stmt.expr);
 
-		let rtype = this.functionReturnStack[this.functionReturnStack.length - 1];
+		const expectedType = this.functionReturnStack[this.functionReturnStack.length - 1];
 
-		if (!rtype) {
+		if (!expectedType) {
 			this.error(`return statement outside function.`, stmt.token as Token, ErrorType.SyntaxError);
 			return type;
 		}
 
-		if (rtype == Typing.t_infer) return type;
+		if (expectedType == Typing.t_infer) return type;
 
-		if (!this.isValidAssignment(rtype, type, TokenType.EQ))
+		if (!this.isValidAssignment(expectedType, type, TokenType.EQ))
 			this.error(
-				`Incorrect return type '${type}'. Expected value of type '${rtype}'`,
+				`Return value has type '${type}'. Expected value of type '${expectedType}'.`,
 				stmt.expr?.token as Token
 			);
 
@@ -625,13 +626,14 @@ export default class Checker {
 	private funcExpr(func: AST.FunctionExpr): FunctionType {
 		this.verifyFunctionParams(func.params);
 		let expectedReturnType = func.type.returnType;
-		this.functionReturnStack.push(expectedReturnType);
 
 		func.type.params.forEach(param => {
 			func.body.declarations.push(new HoistedVarDeclaration(param.name, param.type));
 		});
 
+		this.functionReturnStack.push(expectedReturnType);
 		let returnType = this.body(func.body);
+		this.functionReturnStack.pop();
 
 		// If there was no return statement
 		// anywhere inside the function's body,
@@ -647,7 +649,6 @@ export default class Checker {
 			);
 		}
 
-		this.functionReturnStack.pop();
 		return func.type;
 	}
 

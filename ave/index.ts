@@ -29,13 +29,10 @@ function toJS(filename: string, src: string): string {
 }
 
 const code = `
-
-type LLNode<T> = { data: T, next: LLNode<T> | nil };
-const head: LLNode<num> = 
-  data: 10
-  next:
-    data: 20
-    next: nil
+func foo(x: num): num
+  if x > 10
+    return "abc"
+  return 123
 `;
 
 const parseTree = new Parser(new Lexer("<test>", code).lex()).parse();

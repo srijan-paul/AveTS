@@ -5,6 +5,7 @@ import TT = require("../lexer/tokentype");
 import * as AST from "../parser/ast/ast";
 import NKind = require("../parser/ast/nodekind");
 import { ParsedData } from "../parser/parser";
+import { HoistedVarDeclaration } from "../type/declaration";
 import FunctionType, { ParameterType } from "../type/function-type";
 import GenericType, { GenericInstance, t_Array } from "../type/generic-type";
 import ObjectType, { checkObjectAssignment } from "../type/object-type";
@@ -90,7 +91,6 @@ export default class Binder {
 	}
 
 	private resolve(type: Typing.Type, token?: Token) {
-		if (type == Typing.t_infer) return type;
 		if (type.isPrimitive && !type.unresolved) return type;
 		if (type instanceof UnionType) return this.resolveUnionType(type, token);
 		if (type instanceof GenericInstance) return this.resolveGenericInstance(type, token);
@@ -319,8 +319,11 @@ export default class Binder {
 		}
 	}
 
-	private funDecl(fdecl: AST.FunctionDeclaration): FunctionType {
-		return this.lambda(fdecl.lambda, fdecl.name);
+	private funDecl(fnode: AST.FunctionDeclaration): FunctionType {
+		const ftype = this.lambda(fnode.lambda, fnode.name);
+		const fdecl = new HoistedVarDeclaration(fnode.name, ftype, true);
+		this.currentBlock().declarations.push(fdecl);
+		return ftype;
 	}
 
 	private lambda(func: AST.FunctionExpr, fname?: string): FunctionType {
@@ -349,7 +352,8 @@ export default class Binder {
 		);
 
 		const returnInfo = func.returnTypeInfo;
-		returnInfo.type = this.resolve(returnInfo.type, returnInfo.token);
+		if (returnInfo.type != Typing.t_infer)
+			returnInfo.type = this.resolve(returnInfo.type, returnInfo.token);
 		ftype.returnType = returnInfo.type;
 
 		func.type = ftype;

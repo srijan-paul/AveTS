@@ -8,7 +8,7 @@ import * as Typing from "../type/types";
 import { AssignmentParser } from "./parselets/assign";
 import { DeclarationKind, getDeclarationKind } from "./symbol_table/symtable";
 import { callParser } from "./parselets/call";
-import { FuncDeclaration, HoistedVarDeclaration } from "../type/declaration";
+import { HoistedVarDeclaration } from "../type/declaration";
 import { ArrayParser } from "./parselets/array";
 import { ObjectParser, InfixObjectParser } from "./parselets/object";
 import parseType from "./parselets/type-parser";
@@ -447,10 +447,7 @@ export default class AveParser extends Parser {
 	private funcDecl(): AST.FunctionDeclaration {
 		const name = this.expect(TType.NAME, "Expected function name.");
 		const lambda = this.funcExpr(this.prev());
-
-		// hoist the declaration so that it
-		// can be accessed from anywhere within this block.
-		this.currentBlockScope().declarations.push(FuncDeclaration.fromASTNode(name.raw, lambda));
+		// function declarations are hoisted up in the type binding phase.
 		return new AST.FunctionDeclaration(name.raw, lambda);
 	}
 
