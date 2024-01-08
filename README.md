@@ -1,5 +1,9 @@
 # Ave
 
+## NOTE: This project is now abandonware.
+I'm happy with how far I was able to go with this experiment, but Ave was never meant for production use.
+This project is now discontinued, but should still support the features mentioned in this document.
+
 Ave is a type-checked scripting langauge with clean, minimal syntax
 that compiles to Javascript, intended for rapid prototyping of
 applications.
